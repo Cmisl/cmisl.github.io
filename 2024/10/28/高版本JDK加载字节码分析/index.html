@@ -26,13 +26,13 @@
 <meta property="og:site_name" content="cmisl_破站">
 <meta property="og:description" content="高版本JDK加载字节码分析这是一段很典型的动态加载字节码操作，在jdk8中，可以执行任意代码。 123456789101112131415import java.lang.reflect.InvocationTargetException;import java.lang.reflect.Method;import java.util.Base64;public class evilByteCla">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="http://example.com/images/image-20241026173730868.png">
-<meta property="og:image" content="http://example.com/pict/image-20241028025725610.png">
+<meta property="og:image" content="http://example.com/pict/%E9%AB%98%E7%89%88%E6%9C%ACJDK%E5%8A%A0%E8%BD%BD%E5%AD%97%E8%8A%82%E7%A0%81%E5%88%86%E6%9E%90/image-20241026173730868.png">
+<meta property="og:image" content="http://example.com/pict/%E9%AB%98%E7%89%88%E6%9C%ACJDK%E5%8A%A0%E8%BD%BD%E5%AD%97%E8%8A%82%E7%A0%81%E5%88%86%E6%9E%90/image-20241028025725610.png">
 <meta property="article:published_time" content="2024-10-27T16:00:00.000Z">
-<meta property="article:modified_time" content="2024-11-08T03:19:28.607Z">
+<meta property="article:modified_time" content="2024-12-08T13:38:18.696Z">
 <meta property="article:author" content="John Doe">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="http://example.com/images/image-20241026173730868.png">
+<meta name="twitter:image" content="http://example.com/pict/%E9%AB%98%E7%89%88%E6%9C%ACJDK%E5%8A%A0%E8%BD%BD%E5%AD%97%E8%8A%82%E7%A0%81%E5%88%86%E6%9E%90/image-20241026173730868.png">
   
   
     <meta name="referrer" content="no-referrer-when-downgrade">
@@ -305,7 +305,7 @@
                 <h1 id="高版本JDK加载字节码分析"><a href="#高版本JDK加载字节码分析" class="headerlink" title="高版本JDK加载字节码分析"></a>高版本JDK加载字节码分析</h1><p>这是一段很典型的动态加载字节码操作，在jdk8中，可以执行任意代码。</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">import</span> java.lang.reflect.InvocationTargetException;<br><span class="hljs-keyword">import</span> java.lang.reflect.Method;<br><span class="hljs-keyword">import</span> java.util.Base64;<br><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">evilByteClassloader</span> &#123;<br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">main</span><span class="hljs-params">(String[] args)</span> <span class="hljs-keyword">throws</span> NoSuchMethodException, InvocationTargetException, IllegalAccessException, InstantiationException &#123;<br>        String evilClassBase64=<span class="hljs-string">&quot;Base64 encoding of malicious bytecode&quot;</span>;<br>        <span class="hljs-type">byte</span>[] decode = Base64.getDecoder().decode(evilClassBase64);<br>        <span class="hljs-type">Method</span> <span class="hljs-variable">defineClass</span> <span class="hljs-operator">=</span>ClassLoader.class.getDeclaredMethod(<span class="hljs-string">&quot;defineClass&quot;</span>, <span class="hljs-type">byte</span>[].class, <span class="hljs-type">int</span>.class, <span class="hljs-type">int</span>.class);<br>        defineClass.setAccessible(<span class="hljs-literal">true</span>);<br>        <span class="hljs-type">Class</span> <span class="hljs-variable">evilClassloader</span> <span class="hljs-operator">=</span> (Class) defineClass.invoke(ClassLoader.getSystemClassLoader(), decode, <span class="hljs-number">0</span>, decode.length);<br>        evilClassloader.newInstance();<br>    &#125;<br>&#125;<br><br></code></pre></td></tr></table></figure>
 
-<p><img src="/./images/image-20241026173730868.png" srcset="/img/loading.gif" lazyload alt="image-20241026173730868"></p>
+<p><img src="/pict/%E9%AB%98%E7%89%88%E6%9C%ACJDK%E5%8A%A0%E8%BD%BD%E5%AD%97%E8%8A%82%E7%A0%81%E5%88%86%E6%9E%90/image-20241026173730868.png" srcset="/img/loading.gif" lazyload alt="image-20241026173730868"></p>
 <p>不过，随着java版本的更新，这种方法被限制。</p>
 <h2 id="JDK9的模块化"><a href="#JDK9的模块化" class="headerlink" title="JDK9的模块化"></a>JDK9的模块化</h2><p>Oracle官方文档：<a target="_blank" rel="noopener" href="https://docs.oracle.com/javase/9/whatsnew/toc.htm#JSNEW-GUID-C23AFD78-C777-460B-8ACE-58BE5EA681F6">Java Platform, Standard Edition What’s New in Oracle JDK 9, Release 9</a></p>
 <p>Java 9 引入了模块化系统（Project Jigsaw）。模块化的主要目的是提高 Java 的可维护性、可扩展性和安全性，同时改善大型应用程序和库的构建和管理。</p>
@@ -345,7 +345,6 @@
 </ul>
 <p>可以打开java.base模块的moudle-info.class文件看看就知道了，没有使用opens指令，也就是说并没有开放资源给外部模块反射访问。</p>
 <p>下面是部分关键字的解释：</p>
-<blockquote>
 <ol>
 <li><code>module</code></li>
 </ol>
@@ -360,23 +359,28 @@
 </ol>
 <ul>
 <li><strong>定义</strong>：用来声明当前模块所依赖的其他模块。一个模块可以依赖于一个或多个模块。</li>
-<li><strong>示例</strong>： <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">module</span> com.example.myModule &#123;<br>    <span class="hljs-keyword">requires</span> com.example.otherModule;<br>&#125;<br></code></pre></td></tr></table></figure></li>
+<li><strong>示例</strong>：</li>
 </ul>
+ <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">module</span> com.example.myModule &#123;<br>    <span class="hljs-keyword">requires</span> com.example.otherModule;<br>&#125;<br></code></pre></td></tr></table></figure>
+
 <ol start="3">
 <li><code>exports</code></li>
 </ol>
 <ul>
 <li><strong>定义</strong>：用来声明当前模块希望公开的包。通过 <code>exports</code> 声明的包中的公共类和接口可以被其他模块访问。</li>
-<li><strong>示例</strong>： <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">module</span> com.example.myModule &#123;<br>    <span class="hljs-keyword">exports</span> com.example.myModule.api;<br>&#125;<br></code></pre></td></tr></table></figure></li>
+<li><strong>示例</strong>：</li>
 </ul>
+ <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">module</span> com.example.myModule &#123;<br>    <span class="hljs-keyword">exports</span> com.example.myModule.api;<br>&#125;<br></code></pre></td></tr></table></figure>
+
 <ol start="4">
 <li><code>opens</code></li>
 </ol>
 <ul>
 <li><strong>定义</strong>：与 <code>exports</code> 类似，但允许其他模块通过反射访问指定的包。适用于需要动态访问类和成员的情况，如序列化和依赖注入。</li>
-<li><strong>示例</strong>： <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">module</span> com.example.myModule &#123;<br>    opens com.example.myModule.internal to com.example.otherModule;<br>&#125;<br></code></pre></td></tr></table></figure></li>
+<li><strong>示例</strong>：</li>
 </ul>
-</blockquote>
+ <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">module</span> com.example.myModule &#123;<br>    opens com.example.myModule.internal to com.example.otherModule;<br>&#125;<br></code></pre></td></tr></table></figure>
+
 <p>而我们动态类加载调用的是反射调用java.lang.ClassLoader#defineClass，为java.lang.*位于java.base模块下，而这个模块不允许外部模块反射调用，因此上面代码无法成功动态加载字节码。</p>
 <h2 id="绕过"><a href="#绕过" class="headerlink" title="绕过"></a>绕过</h2><p>当然，我们任然可以绕过上述限制。</p>
 <p>根据报错信息，我们可以很容易追踪到问题出现在如下函数中。</p>
@@ -407,7 +411,7 @@
 
 <p><strong>putObject</strong></p>
 <p>用于将一个对象（或引用）写入到指定对象的内存偏移量</p>
-<figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs pgsql"><span class="hljs-built_in">public</span> <span class="hljs-type">void</span> putObject(<span class="hljs-keyword">Object</span> o, long <span class="hljs-keyword">offset</span>, <span class="hljs-keyword">Object</span> x) &#123;<br>    theInternalUnsafe.putReference(o, <span class="hljs-keyword">offset</span>, x);<br>&#125;<br></code></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">putObject</span><span class="hljs-params">(Object o, <span class="hljs-type">long</span> offset, Object x)</span> &#123;<br>    theInternalUnsafe.putReference(o, offset, x);<br>&#125;<br></code></pre></td></tr></table></figure>
 
 <p>putObject和getAndSetObject方法功能很相似，不过<code>getAndSetObject</code>会返回被替换的旧值，当然里面细节也有所不同，比如<code>getAndSetObject</code>会使用原子操作保障同时执行读取和写入。不过就我们修改类的Class对象的moudle属性来说，两者都可以。</p>
 <blockquote>
@@ -417,10 +421,9 @@
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-type">Class</span> <span class="hljs-variable">unsafeClass</span> <span class="hljs-operator">=</span> Class.forName(<span class="hljs-string">&quot;sun.misc.Unsafe&quot;</span>);<br><span class="hljs-type">Field</span> <span class="hljs-variable">field</span> <span class="hljs-operator">=</span> unsafeClass.getDeclaredField(<span class="hljs-string">&quot;theUnsafe&quot;</span>);<br>field.setAccessible(<span class="hljs-literal">true</span>);<br><span class="hljs-type">Unsafe</span> <span class="hljs-variable">unsafe</span> <span class="hljs-operator">=</span> (Unsafe) field.get(<span class="hljs-literal">null</span>);<br></code></pre></td></tr></table></figure>
 
 <p>可以直接反射获得该类，因为Unsafe类所在的模块<code>jdk.unsupported</code>的<code>moudle-info.class</code>文件中，使用了opens指令开放了<code>sun.misc</code>包，因为我们可以对该包下面的类进行反射操作，自然也包括<code>sun.misc.Unsafe</code></p>
-<p><img src="/../../pict/image-20241028025725610.png" srcset="/img/loading.gif" lazyload alt="image-20241028025725610"></p>
+<p><img src="/pict/%E9%AB%98%E7%89%88%E6%9C%ACJDK%E5%8A%A0%E8%BD%BD%E5%AD%97%E8%8A%82%E7%A0%81%E5%88%86%E6%9E%90/image-20241028025725610.png" srcset="/img/loading.gif" lazyload alt="image-20241028025725610"></p>
 <p>那么我们来用上面的知识来编写jdk17以上版本的动态加载字节码。</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">import</span> sun.misc.Unsafe;<br><br><span class="hljs-keyword">import</span> java.lang.reflect.Field;<br><span class="hljs-keyword">import</span> java.lang.reflect.Method;<br><span class="hljs-keyword">import</span> java.util.Base64;<br><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">JDKbypass</span> &#123;<br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">main</span><span class="hljs-params">(String[] args)</span> <span class="hljs-keyword">throws</span> Exception &#123;<br>        <span class="hljs-type">String</span> <span class="hljs-variable">evilClassBase64</span> <span class="hljs-operator">=</span> <span class="hljs-string">&quot;Base64 encoding of malicious bytecode&quot;</span>;<br>        <span class="hljs-type">byte</span>[] bytes = Base64.getDecoder().decode(evilClassBase64);<br>        <span class="hljs-type">Class</span> <span class="hljs-variable">unsafeClass</span> <span class="hljs-operator">=</span> Class.forName(<span class="hljs-string">&quot;sun.misc.Unsafe&quot;</span>);<br>        <span class="hljs-type">Field</span> <span class="hljs-variable">field</span> <span class="hljs-operator">=</span> unsafeClass.getDeclaredField(<span class="hljs-string">&quot;theUnsafe&quot;</span>);<br>        field.setAccessible(<span class="hljs-literal">true</span>);<br>        <span class="hljs-type">Unsafe</span> <span class="hljs-variable">unsafe</span> <span class="hljs-operator">=</span> (Unsafe) field.get(<span class="hljs-literal">null</span>);<br>        <span class="hljs-type">Module</span> <span class="hljs-variable">baseModule</span> <span class="hljs-operator">=</span> Object.class.getModule();<br>        <span class="hljs-type">Class</span> <span class="hljs-variable">currentClass</span> <span class="hljs-operator">=</span> JDKbypass.class;<br>        <span class="hljs-type">long</span> <span class="hljs-variable">offset</span> <span class="hljs-operator">=</span> unsafe.objectFieldOffset(Class.class.getDeclaredField(<span class="hljs-string">&quot;module&quot;</span>));<br>        <span class="hljs-comment">//使用putObject方法来设置moudle</span><br>        unsafe.putObject(currentClass, offset, baseModule);<br>        <span class="hljs-comment">//使用getAndSetObject方法来设置moudle</span><br>		<span class="hljs-comment">//unsafe.getAndSetObject(currentClass,offset,baseModule);</span><br>        <span class="hljs-type">Method</span> <span class="hljs-variable">method</span> <span class="hljs-operator">=</span> ClassLoader.class.getDeclaredMethod(<span class="hljs-string">&quot;defineClass&quot;</span>, <span class="hljs-type">byte</span>[].class, <span class="hljs-type">int</span>.class, <span class="hljs-type">int</span>.class);<br>        method.setAccessible(<span class="hljs-literal">true</span>);<br>        ((Class) method.invoke(ClassLoader.getSystemClassLoader(), bytes, <span class="hljs-number">0</span>, bytes.length)).newInstance();<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
-
 
                 
               </div>
@@ -482,6 +485,12 @@
                 <div class="post-prevnext my-3">
                   <article class="post-prev col-6">
                     
+                    
+                      <a href="/2024/11/07/Shiro%E5%8E%86%E5%8F%B2%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/" title="Shiro漏洞分析">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Shiro漏洞分析</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
                     
                   </article>
                   <article class="post-next col-6">
