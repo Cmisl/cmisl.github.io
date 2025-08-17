@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="前言很久前其实看过一遍源码，但是过于久远。这次重新学习一下顺便做个笔记，避免后续忽略一些细节。 关于rasp的基础就不说了，其实JavaAgent内存马那里就把基本原理差不多说说明了，简单的demo就是在ClassFileTransformer下面对每个加载的类用字节码的一些库，检查是否有一些敏感操作，比如调用Runtime.getRuntime().exec()这种命令执行的方法等等。 项目地址">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenRasp源码分析">
+<meta property="og:url" content="http://example.com/2025/07/14/OpenRasp%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/index.html">
+<meta property="og:site_name" content="cmisl_破站">
+<meta property="og:description" content="前言很久前其实看过一遍源码，但是过于久远。这次重新学习一下顺便做个笔记，避免后续忽略一些细节。 关于rasp的基础就不说了，其实JavaAgent内存马那里就把基本原理差不多说说明了，简单的demo就是在ClassFileTransformer下面对每个加载的类用字节码的一些库，检查是否有一些敏感操作，比如调用Runtime.getRuntime().exec()这种命令执行的方法等等。 项目地址">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250714145930597.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250714155553024.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250714155709266.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250714160426269.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250714160658594.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250714160706502.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250714161756389.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250714162055253.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250714173217633.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715022720693.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715023058298.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715023959505.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715024455070.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715025443373.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715114609453.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715121034747.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715135245646.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715135534233.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715135925184.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715140131173.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715141042570.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715141403700.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715142210494.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715154027257.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715154340153.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715155654757.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715160402812.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715172041291.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715171817107.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715173851407.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715175303801.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715200214621.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715200730235.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715201440109.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715201643999.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715201856217.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715202105649.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715202822117.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715203217701.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715203436451.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715205046768.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715205641711.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250717111841276.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250717112448723.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250717112744990.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250717113506760.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250717114421157.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250717114343719.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250717114926509.png">
+<meta property="og:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250717115044361.png">
+<meta property="article:published_time" content="2025-07-13T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-07-25T02:55:25.643Z">
+<meta property="article:author" content="John Doe">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250714145930597.png">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>OpenRasp源码分析</title>
+    <!-- async scripts -->
+    <!-- Google Analytics -->
+
+
+    <!-- Umami Analytics -->
+
+
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="目录"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="目录"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="顶部" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa-solid fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/">首页</a></li><!--
+     --><!--
+       --><li><a href="/about/">关于</a></li><!--
+     --><!--
+       --><li><a href="/archives/">归档</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="http://github.com/cmisl">项目</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" aria-label="上一篇" href="/2025/07/24/%E5%93%A5%E6%96%AF%E6%8B%89%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90(2)/"><i class="fa-solid fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
+        
+        <li><a class="icon" aria-label="下一篇" href="/2025/06/10/Java%E5%86%85%E5%AD%98%E9%A9%AC%E7%AF%87%E2%80%94%E2%80%94WebFlux%E5%9E%8B/"><i class="fa-solid fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="返回顶部" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="分享文章" href="#"><i class="fa-solid fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">上一篇</span>
+      <span id="i-next" class="info" style="display:none;">下一篇</span>
+      <span id="i-top" class="info" style="display:none;">返回顶部</span>
+      <span id="i-share" class="info" style="display:none;">分享文章</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2025/07/14/OpenRasp%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2025/07/14/OpenRasp%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/&text=OpenRasp源码分析"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2025/07/14/OpenRasp%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/&title=OpenRasp源码分析"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2025/07/14/OpenRasp%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/&is_video=false&description=OpenRasp源码分析"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=OpenRasp源码分析&body=Check out this article: http://example.com/2025/07/14/OpenRasp%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"><i class="fa-solid fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2025/07/14/OpenRasp%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/&title=OpenRasp源码分析"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2025/07/14/OpenRasp%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/&title=OpenRasp源码分析"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2025/07/14/OpenRasp%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/&title=OpenRasp源码分析"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2025/07/14/OpenRasp%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/&title=OpenRasp源码分析"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2025/07/14/OpenRasp%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/&name=OpenRasp源码分析&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2025/07/14/OpenRasp%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/&t=OpenRasp源码分析"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    
+    
+      <div id="toc">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90"><span class="toc-number">2.</span> <span class="toc-text">源码分析</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#RaspInstall-jar"><span class="toc-number">2.1.</span> <span class="toc-text">RaspInstall.jar</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Rasp-jar"><span class="toc-number">2.2.</span> <span class="toc-text">Rasp.jar</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#MoudleLoader"><span class="toc-number">2.2.1.</span> <span class="toc-text">MoudleLoader</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#engine-rasp-jar"><span class="toc-number">2.3.</span> <span class="toc-text">engine-rasp.jar</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%BB%95%E8%BF%87"><span class="toc-number">3.</span> <span class="toc-text">绕过</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%AD%A3%E5%88%99%E7%BB%95%E8%BF%87"><span class="toc-number">3.1.</span> <span class="toc-text">正则绕过</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A6%86%E7%9B%96%E6%8F%92%E4%BB%B6"><span class="toc-number">3.2.</span> <span class="toc-text">覆盖插件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%BB%91%E5%90%8D%E5%8D%95%E7%BB%95%E8%BF%87"><span class="toc-number">3.3.</span> <span class="toc-text">黑名单绕过</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%80%BB%E8%BE%91%E6%A3%80%E6%B5%8B%E7%82%B9"><span class="toc-number">3.4.</span> <span class="toc-text">逻辑检测点</span></a></li></ol></li></ol>
+      </div>
+    
+  </span>
+</div>
+
+    
+    <div class="content index py4 ">
+        
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle p-name" itemprop="name headline">
+        OpenRasp源码分析
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author p-author h-card" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span class="p-name" itemprop="name">cmisl</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2025-07-13T16:00:00.000Z" class="dt-published" itemprop="datePublished">2025-07-14</time>
+        
+      
+    </div>
+
+
+      
+
+      
+
+    </div>
+  </header>
+  
+
+  <div class="content e-content" itemprop="articleBody">
+    <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>很久前其实看过一遍源码，但是过于久远。这次重新学习一下顺便做个笔记，避免后续忽略一些细节。</p>
+<p>关于rasp的基础就不说了，其实JavaAgent内存马那里就把基本原理差不多说说明了，简单的demo就是在ClassFileTransformer下面对每个加载的类用字节码的一些库，检查是否有一些敏感操作，比如调用Runtime.getRuntime().exec()这种命令执行的方法等等。</p>
+<p>项目地址：<a target="_blank" rel="noopener" href="https://github.com/baidu/openrasp">baidu&#x2F;openrasp: 🔥Open source RASP solution</a></p>
+<h1 id="源码分析"><a href="#源码分析" class="headerlink" title="源码分析"></a>源码分析</h1><p>从release下载的话是有三个jar包的。RaspInstall.jar、rasp.jar、rasp-engine.jar。入口是自然是RaspInstall.jar安装rasp了。</p>
+<h2 id="RaspInstall-jar"><a href="#RaspInstall-jar" class="headerlink" title="RaspInstall.jar"></a>RaspInstall.jar</h2><p>从MANIFEST.MF得知入口类是com.baidu.rasp.App。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250714145930597.png"></p>
+<p>从入口类的main方法跟到operateServer，首先进行了一些解析和检查参数的操作。然后根据参数是install还是uninstall分别走进安装和卸载的逻辑。我们这里是安装，可以直接跟进到BaseStandardInstaller#install。</p>
+<p>然后将剩下两个jar包rasp.jar、rasp-engine.jar复制到目标文件夹下，接着生成更新一些配置。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250714155553024.png"></p>
+<p>然后回去修改服务的启动脚本，比如“-javaagent”等参数，这样是后续用脚本启动就会加载rasp的jar包。来在服务器上运行rasp。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250714155709266.png"></p>
+<p>如果App.isAttach参数为true，还会去动态注入agent。这个默认是flase，在前面提到解析参数时，如果启动参数有pid，就会改为true，毕竟动态注入需要这个值。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250714160426269.png"></p>
+<p>这里不论通过动态注入agent还是修改服务启动参数加载agent。都是对于rasp.jar这个jar包，因此接下来我们就可以看这个jar包。<br><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250714160658594.png"></p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250714160706502.png"></p>
+<h2 id="Rasp-jar"><a href="#Rasp-jar" class="headerlink" title="Rasp.jar"></a>Rasp.jar</h2><p>启动类是com.baidu.openrasp.Agent，包括agent的入口也是这个。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250714161756389.png"></p>
+<p>premain和agentmain都调用init方法，但是传入参数不同。这个方法会将rasp.jar添加到启动类加载器的搜索路径中，使其中的类可以被优先加载。当然对于Bootstrap ClassLoader还是会优先加载 JVM 核心类库，然后才是rasp.jar。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250714162055253.png"></p>
+<p>然后调用ModuleLoader.load(mode, action, inst)来加载模块。实际上就是new了一个MoudleLoader。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250714173217633.png"></p>
+<h3 id="MoudleLoader"><a href="#MoudleLoader" class="headerlink" title="MoudleLoader"></a>MoudleLoader</h3><p>这里不急着先看构造函数，因此该类有静态代码块，在走进构造函数之后会先执行静态代码块里面的代码。</p>
+<p>主要干了两件事，首先是获取rasp.jar所在路径，然后赋值给baseDirectory。然后遍历所有的系统类加载器找到sun.misc.Launcher$ExtClassLoader赋值给moduleClassLoader。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715022720693.png"></p>
+<p>这里为什么需要一个扩展类加载器呢？在三梦师傅的文章就有很好的解释：<a target="_blank" rel="noopener" href="https://threedr3am.github.io/2020/08/23/%E4%BB%A5OpenRASP%E4%B8%BA%E5%9F%BA%E7%A1%80-%E5%B1%95%E5%BC%80%E6%9D%A5%E6%B8%AF%E6%B8%AFRASP%E7%9A%84%E7%B1%BB%E5%8A%A0%E8%BD%BD/">以OpenRASP为基础-展开来港港RASP的类加载 | 大彩笔threedr3am</a></p>
+<p>简单来说，就是为了避免agent(rasp.jar)无法调用到engine(rasp-engine.jar)的类。在一个服务中大部分自己编写的代码，包括服务器的核心代码，是由应用类加载器加载的，如果说我们的engine也是又某个应用类加载器加载的话，我们在hook服务中的类，插入了调用engine方法的代码时，由于隐式加载机制，这个engine中的类是要被加载的，此时又由于双亲委派机制，服务中的应用类加载器会一路委派到启动类加载器，启动类加载器自然是找不到的，因此又会让扩展类加载器加载，当然也是找不到的，因为engine是在另一个应用类加载器加载。而扩展类加载器找不到后，只能回到服务的应用类加载器，由于engine服务在另一个应用类加载器，所以导致整个过程无法加载到engine中的类。因此会产生ClassNoFoundError。</p>
+<p>另一个情景，就是如何要在一个启动类加载器中的类插入hook代码，那么由于启动类加载器已经是最顶层，没有委派的对象了，因此只能自己加载，但是engine又不属于启动类加载器的范畴，那不就找不到这个类了吗？</p>
+<p>因此，此时扩展类加载器就又派上用场了，我们可以通过扩展类加载器去加载不就行了，因为engine我们使用扩展类加载器加载的。而且我们是将这个扩展类加载器存在ModuleLoader.moduleClassLoader这个静态变量中的，ModuleLoader是agent(rasp.jar)下，还记得我们前文提到rasp.jar是会被添加到启动类加载器的搜索路径中吗?</p>
+<p>因此如果我们hook时需要用到engine中的类时候，就可以从启动类加载器中获取ModuleLoader类中的moduleClassLoader，也就是加载engine的扩展类加载，然后用它去加载hook时用到的代码即可。</p>
+<p>ok那么静态代码块这部分就算结束，我觉得大家能从这段代码收获不少东西的，因此多费点笔墨。</p>
+<p>我们回到刚刚是要去new一个ModuleLoader类的，因此可以看到构造函数。如果启动模式是normal，也就是从premain进入的init方法，就会设置一些jboss的启动选项。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715023058298.png"></p>
+<p>接着是new了一个ModuleContainer类，并传递一个参数，engine-rasp.jar。可以看出是要对engine的jar包做一些封装处理的。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715023959505.png"></p>
+<p>获取engine-rasp.jar中MANIFEST.MF中的一些属性，然后获取Rasp-Moudle-Name的值，这里是com.baidu.openrasp.EngineBoot。然后判断当前系统类加载器是否是URLClassloader的子类，一般情况没啥问题，扩展类加载器和应用类加载器都是URLClassloader的子类。然后就是去用刚刚提及的扩展类加载器去加载com.baidu.openrasp.EngineBoot这个类。</p>
+<p>那么非一般情况是什么情况呢，注释给的比较清楚了。那就是weblogic环境或者jdk9,10,11。weblogic是因为类加载器是自定义的，jdk高版本是原本的类加载器的改变。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715024455070.png"></p>
+<p>jdk9之后就没有扩展类加载器了，取而代之的是平台类加载器platform class loader。并且由于应用类加载器和这个平台类加载器不再是继承自URLClassloader，而是BuiltinClassLoader。所以不能用if语句的处理方式加载类了。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715025443373.png"></p>
+<p>那么这里的加载方式可以看到是通过反射调用了appendToClassPathForInstrumentation方法。就是说将engine的jar包添加到当前系统的类加载器的类路径中。加载agent一般是用ApplicationClassLoader程序类加载器加载的。而自定义的类加载器一般继承于此，加载是也会委派到程序类加载器，所以可以在类路径找到engine的jar包。从而达到效果。</p>
+<p>因此最后就是实例化了engine中的com.baidu.openrasp.EngineBoot类，接着调用其start方法启动engine。</p>
+<h2 id="engine-rasp-jar"><a href="#engine-rasp-jar" class="headerlink" title="engine-rasp.jar"></a>engine-rasp.jar</h2><p>那我们来到EngineBoot.start方法，engine的入口点。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715114609453.png"></p>
+<p>首先进入Loader.load()中，这里面是加载一个openrasp_v8_java.dll的动态链接库。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715121034747.png"></p>
+<p>然后是加载日志配置，读取agent的信息，设置模型之类的。然后是JS.Initialize做一些js引擎相关的初始化。</p>
+<p>用setLogger和setStackGetter设置了日志记录器和堆栈获取器，这个堆栈获取器用于序列化当前调用堆栈。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715135245646.png"></p>
+<p>Context.setKeys()设置了JS上下文用到的一些键值。<br><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715135534233.png"></p>
+<p>接着CloudUtils.checkCloudControlEnter()判断是否开启了云端控制，没有的话调用UpdatePlugin()和InitFileWatcher()加载插件并且监听插件目录的变化。</p>
+<p>CheckerManager.init()会遍历下面的Type，将其put进检查器CheckerManager.checker中。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715135925184.png"></p>
+<p>接着调用initTransformer方法，到这里了解过javaagent的朋友就会觉得熟系了。初始化了一个自定义的类转换器CustomClassTransformer，然后调用 retransform() 方法，对已加载的类进行重新转换。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715140131173.png"></p>
+<p>看看CustomClassTransformer的初始化。主要是看构造函数中调用的addAnnotationHook方法。用AnnotationScanner扫描指定包路径下带有HookAnnotation注解的类，然后把扫描到的类实例化，如果创造出来的实例是AbstractClassHook类型，就调用addHook方法进行注册。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715141042570.png"></p>
+<p>如果hook是必需的，就添加到necessaryHookType集合，然后获取忽略列表，检查当前hook是否可以忽略，如果能被忽略。就记录日志直接返回，否则加入到hooks集合中。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715141403700.png"></p>
+<p>对于hook类的结构可以随便找一个有HookAnnotation注解的类参考。check方法用于检测，hookMethod就是将检测方法插入到hook点中。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715142210494.png"></p>
+<p>接着回到CustomClassTransformer，初始化完成会就是调用其retransform方法了。这个方法中会获取所有已经加载的类，然后遍历这些类用isClassMatched方法判断其是否满足hook规则。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715154027257.png"></p>
+<p>实际上就是遍历刚刚添加到hooks集合中的所有hook类，用hook类的isClassMatched方法，将加载的类的类名作为参数传递进去判断。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715154340153.png"></p>
+<p>匹配到后，还有一层判断，需要匹配到的该类可被修改，并非LambdaForm类，这样就会retransformClasses方法去转换加载的类。这时就是冲加载，会走进自定义转换器的transform方法。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715155654757.png"></p>
+<p>前面两个if语句是记录依赖路径和缓存jsp类加载器，暂且不管，看到后面，依旧是遍历hooks的所有hook类，用其isClassMatched方法判断类名是否匹配。毕竟还有别的方法手动调用了transform方法。匹配上的话，就会用Javassist 加载类并且调用AbstractClassHook的transformClass方法修改字节码。</p>
+<p>AbstractClassHook是抽象类，其实现就是具体的hook类，因此调用hookMethod方法实际是去调用到具体实现的hook类的hookMethod方法。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715160402812.png"></p>
+<p>比如com.baidu.openrasp.hook.system.ProcessBuilderHook。从它的isClassMatched方法可以看到hook的是ProcessImpl、UNIXProcess这两个类。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715172041291.png"></p>
+<p>接着看其hookMethod方法，这里就是要插入代码的地方了。我们直接跟进第一个分支吧，毕竟平时都是windows+jdk8。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715171817107.png"></p>
+<p>有点长，我们拆开来看，首先是对参数类型的处理，我们传的是String[].class, String.class，首先是判断是否空参，我们这里有参数，走第一个判断if里面，然后会去判断是否是数组类型，如果是参数类型是数组的话就会用Class.forName()获取其类对象。否则还是不动。</p>
+<p>比如这里String[].class就是Class.forName(“[Ljava.lang.String;”);，String.class获取类型是String，后面加一个.class就还是String.class。</p>
+<p>最后拼在一起时<code>new Class[]&#123;Class.forName(&quot;[Ljava.lang.String;&quot;), String.class&#125;</code></p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715173851407.png"></p>
+<p>接着看getInvokeStaticSrc方法后半截。根据是否是启动类加载器加载的来走进不同分支语句。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715175303801.png"></p>
+<p>如果是的话就使用ModuleLoader.moduleClassLoader加载类并反射调用静态方法，最后拼接的效果如下，$1和$2用于占位，后续用于获取hook点传入的参数然后替换checkCommand方法的两个参数。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">com.baidu.openrasp.ModuleLoader.moduleClassLoader.loadClass(&quot;com.baidu.openrasp.hook.system.ProcessBuilderHook&quot;).getMethod(&quot;checkCommand&quot;,new Class[]&#123;Class.forName(&quot;[Ljava.lang.String;&quot;), String.class&#125;).invoke(null,new Object[]&#123;&quot;$1,$2&quot;&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>可以看到其实是用了之前存储的扩展类加载器去加载，和之前解释的一样，如果当前的类加载器是启动类加载器，是无法获取到engine中的Hook类的。更具体的解释看前面把。</p>
+<p>如果不是启动类加载器就直接拼接成如下代码，因为如果不在启动类加载器的话是可以直接加载的engine中的类的：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">com.baidu.openrasp.hook.system.ProcessBuilderHook.checkCommand($1,$2);</span><br></pre></td></tr></table></figure>
+
+<p>接着回到hookMethod方法，接着是去调用了insertBefore这个方法，这里的ctClass是我们匹配到的要去hook的类，也就是java.lang.ProcessImpl这个类，然后methodName前面能看到是<code>&lt;init&gt;</code>初始化方法。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715200214621.png"></p>
+<p>也就是如下方法，这段代码其实就是将刚刚拼接得到的代码给插入到hook到的方法前面，也就是插入到processImpl方法的开头。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715200730235.png"></p>
+<p>所以上面的方法就变成了如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">private ProcessImpl(String cmd[],  </span><br><span class="line">                    final String envblock,  </span><br><span class="line">                    final String path,  </span><br><span class="line">                    final long[] stdHandles,  </span><br><span class="line">                    final boolean redirectErrorStream)  </span><br><span class="line">    throws IOException  </span><br><span class="line">&#123;  </span><br><span class="line"></span><br><span class="line">	com.baidu.openrasp.ModuleLoader.moduleClassLoader.loadClass(&quot;com.baidu.openrasp.hook.system.ProcessBuilderHook&quot;).getMethod(&quot;checkCommand&quot;,new Class[]&#123;Class.forName(&quot;[Ljava.lang.String;&quot;), String.class&#125;).invoke(null,new Object[]&#123;&quot;$1,$2&quot;&#125;);</span><br><span class="line">	或</span><br><span class="line">	com.baidu.openrasp.hook.system.ProcessBuilderHook.checkCommand($1,$2);</span><br><span class="line">    String cmdstr;  </span><br><span class="line">    SecurityManager security = System.getSecurityManager();  </span><br><span class="line">    boolean allowAmbiguousCommands = false;</span><br></pre></td></tr></table></figure>
+
+<p>其实就是去反射调用hook类的checkCommand方法，然后参数就是前两个参数替换下来，检查程序走到此处的参数是否有危险。最后是走到这里：</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715201440109.png"></p>
+<p>可以看到命令，环境以及堆栈信息都put进了params这个HashMap中，然后去调用HookHandler的doCheckWithoutRequest方法。其中还有个参数是枚举变量。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715201643999.png"></p>
+<p>做了一些判断，跟一些特殊情况禁用hook以及白名单相关，先不理会，继续走进doRealCheckWithoutRequest。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715201856217.png"></p>
+<p>new了一个CheckParameter，然后将其作为参数，传递到CheckerManager的check方法。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715202105649.png"></p>
+<p>  根据当前type选取一个Checker检查器去检查，在刚进入engine的时候，入口点是EngineBoot的start方法。当时进行了CheckManager的初始化，所以put进了type和其对应的检查器到checkers中，此时我们就可以直接获取到当前type对应的一个检查器。直接去看CheckParameter.Type也可以看出我们这里是用的V8AttackChecker。  </p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715202822117.png"></p>
+<p>虽然检查器是V8AttackChecker，但是到check方法还是先走到父类AbstractChecker的check中，可以看到拦截与否实际是从checkParam方法中得出的，这个方法返回的eventInfos列表，后续遍历该列表，对每一个eventinfo判断里面的isBlock属性是否为true，如果最后返回的是ture，HookHandler类中的handleBlock(parameter)就会拦截我们的请求。所以我们跟进checkParam看看。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715203217701.png"></p>
+<p>这个是要看子类的实现，我们前面提到用的检查器是V8AttackChecker，所以走V8AttackChecker的checkParam方法里。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715203436451.png"></p>
+<p>调用的JS.Check，继续跟进。将传入的检查参数（checkParameter.getParams()）通过 JSON 序列化写入字节流，后面通过V8.Check()方法进行攻击检测。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715205046768.png"></p>
+<p>后面就是c代码，具体位置可以定位到openrasp-v8\java\com_baidu_openrasp_v8_V8.cc</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250715205641711.png"></p>
+<p>这里是V8引擎在JNI实现的检测入口，后续会创建一个Isolate，然后对参数做转换，毕竟是跨语言了。然后调用Isolate的Check方法。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250717111841276.png"></p>
+<p>找到openrasp-v8\base\isolate.cc</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250717112448723.png"></p>
+<p>把当前上下文作为参数，调用重载的Check方法。然后就是通过check-&gt;Call(…)调用一个JS注册的检查函数，传入请求类型、参数和上下文。后续就不再多说了。具体可定位openrasp-v8\base\js\rasp.js自己再看看。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250717112744990.png"></p>
+<h1 id="绕过"><a href="#绕过" class="headerlink" title="绕过"></a>绕过</h1><h2 id="正则绕过"><a href="#正则绕过" class="headerlink" title="正则绕过"></a>正则绕过</h2><p>主要是针对拦截规则的不完善去绕过规则，比如正则匹配是否存在被忽视的情况，比如这里主要拦截读取&#x2F;etc&#x2F;passwd文件，对其他文件没有做拦截。</p>
+<p>或者读取多个文件，用变量拼接，a&#x3D;”cat &#x2F;et” b&#x3D;”c&#x2F;passwd” $a$b，设置别名，反斜杠换行等等。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250717113506760.png"></p>
+<h2 id="覆盖插件"><a href="#覆盖插件" class="headerlink" title="覆盖插件"></a>覆盖插件</h2><p>OpenRasp对于上传js文件的行为是ignore忽略，所以不会拦截js的上传，如果有上传点且知道路径，上传js覆盖插件，然后OpenRasp会监视js文件，有变化就是update插件，算是热加载了，无需重启服务。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250717114421157.png"></p>
+<h2 id="黑名单绕过"><a href="#黑名单绕过" class="headerlink" title="黑名单绕过"></a>黑名单绕过</h2><p>针对黑名单不够完善进行绕过。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250717114343719.png"></p>
+<h2 id="逻辑检测点"><a href="#逻辑检测点" class="headerlink" title="逻辑检测点"></a>逻辑检测点</h2><p>之前分析的时候提到一些有逻辑判断的地方，对一些特殊情况不进入hook，比如下面cpu使用率超过90和注册云控。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250717114926509.png"></p>
+<p>还有doRealCheckWithoutRequest方法中的enableHook.get的判断，如果存在代码执行，能通过反射修改属性，在判断时就会被判成不进入hook的逻辑或者阻断了走向检测逻辑。</p>
+<p><img src="https://cmisl.oss-cn-beijing.aliyuncs.com/cmisl/image-20250717115044361.png"></p>
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+        
+          <li><a href="/">首页</a></li>
+        
+          <li><a href="/about/">关于</a></li>
+        
+          <li><a href="/archives/">归档</a></li>
+        
+          <li><a target="_blank" rel="noopener" href="http://github.com/cmisl">项目</a></li>
+        
+      </ul>
+    </div>
+
+    
+    
+      <div id="toc-footer" style="display: none">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90"><span class="toc-number">2.</span> <span class="toc-text">源码分析</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#RaspInstall-jar"><span class="toc-number">2.1.</span> <span class="toc-text">RaspInstall.jar</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Rasp-jar"><span class="toc-number">2.2.</span> <span class="toc-text">Rasp.jar</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#MoudleLoader"><span class="toc-number">2.2.1.</span> <span class="toc-text">MoudleLoader</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#engine-rasp-jar"><span class="toc-number">2.3.</span> <span class="toc-text">engine-rasp.jar</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%BB%95%E8%BF%87"><span class="toc-number">3.</span> <span class="toc-text">绕过</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%AD%A3%E5%88%99%E7%BB%95%E8%BF%87"><span class="toc-number">3.1.</span> <span class="toc-text">正则绕过</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A6%86%E7%9B%96%E6%8F%92%E4%BB%B6"><span class="toc-number">3.2.</span> <span class="toc-text">覆盖插件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%BB%91%E5%90%8D%E5%8D%95%E7%BB%95%E8%BF%87"><span class="toc-number">3.3.</span> <span class="toc-text">黑名单绕过</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%80%BB%E8%BE%91%E6%A3%80%E6%B5%8B%E7%82%B9"><span class="toc-number">3.4.</span> <span class="toc-text">逻辑检测点</span></a></li></ol></li></ol>
+      </div>
+    
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2025/07/14/OpenRasp%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2025/07/14/OpenRasp%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/&text=OpenRasp源码分析"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2025/07/14/OpenRasp%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/&title=OpenRasp源码分析"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2025/07/14/OpenRasp%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/&is_video=false&description=OpenRasp源码分析"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=OpenRasp源码分析&body=Check out this article: http://example.com/2025/07/14/OpenRasp%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"><i class="fa-solid fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2025/07/14/OpenRasp%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/&title=OpenRasp源码分析"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2025/07/14/OpenRasp%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/&title=OpenRasp源码分析"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2025/07/14/OpenRasp%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/&title=OpenRasp源码分析"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2025/07/14/OpenRasp%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/&title=OpenRasp源码分析"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2025/07/14/OpenRasp%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/&name=OpenRasp源码分析&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2025/07/14/OpenRasp%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/&t=OpenRasp源码分析"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fa-solid fa-bars fa-lg" aria-hidden="true"></i> 菜单</a>
+        
+          <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fa-solid fa-list fa-lg" aria-hidden="true"></i> 目录</a>
+        
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fa-solid fa-share-alt fa-lg" aria-hidden="true"></i> 分享</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up fa-lg" aria-hidden="true"></i> 返回顶部</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+      <div class="footer-left">
+        Copyright &copy;
+        
+        
+        2016-2025
+        John Doe
+      </div>
+      <div class="footer-right">
+        <nav>
+          <ul>
+            <!--
+          --><li><a href="/">首页</a></li><!--
+        --><!--
+          --><li><a href="/about/">关于</a></li><!--
+        --><!--
+          --><li><a href="/archives/">归档</a></li><!--
+        --><!--
+          --><li><a target="_blank" rel="noopener" href="http://github.com/cmisl">项目</a></li><!--
+        -->
+          </ul>
+          <ul>
+            
+              <!-- 不蒜子统计 -->
+              <span id="busuanzi_container_site_pv">
+                  本站总访问量<span id="busuanzi_value_site_pv"></span>次
+              </span>
+              <span class="post-meta-divider">|</span>
+              <span id="busuanzi_container_site_uv" style='display:none'>
+                      本站访客数<span id="busuanzi_value_site_uv"></span>人
+              </span>
+            <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+            
+          </ul>
+        </nav>
+      </div>
+      
+</footer>
+
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
+
+
+
+
+<!-- clipboard -->
+
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script>
+  
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"复制到粘贴板！\">";
+    btn += '<i class="fa-regular fa-clone"></i>';
+    btn += '</span>';
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "复制成功！");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>

